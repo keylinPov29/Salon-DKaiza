@@ -1,0 +1,329 @@
+﻿@model DKaiza.Web.Models.Servicio
+@{
+    Layout = null;
+}
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <title>Salón de Belleza D'Kaiza</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600&family=Playfair+Display:ital,wght@0,500;0,600;1,400&display=swap"
+          rel="stylesheet" />
+
+    <link rel="stylesheet"
+          href="~/css/dkaiza.css"
+          asp-append-version="true" />
+</head>
+
+<body>
+
+    <!-- ================= NAVBAR ================= -->
+    <header class="dk-nav">
+
+        <a href="#inicio" class="dk-nav__brand" id="brand">
+            Salón de belleza D'Kaiza
+        </a>
+
+        <nav class="dk-nav__links">
+            <button type="button" class="dk-nav__link" id="navServicios">
+                Servicios
+            </button>
+            <a href="#iniciar-sesion" class="dk-nav__link" data-ancla="iniciar-sesion">
+                Iniciar Sesion
+            </a>
+            <a href="#registrarse" class="dk-nav__link" data-ancla="registrarse">
+                Registrarse
+            </a>
+        </nav>
+
+    </header>
+
+
+    <main>
+
+        <!-- ================= INICIO ================= -->
+        <div id="inicio">
+
+            <section class="dk-hero">
+
+                <div class="dk-hero__content">
+
+                    <span class="dk-hero__line">Salón de Belleza · Lima</span>
+
+                    <h1 class="dk-hero__title">
+                        Elegancia que<br />
+                        <em>Transforma</em>
+                    </h1>
+
+                    <p class="dk-hero__text">
+                        Experimenta el arte del estilo premium en un espacio
+                        diseñado para tu transformación personal. Reserva tu cita
+                        y descubre una nueva forma de cuidarte.
+                    </p>
+
+                    <button id="btnReservar" type="button" class="dk-btn dk-btn--primary">
+                        Reservar mi cita
+                    </button>
+
+                </div>
+
+            </section>
+
+
+            <!-- Estadísticas -->
+            <section class="dk-info" style="padding-top: 3rem; padding-bottom: 3rem;">
+                <div class="dk-stats">
+                    <div class="dk-stat">
+                        <strong>+10</strong>
+                        <span>Años de experiencia</span>
+                    </div>
+                    <div class="dk-stat">
+                        <strong>5★</strong>
+                        <span>Calificación</span>
+                    </div>
+                    <div class="dk-stat">
+                        <strong>2K+</strong>
+                        <span>Clientes satisfechos</span>
+                    </div>
+                </div>
+            </section>
+
+
+            <!-- ================= NOSOTROS ================= -->
+            <section id="nosotros" class="dk-info">
+                <h2>Nosotros</h2>
+                <p>
+                    En D'Kaiza nos dedicamos a realzar tu belleza
+                    y estilo mediante una atención personalizada,
+                    profesionales capacitados y productos de calidad.
+                </p>
+            </section>
+
+
+            <!-- ================= CONTACTO ================= -->
+            <section id="contacto" class="dk-info">
+                <h2>Contacto</h2>
+                <p>Estamos para atenderte y ayudarte a encontrar el servicio ideal para ti.</p>
+                <p class="dk-contact-data">
+                    Teléfono: 999 999 999
+                    <br />
+                    Dirección: Lima, Perú
+                </p>
+            </section>
+
+        </div>
+
+
+        <!-- ================= SERVICIOS ================= -->
+        <section id="servicios" class="dk-servicios" hidden>
+
+            <div class="dk-container">
+
+                <button type="button" id="btnAtras" class="dk-back">
+                    &larr; Volver al inicio
+                </button>
+
+                <header class="dk-servicios__header">
+                    <span class="dk-servicios__eyebrow">— CATÁLOGO —</span>
+                    <h2 class="dk-servicios__title">Nuestros servicios</h2>
+                    <p class="dk-servicios__subtitle">
+                        Elige una categoría para conocer nuestros servicios, duración y precio.
+                    </p>
+                </header>
+
+                @if (Model.HayServicios)
+                {
+                    <div class="dk-cat-grid">
+                        @foreach (var categoria in Model.Categorias)
+                        {
+                            <article class="dk-cat">
+
+                                <button type="button"
+                                        class="dk-cat__header"
+                                        aria-expanded="false"
+                                        aria-controls="cat-@categoria.Id">
+
+                                    <div class="dk-cat__top">
+                                        <span class="dk-cat__icon" aria-hidden="true">
+                                            @switch (categoria.Nombre.ToLower())
+                                            {
+                                                case "cabello":
+                                                    <svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                                        <circle cx="14" cy="14" r="6"/>
+                                                        <circle cx="14" cy="50" r="6"/>
+                                                        <line x1="18.5" y1="17.5" x2="54" y2="50"/>
+                                                        <line x1="18.5" y1="46.5" x2="54" y2="14"/>
+                                                        <line x1="32" y1="32" x2="42" y2="38"/>
+                                                    </svg>
+                                                    break;
+
+                                                case "manicure":
+                                                    <svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                                        <rect x="24" y="6" width="16" height="9" rx="2"/>
+                                                        <line x1="28" y1="15" x2="28" y2="20"/>
+                                                        <line x1="36" y1="15" x2="36" y2="20"/>
+                                                        <path d="M22 25 Q22 20 27 20 L37 20 Q42 20 42 25 L42 50 Q42 58 34 58 L26 58 Q18 58 18 50 Z"/>
+                                                        <line x1="25" y1="28" x2="25" y2="50" opacity="0.4"/>
+                                                    </svg>
+                                                    break;
+
+                                                case "coloración":
+                                                case "coloracion":
+                                                    <svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                                        <path d="M42 8 L56 22 L32 46 L18 32 Z"/>
+                                                        <line x1="24" y1="34" x2="30" y2="40"/>
+                                                        <line x1="28" y1="30" x2="34" y2="36"/>
+                                                        <path d="M18 32 Q10 34 6 44 Q10 48 16 46 L24 40"/>
+                                                        <path d="M13 42 Q11 46 13 50" opacity="0.5"/>
+                                                        <path d="M17 38 Q15 42 17 46" opacity="0.5"/>
+                                                        <path d="M21 34 Q19 38 21 42" opacity="0.5"/>
+                                                    </svg>
+                                                    break;
+
+                                                default:
+                                                    <svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                                        <path d="M32 8 L36 28 L56 32 L36 36 L32 56 L28 36 L8 32 L28 28 Z"/>
+                                                    </svg>
+                                                    break;
+                                            }
+                                        </span>
+                                    </div>
+
+                                    <div class="dk-cat__text">
+                                        <h3 class="dk-cat__name">@categoria.Nombre</h3>
+                                        <p class="dk-cat__desc">@categoria.Descripcion</p>
+                                    </div>
+
+                                    <span class="dk-cat__cta">
+                                        Ver @categoria.Servicios.Count() servicios
+                                        <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                            <polyline points="9 18 15 12 9 6"/>
+                                        </svg>
+                                    </span>
+
+                                </button>
+
+                                <div id="cat-@categoria.Id" class="dk-cat__body" hidden>
+                                    @foreach (var servicio in categoria.Servicios)
+                                    {
+                                        <div class="dk-serv">
+                                            <div class="dk-serv__info">
+                                                <span class="dk-serv__name">@servicio.Nombre</span>
+                                                <div class="dk-serv__meta">
+                                                    <span class="dk-chip dk-chip--time">
+                                                        <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                                            <circle cx="12" cy="12" r="10"/>
+                                                            <polyline points="12 6 12 12 16 14"/>
+                                                        </svg>
+                                                        @servicio.DuracionMinutos min
+                                                    </span>
+                                                    <span class="dk-chip dk-chip--price">
+                                                        S/ @servicio.Precio.ToString("F2")
+                                                    </span>
+                                                </div>
+                                            </div>
+
+                                            <a href="/reservas/nueva?servicioId=@servicio.Id"
+                                               class="dk-btn dk-btn--outline dk-btn--select">
+                                                Seleccionar
+                                                <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                                    <line x1="5" y1="12" x2="19" y2="12"/>
+                                                    <polyline points="12 5 19 12 12 19"/>
+                                                </svg>
+                                            </a>
+                                        </div>
+                                    }
+                                </div>
+
+                            </article>
+                        }
+                    </div>
+                }
+                else
+                {
+                    <div class="dk-empty">
+                        <span class="dk-empty__icon" aria-hidden="true">✦</span>
+                        <h3 class="dk-empty__title">Servicios no disponibles por el momento</h3>
+                        <p class="dk-empty__text">
+                            Nuestro catálogo se está preparando. Vuelve pronto para
+                            descubrir todos los servicios que tenemos para ti.
+                        </p>
+                    </div>
+                }
+
+            </div>
+
+        </section>
+
+    </main>
+
+
+    <!-- ==================== FOOTER ==================== -->
+    <footer class="dk-footer">
+        <div class="dk-container">
+            <div class="dk-footer__grid">
+
+                <div class="dk-footer__col">
+                    <h3 class="dk-footer__brand">Salón de Belleza D'Kaiza</h3>
+                    <p class="dk-footer__text">
+                        Realzamos tu belleza y estilo con atención personalizada,
+                        profesionales capacitados y productos de calidad.
+                    </p>
+                </div>
+
+                <div class="dk-footer__col">
+                    <h4 class="dk-footer__title">Enlaces</h4>
+                    <ul class="dk-footer__list">
+                        <li><a href="#inicio">Inicio</a></li>
+                        <li><a href="#" id="footerServicios">Servicios</a></li>
+                        <li><a href="#nosotros">Nosotros</a></li>
+                        <li><a href="#contacto">Contacto</a></li>
+                    </ul>
+                </div>
+
+                <div class="dk-footer__col">
+                    <h4 class="dk-footer__title">Contacto</h4>
+                    <ul class="dk-footer__list dk-footer__list--contact">
+                        <li>
+                            <span class="dk-footer__label">Teléfono</span>
+                            <span>999 999 999</span>
+                        </li>
+                        <li>
+                            <span class="dk-footer__label">Dirección</span>
+                            <span>Lima, Perú</span>
+                        </li>
+                        <li>
+                            <span class="dk-footer__label">Horario</span>
+                            <span>Lun a Sáb · 10:00 – 22:00</span>
+                        </li>
+                    </ul>
+                </div>
+
+            </div>
+
+            <div class="dk-footer__bottom">
+                <p class="dk-footer__copy">
+                    © 2026 Salón de Belleza D'Kaiza · Todos los derechos reservados.
+                </p>
+                <ul class="dk-footer__social">
+                    <li><a href="#" aria-label="Instagram">IG</a></li>
+                    <li><a href="#" aria-label="Facebook">FB</a></li>
+                    <li><a href="#" aria-label="TikTok">TT</a></li>
+                </ul>
+            </div>
+        </div>
+    </footer>
+
+
+    <!-- ================= JAVASCRIPT ================= -->
+    <script src="~/js/dkaiza.js" asp-append-version="true"></script>
+
+</body>
+</html>s
