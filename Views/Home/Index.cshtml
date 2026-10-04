@@ -20,6 +20,11 @@
     <link rel="stylesheet"
           href="~/css/dkaiza.css"
           asp-append-version="true" />
+
+    <style>
+        .dk-cat__img { width: 72px; height: 72px; object-fit: cover; border-radius: 14px; display: block; }
+        .dk-cat__icon:has(.dk-cat__img) svg { display: none; }
+    </style>
 </head>
 
 <body>
@@ -31,8 +36,9 @@
             Salón de belleza D'Kaiza
         </a>
 
-                   <nav class="dk-nav__links">
-            <button type="button" class="dk-nav__link" id="navServicios">
+        <nav class="dk-nav__links">
+            <button type="button" class="dk-nav__link" id="navServicios"
+                    style="@(User.IsInRole("Administrador") ? "display:none" : "")">
                 Servicios
             </button>
 
@@ -40,7 +46,7 @@
             {
                 @if (User.IsInRole("Administrador"))
                 {
-                    <a href="/admin/categorias" class="dk-nav__link">Admin</a>
+                    <a href="/admin/categorias" class="dk-nav__link">Catálogo de servicios</a>
                 }
 
                 <span class="dk-nav__link" style="cursor:default">@User.Identity!.Name</span>
@@ -167,6 +173,10 @@
 
                                     <div class="dk-cat__top">
                                         <span class="dk-cat__icon" aria-hidden="true">
+                                            @if (((HashSet<int>?)ViewBag.CategoriasConImagen)?.Contains(categoria.Id) == true)
+                                            {
+                                                <img class="dk-cat__img" src="/media/categorias/@categoria.Id" alt="" />
+                                            }
                                             @switch (categoria.Nombre.ToLower())
                                             {
                                                 case "cabello":
@@ -226,22 +236,30 @@
                                 </button>
 
                                 <div id="cat-@categoria.Id" class="dk-cat__body" hidden>
-                                    @foreach (var servicio in categoria.Servicios)
+                                                                       @foreach (var servicio in categoria.Servicios)
                                     {
                                         <div class="dk-serv">
                                             <div class="dk-serv__info">
-                                                <span class="dk-serv__name">@servicio.Nombre</span>
-                                                <div class="dk-serv__meta">
-                                                    <span class="dk-chip dk-chip--time">
-                                                        <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                                            <circle cx="12" cy="12" r="10"/>
-                                                            <polyline points="12 6 12 12 16 14"/>
-                                                        </svg>
-                                                        @servicio.DuracionMinutos min
-                                                    </span>
-                                                    <span class="dk-chip dk-chip--price">
-                                                        S/ @servicio.Precio.ToString("F2")
-                                                    </span>
+                                                <div class="dk-serv__row">
+                                                    @if (((HashSet<int>?)ViewBag.ServiciosConImagen)?.Contains(servicio.Id) == true)
+                                                    {
+                                                        <img class="dk-serv__img" src="/media/servicios/@servicio.Id" alt="" />
+                                                    }
+                                                    <div>
+                                                        <span class="dk-serv__name">@servicio.Nombre</span>
+                                                        <div class="dk-serv__meta">
+                                                            <span class="dk-chip dk-chip--time">
+                                                                <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                                                    <circle cx="12" cy="12" r="10"/>
+                                                                    <polyline points="12 6 12 12 16 14"/>
+                                                                </svg>
+                                                                @servicio.DuracionMinutos min
+                                                            </span>
+                                                            <span class="dk-chip dk-chip--price">
+                                                                S/ @servicio.Precio.ToString("F2")
+                                                            </span>
+                                                        </div>
+                                                    </div>
                                                 </div>
                                             </div>
 
@@ -341,4 +359,4 @@
     <script src="~/js/dkaiza.js" asp-append-version="true"></script>
 
 </body>
-</html>s
+</html>

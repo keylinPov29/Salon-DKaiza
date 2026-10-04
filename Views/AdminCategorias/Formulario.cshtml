@@ -1,0 +1,58 @@
+@model DKaiza.Web.Aplicacion.Catalogo.CategoriaFormViewModel
+@{
+    var esNueva = Model.Id == 0;
+    ViewData["Title"] = esNueva ? "Nueva categoría" : "Editar categoría";
+}
+
+<div class="dk-container dk-admin">
+    <div class="dk-admin__head">
+        <h1 class="dk-admin__title">@ViewData["Title"]</h1>
+        <a class="dk-btn dk-btn--outline" href="/admin/categorias@(esNueva ? "" : "?categoriaId=" + Model.Id)">Volver</a>
+    </div>
+
+    <form class="dk-admin__form" method="post" enctype="multipart/form-data"
+          asp-action="@(esNueva ? "Crear" : "Editar")" asp-route-id="@(esNueva ? null : Model.Id)">
+
+        <div class="dk-field">
+            <label asp-for="Nombre">Nombre *</label>
+            <input asp-for="Nombre" maxlength="80" />
+            <span asp-validation-for="Nombre" class="dk-field__error"></span>
+        </div>
+
+        <div class="dk-field">
+            <label asp-for="Descripcion">Descripción (opcional)</label>
+            <textarea asp-for="Descripcion" rows="3" maxlength="300"></textarea>
+            <span asp-validation-for="Descripcion" class="dk-field__error"></span>
+        </div>
+
+        <div class="dk-field">
+            <label>Imagen de la categoría (PNG o JPG, máx. 2 MB)</label>
+            @if (!esNueva && Model.TieneImagen)
+            {
+                <img class="dk-thumb dk-thumb--grande" src="@Url.Action("Imagen", new { id = Model.Id })" alt="Imagen actual" />
+                <small>Sube otra imagen solo si quieres reemplazar la actual.</small>
+            }
+            <div class="dk-upload">
+                <label class="dk-btn dk-btn--outline" for="Imagen">Subir imagen</label>
+                <span id="nombreArchivo" class="dk-upload__nombre">Ningún archivo seleccionado</span>
+                <input asp-for="Imagen" type="file" accept="image/png,image/jpeg" hidden />
+            </div>
+            <span asp-validation-for="Imagen" class="dk-field__error"></span>
+        </div>
+
+        <button type="submit" class="dk-btn dk-btn--primary">
+            @(esNueva ? "Crear categoría" : "Guardar cambios")
+        </button>
+    </form>
+</div>
+
+<script>
+    (function () {
+        var input = document.getElementById('Imagen');
+        var nombre = document.getElementById('nombreArchivo');
+        if (!input) return;
+        input.addEventListener('change', function () {
+            nombre.textContent = input.files.length ? input.files[0].name : 'Ningún archivo seleccionado';
+        });
+    })();
+</script>

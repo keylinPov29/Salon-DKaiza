@@ -1,53 +1,64 @@
-using Microsoft.AspNetCore.Mvc;
+using DKaiza.Data;
 using DKaiza.Web.Models;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 
 namespace DKaiza.Web.Controllers
 {
     public class HomeController : Controller
     {
-        public IActionResult Index()
+        private readonly ApplicationDbContext _db;
+
+        public HomeController(ApplicationDbContext db) => _db = db;
+
+        // Página pública: no requiere iniciar sesión.
+        public async Task<IActionResult> Index()
         {
+            // Solo categorías con al menos un servicio activo, y solo sus servicios activos.
+            var datos = await _db.CategoriasServicio.AsNoTracking()
+                .Where(c => c.Servicios.Any(s => s.Activo))
+                .OrderBy(c => c.Nombre)
+                .Select(c => new
+                {
+                    c.Id,
+                    c.Nombre,
+                    c.Descripcion,
+                    TieneImagen = c.Imagen != null,
+                    Servicios = c.Servicios
+                        .Where(s => s.Activo)
+                        .OrderBy(s => s.Nombre)
+                        .Select(s => new
+                        {
+                            s.Id,
+                            s.Nombre,
+                            s.DuracionMinutos,
+                            s.Precio,
+                            TieneImagen = s.Imagen != null
+                        })
+                        .ToList()
+                })
+                .ToListAsync();
+
+            // Ids con imagen: la vista las usa en lugar del ícono o junto al nombre.
+            ViewBag.CategoriasConImagen = datos.Where(c => c.TieneImagen).Select(c => c.Id).ToHashSet();
+            ViewBag.ServiciosConImagen = datos.SelectMany(c => c.Servicios)
+                .Where(s => s.TieneImagen).Select(s => s.Id).ToHashSet();
+
             var modelo = new Servicio
             {
-                Categorias = new List<Categoria>
+                Categorias = datos.Select(c => new Categoria
                 {
-                    new Categoria
+                    Id = c.Id,
+                    Nombre = c.Nombre,
+                    Descripcion = c.Descripcion ?? "",
+                    Servicios = c.Servicios.Select(s => new ItemServicio
                     {
-                        Id = 1,
-                        Nombre = "Cabello",
-                        Descripcion = "Cortes y cuidado para tu cabello",
-                        Servicios = new List<ItemServicio>
-                        {
-                            new() { Id = 1, Nombre = "Corte de cabello", DuracionMinutos = 45, Precio = 35.00m },
-                            new() { Id = 2, Nombre = "Lavado y peinado", DuracionMinutos = 40, Precio = 30.00m },
-                            new() { Id = 3, Nombre = "Peinado especial", DuracionMinutos = 60, Precio = 50.00m }
-                        }
-                    },
-                    new Categoria
-                    {
-                        Id = 2,
-                        Nombre = "Manicure",
-                        Descripcion = "Cuidado y belleza para tus manos",
-                        Servicios = new List<ItemServicio>
-                        {
-                            new() { Id = 4, Nombre = "Manicure clásica", DuracionMinutos = 40, Precio = 25.00m },
-                            new() { Id = 5, Nombre = "Manicure semipermanente", DuracionMinutos = 60, Precio = 45.00m },
-                            new() { Id = 6, Nombre = "Diseño de uñas", DuracionMinutos = 30, Precio = 20.00m }
-                        }
-                    },
-                    new Categoria
-                    {
-                        Id = 3,
-                        Nombre = "Coloración",
-                        Descripcion = "Color y transformación para tu cabello",
-                        Servicios = new List<ItemServicio>
-                        {
-                            new() { Id = 7, Nombre = "Tinte completo", DuracionMinutos = 120, Precio = 90.00m },
-                            new() { Id = 8, Nombre = "Mechas", DuracionMinutos = 150, Precio = 120.00m },
-                            new() { Id = 9, Nombre = "Balayage", DuracionMinutos = 180, Precio = 150.00m }
-                        }
-                    }
-                }
+                        Id = s.Id,
+                        Nombre = s.Nombre,
+                        DuracionMinutos = s.DuracionMinutos,
+                        Precio = s.Precio
+                    }).ToList()
+                }).ToList()
             };
 
             return View(modelo);

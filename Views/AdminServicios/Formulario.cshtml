@@ -1,0 +1,89 @@
+@model DKaiza.Web.Aplicacion.Catalogo.ServicioFormViewModel
+@{
+    var esNuevo = Model.Id == 0;
+    ViewData["Title"] = esNuevo ? "Crear servicio" : "Editar servicio";
+}
+
+<div class="dk-container dk-admin">
+    <div class="dk-admin__head">
+        <h1 class="dk-admin__title">@ViewData["Title"]</h1>
+        <a class="dk-btn dk-btn--outline" href="/admin/categorias?categoriaId=@Model.CategoriaId">Volver</a>
+    </div>
+
+    <form class="dk-admin__form" method="post" enctype="multipart/form-data"
+          asp-action="@(esNuevo ? "Crear" : "Editar")" asp-route-id="@(esNuevo ? null : Model.Id)">
+
+        <div class="dk-field">
+            <label for="CategoriaId">Categoría *</label>
+            <select id="CategoriaId" name="CategoriaId">
+                @foreach (var c in Model.Categorias)
+                {
+                    <option value="@c.Id" selected="@(c.Id == Model.CategoriaId)">@c.Nombre</option>
+                }
+            </select>
+            <span asp-validation-for="CategoriaId" class="dk-field__error"></span>
+        </div>
+
+        <div class="dk-field">
+            <label asp-for="Nombre">Nombre del servicio *</label>
+            <input asp-for="Nombre" maxlength="100" />
+            <span asp-validation-for="Nombre" class="dk-field__error"></span>
+        </div>
+
+        <div class="dk-field">
+            <label asp-for="Descripcion">Descripción (opcional)</label>
+            <textarea asp-for="Descripcion" rows="3" maxlength="300"></textarea>
+            <span asp-validation-for="Descripcion" class="dk-field__error"></span>
+        </div>
+
+        <div class="dk-field">
+            <label asp-for="DuracionMinutos">Duración (minutos) *</label>
+            <input asp-for="DuracionMinutos" type="number" min="1" step="1" />
+            <span asp-validation-for="DuracionMinutos" class="dk-field__error"></span>
+        </div>
+
+        <div class="dk-field">
+            <label asp-for="Precio">Costo (S/) *</label>
+            <input asp-for="Precio" type="number" min="0.01" step="0.01" />
+            <span asp-validation-for="Precio" class="dk-field__error"></span>
+        </div>
+
+        <div class="dk-field">
+            <label for="Activo">Estado (opcional)</label>
+            <select id="Activo" name="Activo">
+                <option value="true" selected="@Model.Activo">Activo</option>
+                <option value="false" selected="@(!Model.Activo)">Inactivo</option>
+            </select>
+        </div>
+
+        <div class="dk-field">
+            <label>Imagen del servicio (PNG o JPG, máx. 2 MB)</label>
+            @if (!esNuevo && Model.TieneImagen)
+            {
+                <img class="dk-thumb dk-thumb--grande" src="/admin/servicios/@Model.Id/imagen" alt="Imagen actual" />
+                <small>Sube otra imagen solo si quieres reemplazar la actual.</small>
+            }
+            <div class="dk-upload">
+                <label class="dk-btn dk-btn--outline" for="Imagen">Subir imagen</label>
+                <span id="nombreArchivo" class="dk-upload__nombre">Ningún archivo seleccionado</span>
+                <input asp-for="Imagen" type="file" accept="image/png,image/jpeg" hidden />
+            </div>
+            <span asp-validation-for="Imagen" class="dk-field__error"></span>
+        </div>
+
+        <button type="submit" class="dk-btn dk-btn--primary">
+            @(esNuevo ? "Registrar servicio" : "Guardar cambios")
+        </button>
+    </form>
+</div>
+
+<script>
+    (function () {
+        var input = document.getElementById('Imagen');
+        var nombre = document.getElementById('nombreArchivo');
+        if (!input) return;
+        input.addEventListener('change', function () {
+            nombre.textContent = input.files.length ? input.files[0].name : 'Ningún archivo seleccionado';
+        });
+    })();
+</script>

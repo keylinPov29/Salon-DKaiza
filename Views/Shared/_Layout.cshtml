@@ -14,11 +14,15 @@
     <nav class="dk-nav">
         <a class="dk-nav__brand" href="/">Salón de belleza D'Kaiza</a>
         <div class="dk-nav__links">
-            <a class="dk-nav__link" href="/">Servicios</a>
             @if (User.IsInRole("Administrador"))
             {
-                <a class="dk-nav__link" href="/admin/categorias">Admin</a>
+                <a class="dk-nav__link" href="/admin/categorias">Catálogo de servicios</a>
             }
+            else
+            {
+                <a class="dk-nav__link" href="/">Servicios</a>
+            }
+
             @if (User.Identity?.IsAuthenticated == true)
             {
                 <span class="dk-nav__user">@User.Identity!.Name</span>
