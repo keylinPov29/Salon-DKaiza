@@ -1,50 +1,67 @@
 ﻿<!DOCTYPE html>
-<html lang="en">
+<html lang="es">
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>@ViewData["Title"] - DKaiza</title>
-    <script type="importmap"></script>
-    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <title>@ViewData["Title"] — Salón de belleza D'Kaiza</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600&family=Playfair+Display:ital,wght@0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
-    <link rel="stylesheet" href="~/DKaiza.styles.css" asp-append-version="true" />
+    @RenderSection("Styles", required: false)
 </head>
 <body>
-    <header>
-        <nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-light bg-white border-bottom box-shadow mb-3">
-            <div class="container-fluid">
-                <a class="navbar-brand" asp-area="" asp-controller="Home" asp-action="Index">DKaiza</a>
-                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target=".navbar-collapse" aria-controls="navbarSupportedContent"
-                        aria-expanded="false" aria-label="Toggle navigation">
-                    <span class="navbar-toggler-icon"></span>
-                </button>
-                <div class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
-                    <ul class="navbar-nav flex-grow-1">
-                        <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Index">Home</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a>
-                        </li>
-                    </ul>
-                </div>
-            </div>
-        </nav>
-    </header>
-    <div class="container">
-        <main role="main" class="pb-3">
-            @RenderBody()
-        </main>
-    </div>
+    <nav class="dk-nav">
+        <a class="dk-nav__brand" href="/">Salón de belleza D'Kaiza</a>
+        <div class="dk-nav__links">
+            <a class="dk-nav__link" href="/">Servicios</a>
+            @if (User.IsInRole("Administrador"))
+            {
+                <a class="dk-nav__link" href="/admin/categorias">Admin</a>
+            }
+            @if (User.Identity?.IsAuthenticated == true)
+            {
+                <span class="dk-nav__user">@User.Identity!.Name</span>
+                <form asp-controller="Account" asp-action="Logout" method="post" class="dk-nav__form">
+                    <button type="submit" class="dk-nav__link">Cerrar sesión</button>
+                </form>
+            }
+            else
+            {
+                <a class="dk-nav__link" href="/cuenta/login">Iniciar sesión</a>
+            }
+        </div>
+    </nav>
 
-    <footer class="border-top footer text-muted">
-        <div class="container">
-            &copy; 2026 - DKaiza - <a asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a>
+    @if (TempData["Success"] != null)
+    {
+        <div class="dk-toast dk-toast--ok">@TempData["Success"]</div>
+    }
+    @if (TempData["Error"] != null)
+    {
+        <div class="dk-toast dk-toast--err">@TempData["Error"]</div>
+    }
+
+    <main>
+        @RenderBody()
+    </main>
+
+    <footer class="dk-footer">
+        <div class="dk-container">
+            <div class="dk-footer__bottom" style="padding-top:0">
+                <span class="dk-footer__copy">&copy; @DateTime.Now.Year Salón de belleza D'Kaiza</span>
+            </div>
         </div>
     </footer>
-    <script src="~/lib/jquery/dist/jquery.min.js"></script>
-    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="~/js/site.js" asp-append-version="true"></script>
+
+    <script src="https://cdn.jsdelivr.net/npm/jquery@3.7.1/dist/jquery.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jquery-validation@1.19.5/dist/jquery.validate.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jquery-validation-unobtrusive@4.0.0/dist/jquery.validate.unobtrusive.min.js"></script>
+    <script>
+        document.querySelectorAll('.dk-toast').forEach(function (t) {
+            setTimeout(function () { t.style.opacity = '0'; setTimeout(function () { t.remove(); }, 300); }, 3000);
+        });
+    </script>
     @await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>

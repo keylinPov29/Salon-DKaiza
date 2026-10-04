@@ -1,4 +1,4 @@
-namespace DKaiza.Models;
+namespace DKaiza.Web.Models;
 
 public class ErrorViewModel
 {

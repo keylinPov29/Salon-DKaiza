@@ -31,16 +31,31 @@
             Salón de belleza D'Kaiza
         </a>
 
-        <nav class="dk-nav__links">
+                   <nav class="dk-nav__links">
             <button type="button" class="dk-nav__link" id="navServicios">
                 Servicios
             </button>
-            <a href="#iniciar-sesion" class="dk-nav__link" data-ancla="iniciar-sesion">
-                Iniciar Sesion
-            </a>
-            <a href="#registrarse" class="dk-nav__link" data-ancla="registrarse">
-                Registrarse
-            </a>
+
+            @if (User.Identity?.IsAuthenticated == true)
+            {
+                @if (User.IsInRole("Administrador"))
+                {
+                    <a href="/admin/categorias" class="dk-nav__link">Admin</a>
+                }
+
+                <span class="dk-nav__link" style="cursor:default">@User.Identity!.Name</span>
+
+                <form asp-controller="Account" asp-action="Logout" method="post" style="display:inline;margin:0">
+                    <button type="submit" class="dk-nav__link">Cerrar sesión</button>
+                </form>
+            }
+            else
+            {
+                <a href="/cuenta/login" class="dk-nav__link">Iniciar sesión</a>
+                <a href="#registrarse" class="dk-nav__link" data-ancla="registrarse">
+                    Registrarse
+                </a>
+            }
         </nav>
 
     </header>
