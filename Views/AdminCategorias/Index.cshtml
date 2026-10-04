@@ -1,0 +1,187 @@
+@model DKaiza.Web.Aplicacion.Catalogo.CatalogoViewModel
+@using System.Globalization
+@{
+    ViewData["Title"] = "Catálogo de servicios";
+    var sel = Model.Seleccionada;
+    var inv = CultureInfo.InvariantCulture;
+    var activos = Model.Servicios.Count(s => s.Activo);
+    var inactivos = Model.Servicios.Count - activos;
+}
+
+<div class="dk-container dk-admin">
+    <div class="dk-admin__head">
+        <h1 class="dk-admin__title">Catálogo de servicios</h1>
+        <a class="dk-btn dk-btn--primary" asp-action="Nueva">Nueva categoría</a>
+    </div>
+
+    @if (TempData["Ok"] is string ok)
+    {
+        <div class="dk-alert dk-alert--ok" data-auto>@ok</div>
+    }
+    @if (ViewBag.Error is string err)
+    {
+        <div class="dk-alert">@err</div>
+    }
+
+    @if (sel == null)
+    {
+        <p class="dk-empty">Aún no hay categorías. Crea la primera con el botón "Nueva categoría".</p>
+    }
+    else
+    {
+        <!-- Selector de categoría -->
+        <div class="dk-selector">
+            <label for="selCategoria">Categoría</label>
+            <select id="selCategoria" data-url="@Url.Action("Index")">
+                @foreach (var c in Model.Categorias)
+                {
+                    <option value="@c.Id" selected="@(c.Id == sel.Id)">@c.Nombre (@c.CantidadServicios)</option>
+                }
+            </select>
+        </div>
+
+        <div class="dk-catcard">
+            <!-- Ficha de la categoría -->
+            <div class="dk-catcard__head">
+                <div class="dk-catcard__ico">
+                    @if (sel.TieneImagen)
+                    {
+                        <img src="@Url.Action("Imagen", new { id = sel.Id })" alt="@sel.Nombre" />
+                    }
+                    else
+                    {
+                        <span>Sin imagen</span>
+                    }
+                </div>
+                <div class="dk-catcard__txt">
+                    <strong>@sel.Nombre</strong>
+                    <small>@(string.IsNullOrWhiteSpace(sel.Descripcion) ? "Sin descripción" : sel.Descripcion)</small>
+                </div>
+                <div class="dk-catcard__acc">
+                    <a class="dk-btn dk-btn--outline" asp-action="Editar" asp-route-id="@sel.Id">Editar categoría</a>
+                    <form asp-action="Eliminar" asp-route-id="@sel.Id" method="post"
+                          onsubmit="return confirm('¿Eliminar la categoría @sel.Nombre?');">
+                        <button type="submit" class="dk-btn dk-btn--outline">Eliminar</button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Resumen -->
+            <div class="dk-resumen">
+                <span>@Model.Servicios.Count servicios</span>
+                <span>@activos activos</span>
+                <span>@inactivos inactivos</span>
+            </div>
+
+            <!-- Barra de servicios -->
+            <div class="dk-barra">
+                <strong>Servicios de @sel.Nombre</strong>
+                <a class="dk-btn dk-btn--primary" href="/admin/servicios/nuevo?categoriaId=@sel.Id">Crear servicio</a>
+            </div>
+
+            @if (Model.Servicios.Count == 0)
+            {
+                <div class="dk-vacio">
+                    Aún no hay servicios en esta categoría.<br />
+                    Crea el primero con "Crear servicio".
+                </div>
+            }
+            else
+            {
+                <div class="dk-tools">
+                    <input type="search" id="buscar" placeholder="Buscar servicio..." />
+                    <select id="filtro">
+                        <option value="todos">Todos</option>
+                        <option value="activos">Solo activos</option>
+                        <option value="inactivos">Solo inactivos</option>
+                    </select>
+                </div>
+
+                <div class="dk-table-wrap dk-table-wrap--plano">
+                    <table class="dk-table" id="tablaServicios">
+                        <tbody>
+                        @foreach (var s in Model.Servicios)
+                        {
+                            <tr class="@(s.Activo ? "" : "dk-fila--inactiva")"
+                                data-nombre="@s.Nombre.ToLowerInvariant()"
+                                data-activo="@(s.Activo ? "1" : "0")">
+                                                                <td style="width:64px">
+                                    @if (s.TieneImagen)
+                                    {
+                                        <img class="dk-thumb dk-thumb--sm" src="/admin/servicios/@s.Id/imagen" alt="@s.Nombre" />
+                                    }
+                                    else
+                                    {
+                                        <span class="dk-thumb dk-thumb--sm dk-thumb--vacio">—</span>
+                                    }
+                                </td>
+                                <td>@s.Nombre</td>
+                                <td>@s.DuracionMinutos min</td>
+                                <td>S/ @s.Precio.ToString("F2", inv)</td>
+                                <td>
+                                    <span class="@(s.Activo ? "dk-estado dk-estado--on" : "dk-estado dk-estado--off")">
+                                        @(s.Activo ? "Activo" : "Inactivo")
+                                    </span>
+                                </td>
+                                <td class="dk-table__acciones">
+                                    <a class="dk-btn dk-btn--outline" href="/admin/servicios/@s.Id/editar">Editar</a>
+                                    <form method="post" action="/admin/servicios/@s.Id/estado">
+                                        @Html.AntiForgeryToken()
+                                        <button type="submit" class="dk-btn dk-btn--outline">
+                                            @(s.Activo ? "Desactivar" : "Activar")
+                                        </button>
+                                    </form>
+                                    <form method="post" action="/admin/servicios/@s.Id/eliminar"
+                                          onsubmit="return confirm('¿Eliminar este servicio? Esta acción no se puede deshacer.');">
+                                        @Html.AntiForgeryToken()
+                                        <button type="submit" class="dk-btn dk-btn--outline">Eliminar</button>
+                                    </form>
+                                </td>
+                            </tr>
+                        }
+                        </tbody>
+                    </table>
+                </div>
+                <div class="dk-vacio" id="sinResultados" hidden>Ningún servicio coincide con la búsqueda.</div>
+            }
+        </div>
+    }
+</div>
+
+<partial name="_AlertaAuto" />
+
+<script>
+    (function () {
+        var sel = document.getElementById('selCategoria');
+        if (sel) {
+            sel.addEventListener('change', function () {
+                window.location.href = sel.dataset.url + '?categoriaId=' + sel.value;
+            });
+        }
+
+        var q = document.getElementById('buscar');
+        var f = document.getElementById('filtro');
+        var filas = [].slice.call(document.querySelectorAll('#tablaServicios tbody tr'));
+        var vacio = document.getElementById('sinResultados');
+        if (!q || !f) return;
+
+        function aplicar() {
+            var texto = q.value.trim().toLowerCase();
+            var estado = f.value;
+            var visibles = 0;
+            filas.forEach(function (tr) {
+                var okTexto = tr.dataset.nombre.indexOf(texto) !== -1;
+                var okEstado = estado === 'todos'
+                    || (estado === 'activos' && tr.dataset.activo === '1')
+                    || (estado === 'inactivos' && tr.dataset.activo === '0');
+                var mostrar = okTexto && okEstado;
+                tr.hidden = !mostrar;
+                if (mostrar) visibles++;
+            });
+            vacio.hidden = visibles !== 0;
+        }
+
+        q.addEventListener('input', aplicar);
+        f.addEventListener('change', aplicar);
+    })();
+</script>
