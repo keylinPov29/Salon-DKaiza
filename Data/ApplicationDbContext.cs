@@ -1,3 +1,4 @@
+using DKaiza.Web.Models;
 using Microsoft.EntityFrameworkCore;
 
 namespace DKaiza.Data;
@@ -6,8 +7,14 @@ public class ApplicationDbContext : DbContext
 {
     public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options) : base(options) { }
 
-    protected override void OnModelCreating(ModelBuilder modelBuilder)
+    public DbSet<Usuario> Usuarios => Set<Usuario>();
+
+    protected override void OnModelCreating(ModelBuilder b)
     {
-        base.OnModelCreating(modelBuilder);
+        b.Entity<Usuario>(e =>
+        {
+            e.ToTable("Usuarios");
+            e.Property(x => x.Rol).HasConversion<int>();
+        });
     }
 }

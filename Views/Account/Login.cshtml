@@ -1,0 +1,35 @@
+@model DKaiza.Web.Models.LoginViewModel
+@{
+    ViewData["Title"] = "Iniciar sesión";
+}
+
+<section class="dk-auth">
+    <div class="dk-auth__card">
+        <span class="dk-auth__eyebrow">— Acceso —</span>
+        <h1 class="dk-auth__title">Iniciar sesión</h1>
+        <p class="dk-auth__subtitle">Ingresa tus datos para continuar</p>
+
+        <form asp-action="Login" asp-controller="Account" method="post" class="dk-auth__form">
+            <input type="hidden" name="returnUrl" value="@ViewBag.ReturnUrl" />
+            <div asp-validation-summary="ModelOnly" class="dk-alert"></div>
+
+            <div class="dk-field">
+                <label asp-for="Email">Correo electrónico</label>
+                <input asp-for="Email" type="email" placeholder="tu@email.com" autocomplete="email" />
+                <span asp-validation-for="Email" class="dk-field__error"></span>
+            </div>
+
+            <div class="dk-field">
+                <label asp-for="Password">Contraseña</label>
+                <input asp-for="Password" type="password" placeholder="••••••" autocomplete="current-password" />
+                <span asp-validation-for="Password" class="dk-field__error"></span>
+            </div>
+
+            <label class="dk-check">
+                <input asp-for="Recordarme" type="checkbox" /> Recordarme
+            </label>
+
+            <button type="submit" class="dk-btn dk-btn--primary">Ingresar</button>
+        </form>
+    </div>
+</section>
