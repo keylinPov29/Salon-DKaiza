@@ -3,6 +3,7 @@ using System;
 using DKaiza.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace DKaiza.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20261004215452_Estilistas")]
+    partial class Estilistas
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -150,9 +153,9 @@ namespace DKaiza.Migrations
                             Especialidad = "Coloración",
                             FechaRegistro = new DateTime(2026, 10, 4, 0, 0, 0, 0, DateTimeKind.Utc),
                             FinDescanso = new TimeOnly(15, 0, 0),
-                            FinJornada = new TimeOnly(21, 0, 0),
-                            InicioDescanso = new TimeOnly(13, 0, 0),
-                            InicioJornada = new TimeOnly(9, 30, 0),
+                            FinJornada = new TimeOnly(20, 0, 0),
+                            InicioDescanso = new TimeOnly(14, 0, 0),
+                            InicioJornada = new TimeOnly(10, 0, 0),
                             Nombres = "María",
                             Telefono = "999000001"
                         },
@@ -165,9 +168,9 @@ namespace DKaiza.Migrations
                             Especialidad = "Cabello",
                             FechaRegistro = new DateTime(2026, 10, 4, 0, 0, 0, 0, DateTimeKind.Utc),
                             FinDescanso = new TimeOnly(15, 0, 0),
-                            FinJornada = new TimeOnly(21, 0, 0),
-                            InicioDescanso = new TimeOnly(13, 0, 0),
-                            InicioJornada = new TimeOnly(9, 30, 0),
+                            FinJornada = new TimeOnly(20, 0, 0),
+                            InicioDescanso = new TimeOnly(14, 0, 0),
+                            InicioJornada = new TimeOnly(10, 0, 0),
                             Nombres = "Laura",
                             Telefono = "999000002"
                         },
@@ -180,9 +183,9 @@ namespace DKaiza.Migrations
                             Especialidad = "Tratamientos",
                             FechaRegistro = new DateTime(2026, 10, 4, 0, 0, 0, 0, DateTimeKind.Utc),
                             FinDescanso = new TimeOnly(15, 0, 0),
-                            FinJornada = new TimeOnly(21, 0, 0),
-                            InicioDescanso = new TimeOnly(13, 0, 0),
-                            InicioJornada = new TimeOnly(9, 30, 0),
+                            FinJornada = new TimeOnly(20, 0, 0),
+                            InicioDescanso = new TimeOnly(14, 0, 0),
+                            InicioJornada = new TimeOnly(10, 0, 0),
                             Nombres = "Carolina",
                             Telefono = "999000003"
                         });

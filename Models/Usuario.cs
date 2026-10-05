@@ -32,6 +32,10 @@ public class Usuario
     public RolUsuario Rol { get; set; } = RolUsuario.Cliente;
     public bool Activo { get; set; } = true;
     public bool DebeCambiarPassword { get; set; }
+
+    // Solo se llena cuando Rol = Estilista (vincula la cuenta con su ficha de estilista)
+    public int? EstilistaId { get; set; }
+
     public DateTime FechaRegistro { get; set; } = DateTime.UtcNow;
 
     public string NombreCompleto => $"{Nombre} {Apellido}";
