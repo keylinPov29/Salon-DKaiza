@@ -47,6 +47,7 @@
                 @if (User.IsInRole("Administrador"))
                 {
                     <a href="/admin/categorias" class="dk-nav__link">Catálogo de servicios</a>
+                    <a href="/admin/estilistas" class="dk-nav__link">Estilistas</a>
                 }
 
                 <span class="dk-nav__link" style="cursor:default">@User.Identity!.Name</span>
@@ -236,7 +237,7 @@
                                 </button>
 
                                 <div id="cat-@categoria.Id" class="dk-cat__body" hidden>
-                                                                       @foreach (var servicio in categoria.Servicios)
+                                    @foreach (var servicio in categoria.Servicios)
                                     {
                                         <div class="dk-serv">
                                             <div class="dk-serv__info">

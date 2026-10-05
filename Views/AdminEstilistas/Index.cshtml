@@ -1,0 +1,171 @@
+@model List<DKaiza.Web.Aplicacion.Estilistas.EstilistaListaItem>
+@{
+    ViewData["Title"] = "Lista de Estilistas";
+    var credEmail = TempData["CredEmail"] as string;
+    var credClave = TempData["CredClave"] as string;
+    var hayCredenciales = !string.IsNullOrEmpty(credEmail);
+}
+
+<style>
+    .est-avatar { width:42px; height:42px; border-radius:50%; background:var(--dk-bg-alt); color:var(--dk-mocha);
+        display:inline-flex; align-items:center; justify-content:center; font-weight:600; overflow:hidden;
+        vertical-align:middle; margin-right:10px; flex:none; }
+    .est-avatar img { width:100%; height:100%; object-fit:cover; }
+    .est-acciones { display:flex; gap:6px; justify-content:flex-end; flex-wrap:wrap; }
+    .est-acciones form { margin:0; }
+
+    /* Ventana de credenciales */
+    .est-modal { position:fixed; inset:0; background:rgba(74,55,48,.55); display:none;
+        align-items:center; justify-content:center; z-index:2000; padding:16px; }
+    .est-modal.abierto { display:flex; }
+    .est-modal__box { background:#fff; border-radius:16px; width:100%; max-width:480px;
+        box-shadow:0 20px 50px rgba(0,0,0,.25); overflow:hidden; }
+    .est-modal__head { background:var(--dk-bg-alt); padding:16px 22px; display:flex;
+        justify-content:space-between; align-items:center; }
+    .est-modal__head h3 { margin:0; font-family:'Playfair Display',serif; color:var(--dk-mocha-dk); font-size:1.2rem; }
+    .est-modal__head button { border:0; background:none; font-size:1.2rem; cursor:pointer; color:var(--dk-muted); }
+    .est-modal__body { padding:22px; }
+    .est-modal__body p { margin:0 0 16px; color:var(--dk-muted); font-size:.9rem; }
+    .est-modal__campo { margin-bottom:14px; }
+    .est-modal__campo label { display:block; font-size:.8rem; color:var(--dk-muted); margin-bottom:4px; }
+    .est-modal__fila { display:flex; gap:8px; }
+    .est-modal__fila input { flex:1; padding:9px 10px; border:1px solid var(--dk-border); border-radius:6px;
+        background:var(--dk-bg); font-family:monospace; font-size:1rem; color:var(--dk-text); }
+    .est-modal__aviso { background:#fff8e8; border:1px solid var(--dk-gold, #c9a96e); border-radius:8px;
+        padding:10px 12px; font-size:.8rem; color:var(--dk-text); margin:16px 0; }
+    .est-modal__pie { text-align:right; }
+</style>
+
+<div class="dk-container dk-admin">
+    <div class="dk-admin__head">
+        <h1 class="dk-admin__title">Lista de Estilistas</h1>
+        <a class="dk-btn dk-btn--primary" asp-action="Nuevo">Añadir Estilista</a>
+    </div>
+
+    @if (!Model.Any())
+    {
+        <p class="dk-vacio">Aún no hay estilistas registrados.</p>
+    }
+    else
+    {
+        <table class="dk-table">
+            <thead>
+                <tr>
+                    <th>Estilista</th>
+                    <th>Especialidad</th>
+                    <th>Teléfono</th>
+                    <th>Horario</th>
+                    <th>Estado</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var e in Model)
+                {
+                    <tr class="@(e.Activo ? "" : "dk-fila--inactiva")">
+                        <td>
+                            <span class="est-avatar">
+                                @if (e.TieneFoto) { <img src="@Url.Action("Foto", new { id = e.Id })" alt="@e.NombreCompleto" /> }
+                                else { @e.Iniciales }
+                            </span>
+                            @e.NombreCompleto
+                            <br /><small class="text-muted">DNI @e.Dni</small>
+                        </td>
+                        <td>@e.Especialidad</td>
+                        <td>@e.Telefono</td>
+                        <td>
+                            @e.Jornada
+                            @if (e.Descanso != null) { <br /><small>Descanso @e.Descanso</small> }
+                        </td>
+                        <td>
+                            <span class="dk-estado @(e.Activo ? "dk-estado--on" : "dk-estado--off")">@(e.Activo ? "Activo" : "Inactivo")</span>
+                        </td>
+                        <td>
+                            <div class="est-acciones">
+                                <a class="dk-btn dk-btn--outline" asp-action="Editar" asp-route-id="@e.Id">Editar</a>
+
+                                @if (e.Activo)
+                                {
+                                    <form method="post" asp-action="Desactivar" asp-route-id="@e.Id"
+                                          onsubmit="return confirm('¿Desactivar a @e.NombreCompleto? Dejará de aparecer para reservas y su acceso se bloqueará. Podrás activarlo de nuevo.');">
+                                        <button class="dk-btn dk-btn--outline" type="submit">Desactivar</button>
+                                    </form>
+                                }
+                                else
+                                {
+                                    <form method="post" asp-action="Activar" asp-route-id="@e.Id">
+                                        <button class="dk-btn dk-btn--outline" type="submit">Activar</button>
+                                    </form>
+                                }
+
+                                <form method="post" asp-action="Eliminar" asp-route-id="@e.Id"
+                                      onsubmit="return confirm('¿Eliminar definitivamente a @e.NombreCompleto? También se borrará su cuenta de acceso. Esta acción no se puede deshacer.');">
+                                    <button class="dk-btn dk-btn--outline" type="submit">Eliminar</button>
+                                </form>
+                            </div>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
+</div>
+
+@if (hayCredenciales)
+{
+    <div id="modalCredenciales" class="est-modal abierto" role="dialog" aria-modal="true" aria-labelledby="credTitulo">
+        <div class="est-modal__box">
+            <div class="est-modal__head">
+                <h3 id="credTitulo">Credenciales generadas</h3>
+                <button type="button" onclick="cerrarCredenciales()" aria-label="Cerrar">✕</button>
+            </div>
+            <div class="est-modal__body">
+                <p>Estas credenciales se generaron automáticamente para que el estilista pueda iniciar sesión.</p>
+
+                <div class="est-modal__campo">
+                    <label>Correo de acceso</label>
+                    <div class="est-modal__fila">
+                        <input type="text" id="credEmail" value="@credEmail" readonly />
+                        <button type="button" class="dk-btn dk-btn--outline" onclick="copiar('credEmail', this)">Copiar</button>
+                    </div>
+                </div>
+
+                <div class="est-modal__campo">
+                    <label>Clave temporal</label>
+                    <div class="est-modal__fila">
+                        <input type="text" id="credClave" value="@credClave" readonly />
+                        <button type="button" class="dk-btn dk-btn--outline" onclick="copiar('credClave', this)">Copiar</button>
+                    </div>
+                </div>
+
+                <div class="est-modal__aviso">
+                    Anótala ahora: no se volverá a mostrar. El estilista deberá cambiarla al ingresar.
+                </div>
+
+                <div class="est-modal__pie">
+                    <button type="button" class="dk-btn dk-btn--primary" onclick="cerrarCredenciales()">Entendido</button>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+@section Scripts {
+    <script>
+        function cerrarCredenciales() {
+            var m = document.getElementById('modalCredenciales');
+            if (m) m.classList.remove('abierto');
+        }
+        function copiar(id, btn) {
+            var input = document.getElementById(id);
+            input.select();
+            input.setSelectionRange(0, 99999);
+            var ok = false;
+            try { ok = document.execCommand('copy'); } catch (e) { }
+            if (!ok && navigator.clipboard) { navigator.clipboard.writeText(input.value); }
+            var texto = btn.textContent;
+            btn.textContent = '¡Copiado!';
+            setTimeout(function () { btn.textContent = texto; }, 1500);
+        }
+    </script>
+}

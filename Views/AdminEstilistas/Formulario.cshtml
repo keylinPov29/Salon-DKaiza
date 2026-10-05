@@ -1,0 +1,184 @@
+@model DKaiza.Web.Aplicacion.Estilistas.EstilistaFormViewModel
+@{
+    var esNuevo = Model.Id == 0;
+    ViewData["Title"] = esNuevo ? "Registro de estilista" : "Editar estilista";
+
+    // Horas permitidas: de 9:30 a 21:00, cada 30 minutos
+    var horas = new List<string>();
+    for (var t = new TimeOnly(9, 30); t <= new TimeOnly(21, 0); t = t.AddMinutes(30))
+        horas.Add(t.ToString("HH:mm"));
+
+    // Si la estilista ya tiene una hora fuera de la lista (datos antiguos), se conserva para no perderla
+    List<string> Con(TimeOnly? actual)
+    {
+        var lista = horas.ToList();
+        var v = actual?.ToString("HH:mm");
+        if (v != null && !lista.Contains(v)) { lista.Add(v); lista.Sort(); }
+        return lista;
+    }
+}
+
+<style>
+    .est-wrap .dk-admin__head { justify-content:center !important; text-align:center; }
+.est-wrap .dk-admin__title { text-align:center; margin-left:0; margin-right:0; }
+    .est-wrap { max-width:760px; margin-left:auto !important; margin-right:auto !important; }
+    .est-wrap .est-form { max-width:none !important; width:100%; }
+    .est-form { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+    .est-form .full { grid-column:1/-1; }
+    .est-form label { display:block; font-size:.85rem; color:var(--dk-muted); margin-bottom:4px; }
+    .est-form input, .est-form select { width:100%; padding:9px 10px; border:1px solid var(--dk-border);
+        border-radius:6px; background:#fff; font:inherit; color:var(--dk-text); }
+    .est-form .campo-error { color:#a33; font-size:.8rem; }
+    .est-foto-actual { width:72px; height:72px; border-radius:50%; object-fit:cover; margin-right:12px; vertical-align:middle; }
+    @@media (max-width:640px) { .est-form { grid-template-columns:1fr; } }
+</style>
+
+<div class="dk-container dk-admin est-wrap">
+    <div class="dk-admin__head">
+        <h1 class="dk-admin__title">@ViewData["Title"]</h1>
+    </div>
+
+    <form method="post" enctype="multipart/form-data" class="dk-admin__form est-form"
+          asp-action="@(esNuevo ? "Crear" : "Editar")" asp-route-id="@(esNuevo ? null : Model.Id)">
+
+        <div asp-validation-summary="ModelOnly" class="campo-error full"></div>
+
+        <div>
+            <label asp-for="Nombres">Nombres *</label>
+            <input asp-for="Nombres" maxlength="100" />
+            <span asp-validation-for="Nombres" class="campo-error"></span>
+        </div>
+        <div>
+            <label asp-for="Apellidos">Apellidos *</label>
+            <input asp-for="Apellidos" maxlength="100" />
+            <span asp-validation-for="Apellidos" class="campo-error"></span>
+        </div>
+
+        <div>
+            <label asp-for="Dni">DNI / documento de identidad *</label>
+            <input asp-for="Dni" maxlength="12" />
+            <span asp-validation-for="Dni" class="campo-error"></span>
+        </div>
+        <div>
+            <label asp-for="Telefono">Teléfono de contacto *</label>
+            <input asp-for="Telefono" maxlength="20" />
+            <span asp-validation-for="Telefono" class="campo-error"></span>
+        </div>
+
+        <div class="full">
+            <label asp-for="Especialidad">Especialidad *</label>
+            <select asp-for="Especialidad">
+                <option value="">Selecciona una especialidad…</option>
+                @foreach (var esp in Model.Especialidades)
+                {
+                    <option value="@esp" selected="@(esp == Model.Especialidad)">@esp</option>
+                }
+            </select>
+            <span asp-validation-for="Especialidad" class="campo-error"></span>
+        </div>
+
+        <div>
+            <label>Inicio de jornada *</label>
+            <select name="InicioJornada">
+                @foreach (var h in Con(Model.InicioJornada))
+                {
+                    <option value="@h" selected="@(h == Model.InicioJornada?.ToString("HH:mm"))">@h</option>
+                }
+            </select>
+            <span asp-validation-for="InicioJornada" class="campo-error"></span>
+        </div>
+        <div>
+            <label>Fin de jornada *</label>
+            <select name="FinJornada">
+                @foreach (var h in Con(Model.FinJornada))
+                {
+                    <option value="@h" selected="@(h == Model.FinJornada?.ToString("HH:mm"))">@h</option>
+                }
+            </select>
+            <span asp-validation-for="FinJornada" class="campo-error"></span>
+        </div>
+
+        <div>
+            <label>Inicio de descanso (opcional)</label>
+            <select name="InicioDescanso">
+                <option value="">Sin descanso</option>
+                @foreach (var h in Con(Model.InicioDescanso))
+                {
+                    <option value="@h" selected="@(h == Model.InicioDescanso?.ToString("HH:mm"))">@h</option>
+                }
+            </select>
+            <span asp-validation-for="InicioDescanso" class="campo-error"></span>
+        </div>
+        <div>
+            <label>Fin de descanso (opcional)</label>
+            <select name="FinDescanso">
+                <option value="">Sin descanso</option>
+                @foreach (var h in Con(Model.FinDescanso))
+                {
+                    <option value="@h" selected="@(h == Model.FinDescanso?.ToString("HH:mm"))">@h</option>
+                }
+            </select>
+            <span asp-validation-for="FinDescanso" class="campo-error"></span>
+        </div>
+
+        <div class="full">
+            <label>Foto (PNG o JPG, máximo 2 MB)</label>
+            @if (Model.TieneFoto)
+            {
+                <img class="est-foto-actual" src="@Url.Action("Foto", new { id = Model.Id })" alt="Foto actual" />
+            }
+            <input type="file" id="Foto" name="Foto" accept="image/png,image/jpeg" hidden />
+            <button type="button" class="dk-btn dk-btn--outline" onclick="document.getElementById('Foto').click()">Adjuntar foto</button>
+            <span class="dk-upload__nombre" id="fotoNombre"></span>
+            <span asp-validation-for="Foto" class="campo-error"></span>
+        </div>
+
+        <div class="full">
+            <button type="submit" class="dk-btn dk-btn--primary">Guardar</button>
+            <a class="dk-btn dk-btn--outline" asp-action="Index">Cancelar</a>
+        </div>
+    </form>
+</div>
+
+@section Scripts {
+    <script>
+        document.getElementById('Foto').addEventListener('change', function () {
+            document.getElementById('fotoNombre').textContent = this.files.length ? this.files[0].name : '';
+        });
+
+        // Las horas de fin solo muestran opciones posteriores al inicio elegido
+        (function () {
+            function aMin(v) { var p = v.split(':'); return (+p[0]) * 60 + (+p[1]); }
+
+            function enlazar(nombreIni, nombreFin, minimoMin) {
+                var ini = document.querySelector('[name=' + nombreIni + ']');
+                var fin = document.querySelector('[name=' + nombreFin + ']');
+                if (!ini || !fin) return;
+
+                function aplicar() {
+                    var vi = ini.value;
+                    var primera = null;
+
+                    Array.prototype.forEach.call(fin.options, function (o) {
+                        if (!o.value) return; // la opción "Sin descanso" siempre queda
+                        var ok = vi && aMin(o.value) >= aMin(vi) + minimoMin;
+                        o.hidden = !ok;
+                        o.disabled = !ok;
+                        if (ok && !primera) primera = o;
+                    });
+
+                    var sel = fin.options[fin.selectedIndex];
+                    if (sel && sel.value && sel.disabled) {
+                        fin.value = primera ? primera.value : '';
+                    }
+                }
+
+                ini.addEventListener('change', aplicar);
+                aplicar();
+            }
+
+            enlazar('InicioJornada', 'FinJornada', 60);
+            enlazar('InicioDescanso', 'FinDescanso', 30);
+        })();
+    </script>
+}
