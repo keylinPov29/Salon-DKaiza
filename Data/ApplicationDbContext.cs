@@ -12,6 +12,7 @@ public class ApplicationDbContext : DbContext
     public DbSet<CategoriaServicio> CategoriasServicio => Set<CategoriaServicio>();
     public DbSet<Servicio> Servicios => Set<Servicio>();
     public DbSet<Estilista> Estilistas => Set<Estilista>();
+    public DbSet<Cita> Citas => Set<Cita>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -81,6 +82,31 @@ public class ApplicationDbContext : DbContext
                     InicioDescanso = new TimeOnly(13, 0), FinDescanso = new TimeOnly(15, 0),
                     Activo = true, FechaRegistro = fecha
                 });
+        });
+
+        modelBuilder.Entity<Cita>(e =>
+        {
+            e.ToTable("Citas");
+            e.Property(x => x.Estado).HasConversion<int>();
+            e.Property(x => x.PrecioTotal).HasColumnType("numeric(10,2)");
+
+            e.HasOne(c => c.Cliente)
+             .WithMany()
+             .HasForeignKey(c => c.ClienteId)
+             .OnDelete(DeleteBehavior.Restrict);
+
+            e.HasOne(c => c.Servicio)
+             .WithMany()
+             .HasForeignKey(c => c.ServicioId)
+             .OnDelete(DeleteBehavior.Restrict);
+
+            e.HasOne(c => c.Estilista)
+             .WithMany()
+             .HasForeignKey(c => c.EstilistaId)
+             .OnDelete(DeleteBehavior.Restrict);
+
+            // Índice para consultas rápidas por estilista + fecha
+            e.HasIndex(c => new { c.EstilistaId, c.Inicio });
         });
     }
 }

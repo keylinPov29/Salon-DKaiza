@@ -1,0 +1,66 @@
+@model DKaiza.Web.Models.RegistroViewModel
+@{
+    ViewData["Title"] = "Crear cuenta";
+}
+
+<section class="dk-auth">
+    <div class="dk-auth__card dk-auth__card--wide">
+        <span class="dk-auth__eyebrow">— Únete a D'Kaiza —</span>
+        <h1 class="dk-auth__title">Crear cuenta</h1>
+        <p class="dk-auth__subtitle">Regístrate como cliente para agendar tus citas y disfrutar de una experiencia de belleza personalizada.</p>
+
+        <form asp-action="Registro" asp-controller="Account" method="post" class="dk-auth__form">
+            <input type="hidden" name="returnUrl" value="@ViewBag.ReturnUrl" />
+            <div asp-validation-summary="ModelOnly" class="dk-alert"></div>
+
+            <div class="dk-form-row">
+                <div class="dk-field">
+                    <label asp-for="Nombre">Nombre</label>
+                    <input asp-for="Nombre" type="text" placeholder="Ej. Ana" autocomplete="given-name" />
+                    <span asp-validation-for="Nombre" class="dk-field__error"></span>
+                </div>
+
+                <div class="dk-field">
+                    <label asp-for="Apellido">Apellido</label>
+                    <input asp-for="Apellido" type="text" placeholder="Ej. López" autocomplete="family-name" />
+                    <span asp-validation-for="Apellido" class="dk-field__error"></span>
+                </div>
+            </div>
+
+            <div class="dk-field">
+                <label asp-for="Email">Correo electrónico</label>
+                <input asp-for="Email" type="email" placeholder="tu@email.com" autocomplete="email" />
+                <span asp-validation-for="Email" class="dk-field__error"></span>
+            </div>
+
+            <div class="dk-field">
+                <label asp-for="Telefono">Teléfono / Celular</label>
+                <input asp-for="Telefono" type="tel" placeholder="Ej. 999 999 999" autocomplete="tel" />
+                <span asp-validation-for="Telefono" class="dk-field__error"></span>
+            </div>
+
+            <div class="dk-form-row">
+                <div class="dk-field">
+                    <label asp-for="Password">Contraseña</label>
+                    <input asp-for="Password" type="password" placeholder="Mínimo 6 caracteres" autocomplete="new-password" />
+                    <span asp-validation-for="Password" class="dk-field__error"></span>
+                </div>
+
+                <div class="dk-field">
+                    <label asp-for="ConfirmPassword">Confirmar contraseña</label>
+                    <input asp-for="ConfirmPassword" type="password" placeholder="Repite tu contraseña" autocomplete="new-password" />
+                    <span asp-validation-for="ConfirmPassword" class="dk-field__error"></span>
+                </div>
+            </div>
+
+            <button type="submit" class="dk-btn dk-btn--primary">Registrarme como cliente</button>
+        </form>
+
+        <div class="dk-auth__footer">
+            ¿Ya tienes una cuenta?
+            <a href="/cuenta/login@(string.IsNullOrEmpty(ViewBag.ReturnUrl as string) ? "" : $"?returnUrl={ViewBag.ReturnUrl}")">
+                Inicia sesión aquí
+            </a>
+        </div>
+    </div>
+</section>

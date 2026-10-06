@@ -1,0 +1,131 @@
+@model DKaiza.Web.Models.ReservaPasoTresViewModel
+@{
+    ViewData["Title"] = "Elegir hora";
+    var fechaDisplay = Model.Fecha.ToString("dddd d 'de' MMMM", new System.Globalization.CultureInfo("es-PE"));
+    fechaDisplay = char.ToUpper(fechaDisplay[0]) + fechaDisplay[1..];
+}
+
+<section class="dk-reserva">
+    <div class="dk-container">
+
+        <!-- Progreso -->
+        <div class="dk-steps">
+            <div class="dk-step dk-step--done">
+                <span class="dk-step__num">✓</span>
+                <span class="dk-step__label">Fecha</span>
+            </div>
+            <div class="dk-step__line dk-step__line--done"></div>
+            <div class="dk-step dk-step--done">
+                <span class="dk-step__num">✓</span>
+                <span class="dk-step__label">Estilista</span>
+            </div>
+            <div class="dk-step__line dk-step__line--done"></div>
+            <div class="dk-step dk-step--active">
+                <span class="dk-step__num">3</span>
+                <span class="dk-step__label">Hora</span>
+            </div>
+            <div class="dk-step__line"></div>
+            <div class="dk-step">
+                <span class="dk-step__num">4</span>
+                <span class="dk-step__label">Confirmar</span>
+            </div>
+        </div>
+
+        <!-- Cabecera -->
+        <div class="dk-reserva__head">
+            <a href="/reservas/estilistas?servicioId=@Model.ServicioId&fecha=@Model.Fecha.ToString("yyyy-MM-dd")"
+               class="dk-back">&larr; Cambiar estilista</a>
+            <div class="dk-reserva__servicio">
+                <span class="dk-reserva__eyebrow">— @Model.ServicioNombre —</span>
+                <h1 class="dk-reserva__titulo">Elige tu horario</h1>
+                <div class="dk-reserva__info-row">
+                    <span class="dk-reserva__fecha-chip">
+                        <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                        @fechaDisplay
+                    </span>
+                    <span class="dk-reserva__fecha-chip">
+                        <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
+                        @Model.EstilistaNombre · <em>@Model.EstilistaEspecialidad</em>
+                    </span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Horarios -->
+        @if (!Model.HorariosDisponibles.Any())
+        {
+            <div class="dk-empty">
+                <span class="dk-empty__icon">✦</span>
+                <h3 class="dk-empty__title">Sin horarios disponibles</h3>
+                <p class="dk-empty__text">Este estilista ya no tiene horarios libres ese día. Elige otro estilista o fecha.</p>
+                <a href="/reservas/estilistas?servicioId=@Model.ServicioId&fecha=@Model.Fecha.ToString("yyyy-MM-dd")"
+                   class="dk-btn dk-btn--primary">Elegir otro estilista</a>
+            </div>
+        }
+        else
+        {
+            <div class="dk-horarios">
+                <p class="dk-horarios__hint">Cada cita tiene una duración de <strong>@Model.DuracionMinutos minutos</strong></p>
+                <form method="post" action="/reservas/confirmar" id="frmConfirmar">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="servicioId"  value="@Model.ServicioId" />
+                    <input type="hidden" name="fecha"       value="@Model.Fecha.ToString("yyyy-MM-dd")" />
+                    <input type="hidden" name="estilistaId" value="@Model.EstilistaId" />
+                    <input type="hidden" name="hora"        id="horaSeleccionada" value="" />
+
+                    <div class="dk-horarios__grid">
+                        @foreach (var h in Model.HorariosDisponibles)
+                        {
+                            var fin = h.AddMinutes(Model.DuracionMinutos);
+                            <button type="button"
+                                    class="dk-hora-btn"
+                                    data-hora="@h.ToString("HH:mm")"
+                                    aria-label="Seleccionar @h.ToString("hh:mm tt", new System.Globalization.CultureInfo("es-PE"))">
+                                <span class="dk-hora-btn__time">@h.ToString("h:mm tt", new System.Globalization.CultureInfo("es-PE"))</span>
+                                <span class="dk-hora-btn__until">hasta @fin.ToString("h:mm tt", new System.Globalization.CultureInfo("es-PE"))</span>
+                            </button>
+                        }
+                    </div>
+
+                    <!-- Panel de confirmación (aparece al elegir hora) -->
+                    <div class="dk-confirm-panel" id="confirmPanel" hidden>
+                        <div class="dk-confirm-panel__resumen">
+                            <span class="dk-confirm-panel__servicio">@Model.ServicioNombre</span>
+                            <span class="dk-confirm-panel__detalle" id="confirmDetalle"></span>
+                            <span class="dk-confirm-panel__precio">S/ @Model.Precio.ToString("F2")</span>
+                        </div>
+                        <button type="submit" class="dk-btn dk-btn--primary dk-btn--confirmar">
+                            Confirmar reserva
+                            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                        </button>
+                    </div>
+                </form>
+            </div>
+        }
+
+    </div>
+</section>
+
+@section Scripts {
+<script>
+document.querySelectorAll('.dk-hora-btn').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+        document.querySelectorAll('.dk-hora-btn').forEach(b => b.classList.remove('dk-hora-btn--sel'));
+        btn.classList.add('dk-hora-btn--sel');
+
+        var hora = btn.dataset.hora;
+        document.getElementById('horaSeleccionada').value = hora;
+
+        var detalle = btn.querySelector('.dk-hora-btn__time').textContent.trim()
+                    + ' – '
+                    + btn.querySelector('.dk-hora-btn__until').textContent.replace('hasta ','').trim();
+        document.getElementById('confirmDetalle').textContent =
+            '@fechaDisplay · ' + '@Model.EstilistaNombre' + ' · ' + detalle;
+
+        var panel = document.getElementById('confirmPanel');
+        panel.hidden = false;
+        panel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    });
+});
+</script>
+}

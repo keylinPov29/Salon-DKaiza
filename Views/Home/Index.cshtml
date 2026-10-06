@@ -1,4 +1,4 @@
-﻿@model DKaiza.Web.Models.Servicio
+@model DKaiza.Web.Models.Servicio
 @{
     Layout = null;
 }
@@ -59,13 +59,20 @@
             else
             {
                 <a href="/cuenta/login" class="dk-nav__link">Iniciar sesión</a>
-                <a href="#registrarse" class="dk-nav__link" data-ancla="registrarse">
-                    Registrarse
-                </a>
+                <a href="/cuenta/registro" class="dk-nav__link">Registrarse</a>
             }
         </nav>
 
     </header>
+
+    @if (TempData["Success"] != null)
+    {
+        <div class="dk-toast dk-toast--ok">@TempData["Success"]</div>
+    }
+    @if (TempData["Error"] != null)
+    {
+        <div class="dk-toast dk-toast--err">@TempData["Error"]</div>
+    }
 
 
     <main>

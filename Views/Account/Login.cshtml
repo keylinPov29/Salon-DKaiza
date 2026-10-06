@@ -31,5 +31,12 @@
 
             <button type="submit" class="dk-btn dk-btn--primary">Ingresar</button>
         </form>
+
+        <div class="dk-auth__footer">
+            ¿Aún no tienes una cuenta?
+            <a href="/cuenta/registro@(string.IsNullOrEmpty(ViewBag.ReturnUrl as string) ? "" : $"?returnUrl={ViewBag.ReturnUrl}")">
+                Regístrate aquí
+            </a>
+        </div>
     </div>
 </section>

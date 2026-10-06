@@ -1,0 +1,115 @@
+@model DKaiza.Web.Models.ReservaPasoUnoViewModel
+@{
+    ViewData["Title"] = "Elegir fecha";
+    var hoy = DateOnly.FromDateTime(DateTime.Today);
+    var mesActual = DateOnly.FromDateTime(DateTime.Today);
+    var diasSet = Model.DiasDisponibles.ToHashSet();
+}
+
+<section class="dk-reserva">
+    <div class="dk-container">
+
+        <!-- Progreso -->
+        <div class="dk-steps">
+            <div class="dk-step dk-step--active">
+                <span class="dk-step__num">1</span>
+                <span class="dk-step__label">Fecha</span>
+            </div>
+            <div class="dk-step__line"></div>
+            <div class="dk-step">
+                <span class="dk-step__num">2</span>
+                <span class="dk-step__label">Estilista</span>
+            </div>
+            <div class="dk-step__line"></div>
+            <div class="dk-step">
+                <span class="dk-step__num">3</span>
+                <span class="dk-step__label">Hora</span>
+            </div>
+            <div class="dk-step__line"></div>
+            <div class="dk-step">
+                <span class="dk-step__num">4</span>
+                <span class="dk-step__label">Confirmar</span>
+            </div>
+        </div>
+
+        <!-- Cabecera servicio -->
+        <div class="dk-reserva__head">
+            <a href="/" class="dk-back">&larr; Volver al catálogo</a>
+            <div class="dk-reserva__servicio">
+                <span class="dk-reserva__eyebrow">— Reservar cita —</span>
+                <h1 class="dk-reserva__titulo">@Model.ServicioNombre</h1>
+                <div class="dk-reserva__meta">
+                    <span class="dk-chip dk-chip--time">
+                        <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                        @Model.DuracionMinutos min
+                    </span>
+                    <span class="dk-chip dk-chip--price">S/ @Model.Precio.ToString("F2")</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Calendario -->
+        <div class="dk-cal-wrap">
+            <h2 class="dk-cal__titulo">Selecciona un día disponible</h2>
+            <p class="dk-cal__sub">Los días marcados tienen al menos un estilista con horario libre.</p>
+
+            @{
+                // Renderizar 2 meses
+                for (int m = 0; m < 2; m++)
+                {
+                    var primerDia = new DateOnly(hoy.Year, hoy.Month, 1).AddMonths(m);
+                    var ultimoDia = primerDia.AddMonths(1).AddDays(-1);
+                    var nombreMes = primerDia.ToString("MMMM yyyy", new System.Globalization.CultureInfo("es-PE"));
+                    nombreMes = char.ToUpper(nombreMes[0]) + nombreMes[1..];
+                    <div class="dk-cal">
+                        <div class="dk-cal__header">
+                            <strong>@nombreMes</strong>
+                        </div>
+                        <div class="dk-cal__grid">
+                            @foreach (var dia in new[] {"Lun","Mar","Mié","Jue","Vie","Sáb","Dom"})
+                            {
+                                <span class="dk-cal__dow">@dia</span>
+                            }
+                            @{
+                                // Desplazamiento para que el 1 caiga en el día correcto
+                                int offset = ((int)primerDia.DayOfWeek + 6) % 7; // Lun=0
+                                for (int i = 0; i < offset; i++) { <span></span> }
+
+                                for (var d = primerDia; d <= ultimoDia; d = d.AddDays(1))
+                                {
+                                    bool disponible  = diasSet.Contains(d);
+                                    bool esDomingo   = d.DayOfWeek == DayOfWeek.Sunday;
+                                    bool esPasado    = d <= hoy;
+                                    string css = "dk-cal__dia";
+                                    if (esDomingo || esPasado) css += " dk-cal__dia--off";
+                                    else if (disponible) css += " dk-cal__dia--ok";
+                                    else css += " dk-cal__dia--no";
+
+                                    if (disponible && !esDomingo && !esPasado)
+                                    {
+                                        <a class="@css"
+                                           href="/reservas/estilistas?servicioId=@Model.ServicioId&fecha=@d.ToString("yyyy-MM-dd")">
+                                            @d.Day
+                                        </a>
+                                    }
+                                    else
+                                    {
+                                        <span class="@css">@d.Day</span>
+                                    }
+                                }
+                            }
+                        </div>
+                    </div>
+                }
+            }
+        </div>
+
+        <!-- Leyenda -->
+        <div class="dk-cal__leyenda">
+            <span class="dk-cal__ley-item"><i class="dk-cal__dot dk-cal__dot--ok"></i> Disponible</span>
+            <span class="dk-cal__ley-item"><i class="dk-cal__dot dk-cal__dot--no"></i> Sin horarios libres</span>
+            <span class="dk-cal__ley-item"><i class="dk-cal__dot dk-cal__dot--off"></i> No disponible</span>
+        </div>
+
+    </div>
+</section>
