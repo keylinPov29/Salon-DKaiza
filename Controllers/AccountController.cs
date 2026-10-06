@@ -60,7 +60,88 @@ public class AccountController : Controller
         if (!string.IsNullOrEmpty(returnUrl) && Url.IsLocalUrl(returnUrl))
             return LocalRedirect(returnUrl);
 
-        // Redirección por rol (por ahora todos a "/", luego Admin→/admin/categorias, etc.)
+        if (usuario.Rol == RolUsuario.Administrador)
+            return Redirect("/admin/categorias");
+
+        return Redirect("/");
+    }
+
+    [HttpGet("/cuenta/registro")]
+    public IActionResult Registro(string? returnUrl = null)
+    {
+        if (User.Identity?.IsAuthenticated == true)
+            return Redirect("/");
+        ViewBag.ReturnUrl = returnUrl;
+        return View(new RegistroViewModel());
+    }
+
+    [HttpPost("/cuenta/registro")]
+    [ValidateAntiForgeryToken]
+    [EnableRateLimiting("login")]
+    public async Task<IActionResult> Registro(RegistroViewModel model, string? returnUrl = null)
+    {
+        if (User.Identity?.IsAuthenticated == true)
+            return Redirect("/");
+
+        ViewBag.ReturnUrl = returnUrl;
+
+        if (!ModelState.IsValid)
+            return View(model);
+
+        var emailNormalizado = model.Email.Trim().ToLower();
+
+        var existeEmail = await _db.Usuarios
+            .AnyAsync(u => u.Email.ToLower() == emailNormalizado);
+
+        if (existeEmail)
+        {
+            ModelState.AddModelError("Email", "Ya existe una cuenta registrada con este correo electrónico.");
+            return View(model);
+        }
+
+        var usuario = new Usuario
+        {
+            Nombre = model.Nombre.Trim(),
+            Apellido = model.Apellido.Trim(),
+            Email = emailNormalizado,
+            Telefono = model.Telefono.Trim(),
+            PasswordHash = BCrypt.Net.BCrypt.HashPassword(model.Password),
+            Rol = RolUsuario.Cliente,
+            Activo = true,
+            DebeCambiarPassword = false,
+            FechaRegistro = DateTime.UtcNow
+        };
+
+        try
+        {
+            _db.Usuarios.Add(usuario);
+            await _db.SaveChangesAsync();
+        }
+        catch (DbUpdateException)
+        {
+            ModelState.AddModelError("", "Ocurrió un error al registrar la cuenta. Por favor, intenta de nuevo.");
+            return View(model);
+        }
+
+        var claims = new List<Claim>
+        {
+            new Claim(ClaimTypes.NameIdentifier, usuario.Id.ToString()),
+            new Claim(ClaimTypes.Name, usuario.NombreCompleto),
+            new Claim(ClaimTypes.Email, usuario.Email),
+            new Claim(ClaimTypes.Role, usuario.Rol.ToString())
+        };
+        var identity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
+
+        await HttpContext.SignInAsync(
+            CookieAuthenticationDefaults.AuthenticationScheme,
+            new ClaimsPrincipal(identity),
+            new AuthenticationProperties { IsPersistent = true });
+
+        TempData["Success"] = $"¡Registro exitoso! Te damos la bienvenida a D'Kaiza, {usuario.Nombre}.";
+
+        if (!string.IsNullOrEmpty(returnUrl) && Url.IsLocalUrl(returnUrl))
+            return LocalRedirect(returnUrl);
+
         return Redirect("/");
     }
 

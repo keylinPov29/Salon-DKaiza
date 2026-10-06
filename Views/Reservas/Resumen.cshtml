@@ -1,0 +1,70 @@
+@model DKaiza.Web.Models.ReservaResumenViewModel
+@{
+    ViewData["Title"] = "Cita confirmada";
+    var dias = new[] {"domingo","lunes","martes","miércoles","jueves","viernes","sábado"};
+    var meses = new[] {"","enero","febrero","marzo","abril","mayo","junio","julio","agosto","septiembre","octubre","noviembre","diciembre"};
+    var diaStr = dias[(int)Model.Inicio.DayOfWeek];
+    var fechaStr = $"{char.ToUpper(diaStr[0])}{diaStr[1..]} {Model.Inicio.Day} de {meses[Model.Inicio.Month]} de {Model.Inicio.Year}";
+}
+
+<section class="dk-reserva">
+    <div class="dk-container">
+
+        <!-- Progreso -->
+        <div class="dk-steps">
+            <div class="dk-step dk-step--done"><span class="dk-step__num">✓</span><span class="dk-step__label">Fecha</span></div>
+            <div class="dk-step__line dk-step__line--done"></div>
+            <div class="dk-step dk-step--done"><span class="dk-step__num">✓</span><span class="dk-step__label">Estilista</span></div>
+            <div class="dk-step__line dk-step__line--done"></div>
+            <div class="dk-step dk-step--done"><span class="dk-step__num">✓</span><span class="dk-step__label">Hora</span></div>
+            <div class="dk-step__line dk-step__line--done"></div>
+            <div class="dk-step dk-step--active"><span class="dk-step__num">4</span><span class="dk-step__label">Confirmar</span></div>
+        </div>
+
+        <!-- Tarjeta de confirmación -->
+        <div class="dk-ticket">
+            <div class="dk-ticket__top">
+                <span class="dk-ticket__icono">✦</span>
+                <h1 class="dk-ticket__titulo">¡Cita reservada!</h1>
+                <p class="dk-ticket__sub">Tu cita ha sido agendada correctamente. Aquí está tu resumen.</p>
+            </div>
+
+            <div class="dk-ticket__cuerpo">
+                <div class="dk-ticket__fila">
+                    <span class="dk-ticket__label">Servicio</span>
+                    <strong class="dk-ticket__valor">@Model.ServicioNombre</strong>
+                </div>
+                <div class="dk-ticket__fila">
+                    <span class="dk-ticket__label">Estilista</span>
+                    <strong class="dk-ticket__valor">@Model.EstilistaNombre</strong>
+                </div>
+                <div class="dk-ticket__fila">
+                    <span class="dk-ticket__label">Fecha</span>
+                    <strong class="dk-ticket__valor">@fechaStr</strong>
+                </div>
+                <div class="dk-ticket__fila">
+                    <span class="dk-ticket__label">Hora</span>
+                    <strong class="dk-ticket__valor">
+                        @Model.Inicio.ToString("h:mm tt", new System.Globalization.CultureInfo("es-PE"))
+                        – @Model.Fin.ToString("h:mm tt", new System.Globalization.CultureInfo("es-PE"))
+                    </strong>
+                </div>
+                <div class="dk-ticket__fila dk-ticket__fila--total">
+                    <span class="dk-ticket__label">Total a pagar</span>
+                    <strong class="dk-ticket__total">S/ @Model.PrecioTotal.ToString("F2")</strong>
+                </div>
+            </div>
+
+            <div class="dk-ticket__acciones">
+                <!-- En una futura iteración este botón enlazaría con la pasarela de pago -->
+                <button type="button" class="dk-btn dk-btn--primary dk-btn--pago" disabled>
+                    Proceder al pago
+                    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
+                </button>
+                <p class="dk-ticket__pago-hint">El módulo de pago estará disponible próximamente.</p>
+                <a href="/" class="dk-back" style="margin-top:1rem">Ver más servicios &rarr;</a>
+            </div>
+        </div>
+
+    </div>
+</section>

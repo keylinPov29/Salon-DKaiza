@@ -1,4 +1,4 @@
-﻿document.addEventListener("DOMContentLoaded", function () {
+document.addEventListener("DOMContentLoaded", function () {
 
     const inicio = document.getElementById("inicio");
     const servicios = document.getElementById("servicios");
@@ -156,6 +156,21 @@
                 if (contenido) contenido.hidden = false;
             }
         });
+    });
+
+
+    // ==========================================
+    // NOTIFICACIONES TOAST (AUTO-CIERRE)
+    // ==========================================
+
+    document.querySelectorAll(".dk-toast").forEach(function (toast) {
+        setTimeout(function () {
+            toast.style.opacity = "0";
+            toast.style.transform = "translateY(-10px)";
+            setTimeout(function () {
+                toast.remove();
+            }, 350);
+        }, 3500);
     });
 
 });
