@@ -1,8 +1,8 @@
 @model DKaiza.Web.Models.ReservaPasoUnoViewModel
 @{
     ViewData["Title"] = "Elegir fecha";
-    var hoy = DateOnly.FromDateTime(DateTime.Today);
-    var mesActual = DateOnly.FromDateTime(DateTime.Today);
+    var hoy = Model.FechaMinima;
+    var primerMes = new DateOnly(hoy.Year, hoy.Month, 1);
     var diasSet = Model.DiasDisponibles.ToHashSet();
 }
 
@@ -52,16 +52,26 @@
         <div class="dk-cal-wrap">
             <h2 class="dk-cal__titulo">Selecciona un día disponible</h2>
             <p class="dk-cal__sub">Los días marcados tienen al menos un estilista con horario libre.</p>
+            <div class="dk-cal__nav" aria-label="Navegación del calendario">
+                <button class="dk-cal__nav-btn" id="calPrev" type="button" aria-label="Mostrar meses anteriores" disabled>
+                    <span aria-hidden="true">&larr;</span>
+                </button>
+                <span class="dk-cal__range" id="calRange" aria-live="polite"></span>
+                <button class="dk-cal__nav-btn" id="calNext" type="button" aria-label="Mostrar meses siguientes">
+                    <span aria-hidden="true">&rarr;</span>
+                </button>
+            </div>
 
             @{
-                // Renderizar 2 meses
-                for (int m = 0; m < 2; m++)
+                var mesesTotales = (Model.FechaMaxima.Year - primerMes.Year) * 12
+                    + Model.FechaMaxima.Month - primerMes.Month + 1;
+                for (int m = 0; m < mesesTotales; m++)
                 {
-                    var primerDia = new DateOnly(hoy.Year, hoy.Month, 1).AddMonths(m);
+                    var primerDia = primerMes.AddMonths(m);
                     var ultimoDia = primerDia.AddMonths(1).AddDays(-1);
                     var nombreMes = primerDia.ToString("MMMM yyyy", new System.Globalization.CultureInfo("es-PE"));
                     nombreMes = char.ToUpper(nombreMes[0]) + nombreMes[1..];
-                    <div class="dk-cal">
+                    <div class="dk-cal @(m < 2 ? "dk-cal--visible" : "")" data-month-index="@m" @((m >= 2) ? "hidden" : null)>
                         <div class="dk-cal__header">
                             <strong>@nombreMes</strong>
                         </div>
@@ -79,13 +89,13 @@
                                 {
                                     bool disponible  = diasSet.Contains(d);
                                     bool esDomingo   = d.DayOfWeek == DayOfWeek.Sunday;
-                                    bool esPasado    = d <= hoy;
+                                    bool fueraDeRango = d <= hoy || d > Model.FechaMaxima;
                                     string css = "dk-cal__dia";
-                                    if (esDomingo || esPasado) css += " dk-cal__dia--off";
+                                    if (esDomingo || fueraDeRango) css += " dk-cal__dia--off";
                                     else if (disponible) css += " dk-cal__dia--ok";
                                     else css += " dk-cal__dia--no";
 
-                                    if (disponible && !esDomingo && !esPasado)
+                                    if (disponible && !esDomingo && !fueraDeRango)
                                     {
                                         <a class="@css"
                                            href="/reservas/estilistas?servicioId=@Model.ServicioId&fecha=@d.ToString("yyyy-MM-dd")">
@@ -113,3 +123,40 @@
 
     </div>
 </section>
+
+@section Scripts {
+<script>
+(() => {
+    const months = [...document.querySelectorAll('.dk-cal[data-month-index]')];
+    const previous = document.getElementById('calPrev');
+    const next = document.getElementById('calNext');
+    const range = document.getElementById('calRange');
+    let firstVisible = 0;
+
+    function renderMonths() {
+        months.forEach((month, index) => {
+            month.hidden = index < firstVisible || index > firstVisible + 1;
+        });
+        previous.disabled = firstVisible === 0;
+        next.disabled = firstVisible >= months.length - 2;
+        range.textContent = `${months[firstVisible].querySelector('strong').textContent} · ${months[firstVisible + 1].querySelector('strong').textContent}`;
+    }
+
+    previous.addEventListener('click', () => {
+        if (firstVisible > 0) {
+            firstVisible--;
+            renderMonths();
+        }
+    });
+
+    next.addEventListener('click', () => {
+        if (firstVisible < months.length - 2) {
+            firstVisible++;
+            renderMonths();
+        }
+    });
+
+    renderMonths();
+})();
+</script>
+}
