@@ -8,8 +8,10 @@ public class ReservaPasoUnoViewModel
     public int DuracionMinutos { get; set; }
     public decimal Precio { get; set; }
 
-    // Días con al menos un estilista disponible (próximos 30 días)
+    // Días disponibles desde mañana hasta el final del segundo mes siguiente.
     public List<DateOnly> DiasDisponibles { get; set; } = new();
+    public DateOnly FechaMinima { get; set; }
+    public DateOnly FechaMaxima { get; set; }
 }
 
 /// <summary>Paso 2: estilistas disponibles para la fecha elegida</summary>

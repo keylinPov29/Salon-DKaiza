@@ -75,6 +75,209 @@ img { max-width: 100%; display: block; }
   margin: 0 auto;
   padding: 0 2rem;
 }
+
+.dk-reserva {
+  min-height: calc(100vh - 150px);
+  padding: 3rem 0 5rem;
+  background: linear-gradient(145deg, #F7F2EC 0%, #F2EAE2 58%, #E8DCD2 100%);
+}
+
+.dk-reserva .dk-container { max-width: 1050px; }
+
+.dk-steps {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  margin: 0 auto 2.5rem;
+}
+
+.dk-step {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  color: #8A7568;
+  white-space: nowrap;
+}
+
+.dk-step__num {
+  display: grid;
+  place-items: center;
+  width: 2rem;
+  height: 2rem;
+  flex: 0 0 2rem;
+  border: 1px solid #CDBFB4;
+  border-radius: 50%;
+  background: #FFFFFF;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.dk-step__label {
+  font-size: 0.72rem;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.dk-step--active { color: #5E4A40; }
+.dk-step--active .dk-step__num { color: #FFFFFF; background: #7E675A; border-color: #7E675A; }
+.dk-step--done .dk-step__num { color: #FFFFFF; background: #477765; border-color: #477765; }
+
+.dk-step__line {
+  width: clamp(1rem, 5vw, 3.5rem);
+  height: 1px;
+  background: #CDBFB4;
+}
+
+.dk-step__line--done { background: #477765; }
+
+.dk-reserva__head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 2rem;
+  margin-bottom: 2rem;
+  padding-bottom: 1.5rem;
+  border-bottom: 1px solid rgba(126, 103, 90, 0.2);
+}
+
+.dk-reserva__head .dk-back { margin: 0; }
+.dk-reserva__servicio { text-align: right; }
+.dk-reserva__eyebrow { color: #7E675A; font-size: 0.7rem; font-weight: 600; text-transform: uppercase; }
+.dk-reserva__titulo { margin: 0.35rem 0 0.75rem; font-size: 2rem; }
+.dk-reserva__meta { display: flex; justify-content: flex-end; gap: 0.5rem; }
+
+.dk-cal-wrap {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  column-gap: 2rem;
+  max-width: 820px;
+  margin: 0 auto;
+  padding: 1.75rem 2rem;
+  border: 1px solid #E5D9C9;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.92);
+  box-shadow: 0 16px 42px rgba(94, 74, 64, 0.1);
+}
+
+.dk-cal__titulo,
+.dk-cal__sub { grid-column: 1 / -1; }
+.dk-cal__titulo { text-align: center; font-size: 1.55rem; }
+.dk-cal__sub { margin: 0.5rem 0 1.3rem; text-align: center; font-size: 0.88rem; }
+.dk-cal__nav { display: flex; grid-column: 1 / -1; align-items: center; justify-content: center; gap: 1rem; margin: 0 auto 0.75rem; }
+.dk-cal__range { min-width: 250px; color: #5E4A40; font-size: 0.78rem; font-weight: 600; text-align: center; }
+.dk-cal__nav-btn { display: grid; width: 2.25rem; height: 2.25rem; place-items: center; border: 1px solid #D8CFC7; border-radius: 50%; background: #FFFFFF; color: #477765; font-size: 1rem; cursor: pointer; transition: background-color 160ms ease, color 160ms ease, border-color 160ms ease; }
+.dk-cal__nav-btn:hover:not(:disabled), .dk-cal__nav-btn:focus-visible { border-color: #477765; background: #477765; color: #FFFFFF; outline: 2px solid rgba(71, 119, 101, 0.2); outline-offset: 2px; }
+.dk-cal__nav-btn:disabled { color: #BDB5AE; cursor: not-allowed; opacity: 0.55; }
+
+.dk-cal {
+  display: none;
+  padding: 1.2rem 0 1.4rem;
+  border-top: 1px solid #EEE7E0;
+}
+
+.dk-cal.dk-cal--visible { display: block; }
+.dk-cal[hidden] { display: none; }
+
+.dk-cal__header { margin-bottom: 1rem; text-align: center; }
+.dk-cal__header strong { color: #5E4A40; font-family: var(--dk-serif); font-size: 1.15rem; font-weight: 600; }
+
+.dk-cal__grid {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 0.4rem;
+}
+
+.dk-cal__dow {
+  display: grid;
+  min-height: 2rem;
+  place-items: center;
+  color: #8A7568;
+  font-size: 0.68rem;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.dk-cal__grid > span:empty {
+  width: 100%;
+  max-width: 48px;
+  aspect-ratio: 1;
+  margin: auto;
+}
+
+.dk-cal__dia {
+  display: grid;
+  width: 100%;
+  max-width: 48px;
+  aspect-ratio: 1;
+  place-items: center;
+  margin: auto;
+  border: 1px solid transparent;
+  border-radius: 50%;
+  color: #74685F;
+  font-size: 0.88rem;
+  font-weight: 500;
+}
+
+.dk-cal__dia--ok {
+  border-color: #477765;
+  background: #E8F1EC;
+  color: #285D49;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background-color 160ms ease, color 160ms ease, transform 160ms ease;
+}
+
+.dk-cal__dia--ok:hover,
+.dk-cal__dia--ok:focus-visible {
+  transform: translateY(-2px);
+  background: #477765;
+  color: #FFFFFF;
+  outline: 2px solid #477765;
+  outline-offset: 2px;
+}
+
+.dk-cal__dia--no { background: #F4F1EE; color: #B3A9A1; }
+.dk-cal__dia--off { color: #C9C1BB; }
+
+.dk-cal__leyenda {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.8rem 1.5rem;
+  margin: 1rem auto 0;
+  color: #74685F;
+  font-size: 0.75rem;
+}
+
+.dk-cal__ley-item { display: inline-flex; align-items: center; gap: 0.45rem; }
+.dk-cal__dot { width: 0.65rem; height: 0.65rem; border: 1px solid #D7CEC6; border-radius: 50%; }
+.dk-cal__dot--ok { border-color: #477765; background: #477765; }
+.dk-cal__dot--no { background: #E5DED8; }
+.dk-cal__dot--off { background: #FFFFFF; }
+
+@media (max-width: 640px) {
+  .dk-reserva { padding: 1.5rem 0 3rem; }
+  .dk-reserva .dk-container { padding: 0 1rem; }
+  .dk-steps { gap: 0.3rem; margin-bottom: 1.5rem; }
+  .dk-step { gap: 0.3rem; }
+  .dk-step__num { width: 1.7rem; height: 1.7rem; flex-basis: 1.7rem; }
+  .dk-step__label { font-size: 0.55rem; }
+  .dk-step__line { width: clamp(0.35rem, 2vw, 0.8rem); }
+  .dk-reserva__head { display: block; margin-bottom: 1.5rem; }
+  .dk-reserva__servicio { margin-top: 0.75rem; text-align: left; }
+  .dk-reserva__titulo { font-size: 1.65rem; }
+  .dk-reserva__meta { justify-content: flex-start; }
+  .dk-cal-wrap { grid-template-columns: minmax(0, 1fr); padding: 1.25rem 0.75rem; }
+  .dk-cal__titulo { font-size: 1.3rem; }
+  .dk-cal__range { min-width: 0; font-size: 0.7rem; }
+  .dk-cal__grid { gap: 0.2rem; }
+  .dk-cal__dow { font-size: 0.58rem; }
+  .dk-cal__dia { max-width: 40px; font-size: 0.8rem; }
+  .dk-cal__grid > span:empty { max-width: 40px; }
+  .dk-cal__leyenda { justify-content: flex-start; gap: 0.55rem 1rem; font-size: 0.68rem; }
+}
+
 /* =========================================
    4. NAVEGACIÓN (Café Romano)
    ========================================= */
@@ -785,6 +988,190 @@ img { max-width: 100%; display: block; }
   margin-left: auto;
   margin-right: auto;
 }
+
+.dk-reserva .dk-empty {
+  max-width: 700px;
+  padding: 3.5rem 2rem;
+  border-radius: 8px;
+}
+
+.dk-reserva .dk-empty::before { display: none; }
+
+.dk-estilistas-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr));
+  gap: 1rem;
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+.dk-estilista-card {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 1rem;
+  padding: 1.15rem;
+  border: 1px solid #E5D9C9;
+  border-radius: 8px;
+  background: #FFFFFF;
+  color: #4A3730;
+  box-shadow: 0 8px 24px rgba(94, 74, 64, 0.07);
+  transition: border-color 160ms ease, box-shadow 160ms ease, transform 160ms ease;
+}
+
+.dk-estilista-card:hover,
+.dk-estilista-card:focus-visible {
+  transform: translateY(-2px);
+  border-color: #477765;
+  color: #4A3730;
+  box-shadow: 0 12px 28px rgba(71, 119, 101, 0.14);
+  outline: none;
+}
+
+.dk-estilista-card__avatar {
+  display: grid;
+  width: 68px;
+  height: 68px;
+  flex: 0 0 68px;
+  place-items: center;
+  overflow: hidden;
+  border: 1px solid #D7E4DA;
+  border-radius: 50%;
+  background: #E8F1EC;
+}
+
+.dk-estilista-card__avatar img { width: 100%; height: 100%; object-fit: cover; }
+.dk-estilista-card__initials { color: #285D49; font-family: var(--dk-serif); font-size: 1.3rem; }
+.dk-estilista-card__info { display: flex; min-width: 0; flex: 1; flex-direction: column; gap: 0.2rem; }
+.dk-estilista-card__nombre { overflow-wrap: anywhere; color: #4A3730; font-family: var(--dk-serif); font-size: 1.12rem; font-weight: 600; }
+.dk-estilista-card__espec { color: #8A7568; font-size: 0.78rem; }
+.dk-estilista-card__slots { margin-top: 0.25rem; color: #285D49; font-size: 0.72rem; font-weight: 600; }
+.dk-estilista-card__arrow { flex: 0 0 18px; color: #477765; transition: transform 160ms ease; }
+.dk-estilista-card:hover .dk-estilista-card__arrow { transform: translateX(3px); }
+
+.dk-reserva__fecha-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid #E5D9C9;
+  border-radius: 4px;
+  background: #FFFFFF;
+  color: #5E4A40;
+  font-size: 0.78rem;
+}
+
+.dk-reserva__fecha-chip svg { flex: 0 0 auto; color: #477765; }
+.dk-reserva__fecha-chip em { color: #8A7568; font-style: normal; }
+.dk-reserva__info-row { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 0.5rem; }
+
+.dk-horarios {
+  max-width: 820px;
+  margin: 0 auto;
+  padding: 1.5rem;
+  border: 1px solid #E5D9C9;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.92);
+  box-shadow: 0 16px 42px rgba(94, 74, 64, 0.1);
+}
+
+.dk-horarios__hint { margin-bottom: 1rem; text-align: center; font-size: 0.88rem; }
+.dk-horarios__hint strong { color: #5E4A40; }
+.dk-horarios__grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 0.65rem; }
+
+.dk-hora-btn {
+  display: flex;
+  min-height: 72px;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.1rem;
+  padding: 0.7rem 0.5rem;
+  border: 1px solid #D8CFC7;
+  border-radius: 6px;
+  background: #FFFFFF;
+  color: #4A3730;
+  cursor: pointer;
+  transition: background-color 160ms ease, border-color 160ms ease, color 160ms ease, transform 160ms ease;
+}
+
+.dk-hora-btn:hover,
+.dk-hora-btn:focus-visible {
+  transform: translateY(-1px);
+  border-color: #477765;
+  outline: 2px solid rgba(71, 119, 101, 0.2);
+  outline-offset: 1px;
+}
+
+.dk-hora-btn--sel { border-color: #477765; background: #E8F1EC; color: #285D49; }
+.dk-hora-btn__time { font-size: 0.94rem; font-weight: 700; }
+.dk-hora-btn__until { color: #8A7568; font-size: 0.7rem; }
+.dk-hora-btn--sel .dk-hora-btn__until { color: #477765; }
+
+.dk-confirm-panel {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1.25rem;
+  margin-top: 1.25rem;
+  padding: 1rem 1.15rem;
+  border: 1px solid #CADDD0;
+  border-radius: 6px;
+  background: #F1F7F3;
+}
+
+.dk-confirm-panel[hidden] { display: none; }
+.dk-confirm-panel__resumen { display: flex; min-width: 0; flex-direction: column; gap: 0.2rem; }
+.dk-confirm-panel__servicio { color: #285D49; font-family: var(--dk-serif); font-size: 1.05rem; font-weight: 600; }
+.dk-confirm-panel__detalle { color: #74685F; font-size: 0.78rem; }
+.dk-confirm-panel__precio { color: #4A3730; font-size: 0.82rem; font-weight: 700; }
+.dk-btn--confirmar { display: inline-flex; align-items: center; justify-content: center; gap: 0.6rem; flex: 0 0 auto; border-radius: 4px; }
+
+.dk-ticket {
+  max-width: 680px;
+  margin: 1rem auto 0;
+  overflow: hidden;
+  border: 1px solid #E5D9C9;
+  border-radius: 8px;
+  background: #FFFFFF;
+  box-shadow: 0 18px 48px rgba(94, 74, 64, 0.12);
+}
+
+.dk-ticket__top { padding: 2rem 2rem 1.5rem; text-align: center; background: #E8F1EC; }
+.dk-ticket__icono { display: grid; width: 2.75rem; height: 2.75rem; place-items: center; margin: 0 auto 0.75rem; border-radius: 50%; background: #477765; color: #FFFFFF; font-size: 1.15rem; }
+.dk-ticket__titulo { margin-bottom: 0.4rem; color: #285D49; font-size: 1.8rem; }
+.dk-ticket__sub { font-size: 0.84rem; }
+.dk-ticket__cuerpo { padding: 0.5rem 1.75rem; }
+.dk-ticket__fila { display: flex; justify-content: space-between; gap: 1rem; padding: 0.9rem 0; border-bottom: 1px solid #EEE7E0; }
+.dk-ticket__label { color: #8A7568; font-size: 0.78rem; }
+.dk-ticket__valor { color: #4A3730; font-size: 0.86rem; text-align: right; }
+.dk-ticket__fila--total { align-items: center; border-bottom: 0; }
+.dk-ticket__total { color: #285D49; font-family: var(--dk-serif); font-size: 1.3rem; }
+.dk-ticket__acciones { display: flex; flex-direction: column; align-items: center; padding: 0 1.75rem 1.75rem; }
+.dk-btn--pago { display: inline-flex; align-items: center; justify-content: center; gap: 0.65rem; border-radius: 4px; }
+.dk-btn--pago:disabled { cursor: not-allowed; opacity: 0.55; transform: none; box-shadow: none; }
+.dk-ticket__pago-hint { margin-top: 0.6rem; font-size: 0.72rem; text-align: center; }
+.dk-ticket__acciones .dk-back { margin: 1rem 0 0; }
+
+@media (max-width: 640px) {
+  .dk-estilistas-grid { grid-template-columns: minmax(0, 1fr); gap: 0.7rem; }
+  .dk-estilista-card { gap: 0.75rem; padding: 0.9rem; }
+  .dk-estilista-card__avatar { width: 56px; height: 56px; flex-basis: 56px; }
+  .dk-reserva__info-row { justify-content: flex-start; }
+  .dk-horarios { padding: 1rem 0.75rem; }
+  .dk-horarios__grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.5rem; }
+  .dk-hora-btn { min-height: 68px; }
+  .dk-confirm-panel { align-items: stretch; flex-direction: column; }
+  .dk-btn--confirmar { width: 100%; }
+  .dk-ticket { margin-top: 0; }
+  .dk-ticket__top { padding: 1.5rem 1rem 1.2rem; }
+  .dk-ticket__titulo { font-size: 1.55rem; }
+  .dk-ticket__cuerpo { padding: 0.35rem 1rem; }
+  .dk-ticket__fila { gap: 0.65rem; }
+  .dk-ticket__acciones { padding: 0 1rem 1.25rem; }
+  .dk-btn--pago { width: 100%; padding: 0.85rem 1rem; font-size: 0.72rem; }
+}
+
 /* =========================================
    13. FOOTER (Café Romano)
    ========================================= */

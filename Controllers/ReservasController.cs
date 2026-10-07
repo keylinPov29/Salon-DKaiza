@@ -20,6 +20,7 @@ namespace DKaiza.Web.Controllers;
 [Authorize(Roles = "Cliente")]
 public class ReservasController : Controller
 {
+    private const int MesesCalendarioReserva = 3;
     private readonly ApplicationDbContext _db;
 
     // Zona horaria del salón (Perú = UTC-5, sin cambio de horario)
@@ -29,13 +30,14 @@ public class ReservasController : Controller
     public ReservasController(ApplicationDbContext db) => _db = db;
 
     // ────────────────────────────────────────────────────────────────
-    //  PASO 1 — Calendario (días disponibles en los próx. 30 días)
+    //  PASO 1 — Calendario (mes actual y los dos siguientes)
     // ────────────────────────────────────────────────────────────────
     [HttpGet("nueva")]
     public async Task<IActionResult> PasoUno(int servicioId)
     {
         var servicio = await _db.Servicios
             .AsNoTracking()
+            .Include(s => s.Categoria)
             .FirstOrDefaultAsync(s => s.Id == servicioId && s.Activo);
 
         if (servicio == null)
@@ -45,7 +47,9 @@ public class ReservasController : Controller
         }
 
         var hoyLocal = DateOnly.FromDateTime(TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, ZonaSalon));
-        var hasta    = hoyLocal.AddDays(30);
+        var hasta = FinVentanaReserva(hoyLocal);
+        var inicioRangoUtc = AFechaUtc(hoyLocal, TimeOnly.MinValue);
+        var finRangoUtc = AFechaUtc(hasta.AddDays(1), TimeOnly.MinValue);
 
         // Estilistas activos y sus horarios
         var estilistas = await _db.Estilistas
@@ -54,19 +58,23 @@ public class ReservasController : Controller
             .Select(e => new
             {
                 e.Id,
+                e.Especialidad,
                 e.InicioJornada,
                 e.FinJornada,
                 e.InicioDescanso,
                 e.FinDescanso
             })
             .ToListAsync();
+        estilistas = estilistas
+            .Where(e => CoincideEspecialidad(e.Especialidad, servicio.Categoria?.Nombre))
+            .ToList();
 
         // Citas ya reservadas en el rango (no canceladas)
         var citasExistentes = await _db.Citas
             .AsNoTracking()
             .Where(c => c.Estado != EstadoCita.Cancelada
-                     && c.Inicio >= hoyLocal.ToDateTime(TimeOnly.MinValue)
-                     && c.Inicio < hasta.AddDays(1).ToDateTime(TimeOnly.MinValue))
+                     && c.Inicio >= inicioRangoUtc
+                     && c.Inicio < finRangoUtc)
             .Select(c => new { c.EstilistaId, c.Inicio, c.Fin })
             .ToListAsync();
 
@@ -93,7 +101,7 @@ public class ReservasController : Controller
 
                 foreach (var slot in slots)
                 {
-                    var slotUtcInicio = TimeZoneInfo.ConvertTimeToUtc(slot, ZonaSalon);
+                    var slotUtcInicio = TimeZoneInfo.ConvertTimeToUtc(dia.ToDateTime(slot), ZonaSalon);
                     var slotUtcFin   = slotUtcInicio.AddMinutes(servicio.DuracionMinutos);
 
                     bool ocupado = slotsOcupados.Any(c =>
@@ -113,7 +121,9 @@ public class ReservasController : Controller
             ServicioNombre  = servicio.Nombre,
             DuracionMinutos = servicio.DuracionMinutos,
             Precio          = servicio.Precio,
-            DiasDisponibles = diasDisponibles
+            DiasDisponibles = diasDisponibles,
+            FechaMinima = hoyLocal,
+            FechaMaxima = hasta
         };
 
         return View("PasoUno", vm);
@@ -125,11 +135,15 @@ public class ReservasController : Controller
     [HttpGet("estilistas")]
     public async Task<IActionResult> PasoDos(int servicioId, string fecha)
     {
-        if (!DateOnly.TryParse(fecha, out var fechaElegida))
-            return Redirect("/");
+        if (!DateOnly.TryParse(fecha, out var fechaElegida) || !EsFechaReservaValida(fechaElegida))
+        {
+            TempData["Error"] = "La fecha seleccionada ya no está disponible.";
+            return RedirectToAction(nameof(PasoUno), new { servicioId });
+        }
 
         var servicio = await _db.Servicios
             .AsNoTracking()
+            .Include(s => s.Categoria)
             .FirstOrDefaultAsync(s => s.Id == servicioId && s.Activo);
 
         if (servicio == null) return Redirect("/");
@@ -144,6 +158,9 @@ public class ReservasController : Controller
                 e.InicioJornada, e.FinJornada, e.InicioDescanso, e.FinDescanso
             })
             .ToListAsync();
+        estilistas = estilistas
+            .Where(e => CoincideEspecialidad(e.Especialidad, servicio.Categoria?.Nombre))
+            .ToList();
 
         // Citas del día para calcular slots libres por estilista
         var inicioDiaUtc = TimeZoneInfo.ConvertTimeToUtc(fechaElegida.ToDateTime(TimeOnly.MinValue), ZonaSalon);
@@ -168,7 +185,7 @@ public class ReservasController : Controller
 
             int libres = slots.Count(slot =>
             {
-                var utcI = TimeZoneInfo.ConvertTimeToUtc(slot, ZonaSalon);
+                var utcI = TimeZoneInfo.ConvertTimeToUtc(fechaElegida.ToDateTime(slot), ZonaSalon);
                 var utcF = utcI.AddMinutes(servicio.DuracionMinutos);
                 return !ocupados.Any(c => utcI < c.Fin && utcF > c.Inicio);
             });
@@ -205,11 +222,15 @@ public class ReservasController : Controller
     [HttpGet("horarios")]
     public async Task<IActionResult> PasoTres(int servicioId, string fecha, int estilistaId)
     {
-        if (!DateOnly.TryParse(fecha, out var fechaElegida))
-            return Redirect("/");
+        if (!DateOnly.TryParse(fecha, out var fechaElegida) || !EsFechaReservaValida(fechaElegida))
+        {
+            TempData["Error"] = "La fecha seleccionada ya no está disponible.";
+            return RedirectToAction(nameof(PasoUno), new { servicioId });
+        }
 
         var servicio = await _db.Servicios
             .AsNoTracking()
+            .Include(s => s.Categoria)
             .FirstOrDefaultAsync(s => s.Id == servicioId && s.Activo);
 
         var estilista = await _db.Estilistas
@@ -217,6 +238,11 @@ public class ReservasController : Controller
             .FirstOrDefaultAsync(e => e.Id == estilistaId && e.Activo);
 
         if (servicio == null || estilista == null) return Redirect("/");
+        if (!CoincideEspecialidad(estilista.Especialidad, servicio.Categoria?.Nombre))
+        {
+            TempData["Error"] = "Ese estilista no realiza el servicio seleccionado.";
+            return RedirectToAction(nameof(PasoDos), new { servicioId, fecha });
+        }
 
         var inicioDiaUtc = TimeZoneInfo.ConvertTimeToUtc(fechaElegida.ToDateTime(TimeOnly.MinValue), ZonaSalon);
         var finDiaUtc    = inicioDiaUtc.AddDays(1);
@@ -235,7 +261,7 @@ public class ReservasController : Controller
 
         var libres = todosSlots.Where(slot =>
         {
-            var utcI = TimeZoneInfo.ConvertTimeToUtc(slot, ZonaSalon);
+            var utcI = TimeZoneInfo.ConvertTimeToUtc(fechaElegida.ToDateTime(slot), ZonaSalon);
             var utcF = utcI.AddMinutes(servicio.DuracionMinutos);
             return !citasDelDia.Any(c => utcI < c.Fin && utcF > c.Inicio);
         }).ToList();
@@ -263,7 +289,7 @@ public class ReservasController : Controller
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Confirmar(int servicioId, string fecha, int estilistaId, string hora)
     {
-        if (!DateOnly.TryParse(fecha, out var fechaElegida) ||
+        if (!DateOnly.TryParse(fecha, out var fechaElegida) || !EsFechaReservaValida(fechaElegida) ||
             !TimeOnly.TryParse(hora, out var horaElegida))
         {
             TempData["Error"] = "Datos de reserva inválidos. Por favor vuelve a intentarlo.";
@@ -275,6 +301,7 @@ public class ReservasController : Controller
             return Forbid();
 
         var servicio  = await _db.Servicios.AsNoTracking()
+            .Include(s => s.Categoria)
             .FirstOrDefaultAsync(s => s.Id == servicioId && s.Activo);
         var estilista = await _db.Estilistas.AsNoTracking()
             .FirstOrDefaultAsync(e => e.Id == estilistaId && e.Activo);
@@ -283,6 +310,26 @@ public class ReservasController : Controller
         {
             TempData["Error"] = "El servicio o estilista no están disponibles.";
             return Redirect("/");
+        }
+
+        if (!CoincideEspecialidad(estilista.Especialidad, servicio.Categoria?.Nombre))
+        {
+            TempData["Error"] = "Ese estilista no realiza el servicio seleccionado.";
+            return RedirectToAction(nameof(PasoDos), new { servicioId, fecha });
+        }
+
+        var horariosPermitidos = GenerarSlots(
+            fechaElegida,
+            estilista.InicioJornada,
+            estilista.FinJornada,
+            estilista.InicioDescanso,
+            estilista.FinDescanso,
+            servicio.DuracionMinutos);
+
+        if (!horariosPermitidos.Contains(horaElegida))
+        {
+            TempData["Error"] = "El horario seleccionado ya no está disponible.";
+            return RedirectToAction("PasoTres", new { servicioId, fecha, estilistaId });
         }
 
         // Convertir hora local del salón → UTC
@@ -410,4 +457,26 @@ public class ReservasController : Controller
 
         return slots;
     }
+
+    private static DateTime AFechaUtc(DateOnly fecha, TimeOnly hora) =>
+        TimeZoneInfo.ConvertTimeToUtc(fecha.ToDateTime(hora), ZonaSalon);
+
+    private static bool CoincideEspecialidad(string especialidad, string? categoria) =>
+        !string.IsNullOrWhiteSpace(categoria)
+        && string.Equals(especialidad.Trim(), categoria.Trim(), StringComparison.OrdinalIgnoreCase);
+
+    private static bool EsFechaReservaValida(DateOnly fecha)
+    {
+        var hoyLocal = DateOnly.FromDateTime(
+            TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, ZonaSalon));
+
+        return fecha > hoyLocal
+            && fecha <= FinVentanaReserva(hoyLocal)
+            && fecha.DayOfWeek != DayOfWeek.Sunday;
+    }
+
+    private static DateOnly FinVentanaReserva(DateOnly hoyLocal) =>
+        new DateOnly(hoyLocal.Year, hoyLocal.Month, 1)
+            .AddMonths(MesesCalendarioReserva)
+            .AddDays(-1);
 }
