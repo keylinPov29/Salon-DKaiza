@@ -1488,3 +1488,79 @@ tr[hidden] { display: none; }
 .dk-upload__nombre { color: var(--dk-muted); font-size: .85rem; }
 .dk-field select { width: 100%; padding: .7rem .8rem; border: 1px solid var(--dk-border); border-radius: 8px; background: var(--dk-bg); color: var(--dk-text); font: inherit; }
 .dk-thumb--sm { width: 44px; height: 44px; border-radius: 8px; }
+/* ───────── Aviso informativo ───────── */
+.dk-toast--info { background-color: #7E675A; }
+
+/* ───────── Menú de usuario (desplegable) ───────── */
+.dk-user { position: relative; }
+.dk-user > summary { list-style: none; cursor: pointer; display: inline-flex; align-items: center; gap: 0.4rem; }
+.dk-user > summary::-webkit-details-marker { display: none; }
+.dk-user__menu { position: absolute; right: 0; top: calc(100% + 16px); min-width: 210px; background: #FFFFFF; border: 1px solid var(--dk-border); border-radius: 14px; padding: 0.4rem 0; box-shadow: 0 12px 30px rgba(94, 74, 64, 0.18); z-index: 300; }
+.dk-user__menu a, .dk-user__menu button { display: block; width: 100%; padding: 0.7rem 1.1rem; font-family: var(--dk-sans); font-size: 0.82rem; color: var(--dk-text); background: none; border: none; text-align: left; text-decoration: none; cursor: pointer; }
+.dk-user__menu a:hover, .dk-user__menu button:hover { background: var(--dk-bg); }
+.dk-user__menu form { margin: 0.3rem 0 0; padding-top: 0.3rem; border-top: 1px solid var(--dk-border); }
+
+/* ───────── Mi perfil ───────── */
+.dk-perfil { min-height: calc(100vh - 80px); padding: 3rem 1rem 4rem; background: linear-gradient(180deg, var(--dk-bg) 0%, var(--dk-bg-alt) 100%); }
+.dk-perfil__card { max-width: 900px; margin: 0 auto; background: var(--dk-card); border: 1px solid var(--dk-border); border-radius: 24px; overflow: hidden; box-shadow: 0 15px 40px rgba(126, 103, 90, 0.12); }
+.dk-perfil__band { height: 120px; background: linear-gradient(120deg, var(--dk-blush), var(--dk-taupe)); }
+
+/* Cabecera: el avatar sube sobre la banda; el nombre y las etiquetas van en la zona blanca */
+.dk-perfil__top { display: flex; align-items: flex-start; gap: 1.6rem; padding: 0 2.25rem; }
+.dk-perfil__avatar { width: 124px; height: 124px; flex: none; margin-top: -62px; border-radius: 50%; background: var(--dk-mocha); color: #FFFFFF; border: 6px solid #FFFFFF; display: flex; align-items: center; justify-content: center; font-family: var(--dk-serif); font-size: 2.6rem; }
+.dk-perfil__info { flex: 1; min-width: 0; padding-top: 1.1rem; min-height: 8.25rem; }
+.dk-perfil__name { font-family: var(--dk-serif); font-size: 2.1rem; line-height: 1.15; margin: 0; color: var(--dk-text); }
+.dk-perfil__nota { margin: 0.5rem 0 0; font-size: 0.9rem; color: var(--dk-muted); }
+.dk-perfil__act { padding-top: 1.25rem; min-width: 8.5rem; text-align: right; }
+
+/* Etiquetas */
+.dk-perfil__chips { display: flex; gap: 0.6rem; flex-wrap: wrap; margin-top: 0.9rem; }
+.dk-pchip { display: inline-flex; align-items: center; gap: 0.5rem; font-family: var(--dk-sans); font-size: 0.75rem; font-weight: 600; letter-spacing: 1.2px; text-transform: uppercase; line-height: 1; padding: 0.6rem 1.15rem; border-radius: 50px; border: 1px solid #D9C9BD; background: var(--dk-bg); color: var(--dk-mocha-dk); }
+.dk-pchip--ok { background: #EAF3DE; border-color: #C5DCAF; color: #27500A; }
+.dk-pchip--ok::before { content: ""; width: 0.55rem; height: 0.55rem; border-radius: 50%; background: #4E9A2F; }
+.dk-pchip--fecha { background: #FFFFFF; }
+.dk-pchip svg { width: 0.95rem; height: 0.95rem; }
+
+/* Botones del perfil */
+.dk-perfil .dk-btn { font-size: 0.8rem; padding: 0.95rem 2.25rem; }
+.dk-perfil .dk-btn--outline { padding: 0.9rem 2rem; font-size: 0.8rem; }
+
+/* Pestañas */
+.dk-perfil__tabs { display: flex; gap: 0.4rem; padding: 0 2.25rem; margin-top: 0.5rem; border-bottom: 1px solid var(--dk-border); }
+.dk-perfil__tab { padding: 1rem 1.25rem; font-family: var(--dk-sans); font-size: 0.95rem; color: var(--dk-muted); text-decoration: none; border-bottom: 2px solid transparent; margin-bottom: -1px; }
+.dk-perfil__tab:hover { color: var(--dk-mocha-dk); }
+.dk-perfil__tab--on { color: var(--dk-mocha-dk); border-bottom-color: var(--dk-mocha); font-weight: 600; }
+
+/* Datos */
+.dk-perfil__body { padding: 0.5rem 2.25rem 2.25rem; }
+.dk-perfil__sec { font-family: var(--dk-sans); font-size: 0.75rem; font-weight: 600; letter-spacing: 2.6px; text-transform: uppercase; color: var(--dk-mocha); margin: 1.6rem 0 0.9rem; }
+.dk-perfil__grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 1.1rem; }
+.dk-dato { border: 1px solid var(--dk-border); border-radius: 18px; padding: 1rem 1.4rem; min-height: 5.5rem; background: #FDFAF6; }
+.dk-dato small { display: block; font-family: var(--dk-sans); font-size: 0.75rem; letter-spacing: 1.5px; text-transform: uppercase; color: var(--dk-muted); margin-bottom: 0.35rem; }
+.dk-dato b { display: block; font-family: var(--dk-sans); font-weight: 500; font-size: 1.2rem; line-height: 1.75rem; word-break: break-all; color: var(--dk-text); }
+.dk-dato input { display: block; width: 100%; height: 1.75rem; border: none; outline: none; background: transparent; font-family: var(--dk-sans); font-size: 1.2rem; color: var(--dk-text); padding: 0; }
+.dk-perfil__err { display: block; min-height: 1.2rem; margin: 0.4rem 0 0 0.5rem; font-size: 0.8rem; color: #B83232; }
+.dk-perfil__actions { gap: 0.9rem; justify-content: flex-end; margin-top: 1.25rem; }
+
+/* Alternar vista / edición */
+.dk-perfil .dk-edit { display: none; }
+.dk-perfil.is-editing .dk-ver { display: none; }
+.dk-perfil.is-editing .dk-edit { display: block; }
+.dk-perfil.is-editing .dk-perfil__actions.dk-edit { display: flex; }
+.dk-perfil.is-editing .dk-dato--lock { opacity: 0.6; }
+.dk-perfil.is-editing .dk-dato:not(.dk-dato--lock) { border-color: var(--dk-mocha); background: #FFFFFF; box-shadow: 0 0 0 3px rgba(126, 103, 90, 0.12); }
+.dk-perfil.is-editing .dk-dato:has(.input-validation-error) { border-color: #B83232; background: #FDF0F0; }
+
+/* Celular */
+@media (max-width: 640px) {
+  .dk-perfil { padding: 1.5rem 0.75rem 3rem; }
+  .dk-perfil__band { height: 90px; }
+  .dk-perfil__top { flex-direction: column; gap: 0.4rem; padding: 0 1.25rem; }
+  .dk-perfil__avatar { width: 100px; height: 100px; margin-top: -50px; font-size: 2.1rem; }
+  .dk-perfil__info { min-height: 0; padding-top: 0.25rem; }
+  .dk-perfil__name { font-size: 1.7rem; }
+  .dk-perfil__act { padding: 0.25rem 0 0; text-align: left; min-width: 0; }
+  .dk-perfil__tabs { padding: 0 1.25rem; }
+  .dk-perfil__body { padding: 0.25rem 1.25rem 1.75rem; }
+  .dk-perfil__actions .dk-btn { flex: 1; }
+}
