@@ -1029,3 +1029,19 @@ img { max-width: 100%; display: block; }
 }
 .dk-toast--ok { background-color: #557A58; }
 .dk-toast--err { background-color: #B83232; }
+
+/* =========================================
+   AVISO INFORMATIVO
+   ========================================= */
+.dk-toast--info { background-color: #7E675A; }
+
+/* =========================================
+   MENÚ DE USUARIO (DESPLEGABLE)
+   ========================================= */
+.dk-user { position: relative; }
+.dk-user > summary { list-style: none; cursor: pointer; display: inline-flex; align-items: center; gap: 0.4rem; }
+.dk-user > summary::-webkit-details-marker { display: none; }
+.dk-user__menu { position: absolute; right: 0; top: calc(100% + 16px); min-width: 210px; background: #FFFFFF; border: 1px solid var(--dk-border); border-radius: 14px; padding: 0.4rem 0; box-shadow: 0 12px 30px rgba(94, 74, 64, 0.18); z-index: 300; }
+.dk-user__menu a, .dk-user__menu button { display: block; width: 100%; padding: 0.7rem 1.1rem; font-family: var(--dk-sans); font-size: 0.82rem; color: var(--dk-text); background: none; border: none; text-align: left; text-decoration: none; cursor: pointer; }
+.dk-user__menu a:hover, .dk-user__menu button:hover { background: var(--dk-bg); }
+.dk-user__menu form { margin: 0.3rem 0 0; padding-top: 0.3rem; border-top: 1px solid var(--dk-border); }

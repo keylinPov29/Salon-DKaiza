@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="utf-8" />
@@ -26,10 +26,17 @@
 
             @if (User.Identity?.IsAuthenticated == true)
             {
-                <span class="dk-nav__user">@User.Identity!.Name</span>
-                <form asp-controller="Account" asp-action="Logout" method="post" class="dk-nav__form">
-                    <button type="submit" class="dk-nav__link">Cerrar sesión</button>
-                </form>
+                @if (User.IsInRole("Cliente"))
+                {
+                    <partial name="_MenuUsuario" />
+                }
+                else
+                {
+                    <span class="dk-nav__user">@User.Identity!.Name</span>
+                    <form asp-controller="Account" asp-action="Logout" method="post" class="dk-nav__form">
+                        <button type="submit" class="dk-nav__link">Cerrar sesión</button>
+                    </form>
+                }
             }
             else
             {
@@ -46,6 +53,10 @@
     @if (TempData["Error"] != null)
     {
         <div class="dk-toast dk-toast--err">@TempData["Error"]</div>
+    }
+    @if (TempData["Info"] != null)
+    {
+        <div class="dk-toast dk-toast--info">@TempData["Info"]</div>
     }
 
     <main>

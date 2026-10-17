@@ -1,4 +1,4 @@
-@model DKaiza.Web.Models.Servicio
+﻿@model DKaiza.Web.Models.Servicio
 @{
     Layout = null;
 }
@@ -50,11 +50,18 @@
                     <a href="/admin/estilistas" class="dk-nav__link">Estilistas</a>
                 }
 
-                <span class="dk-nav__link" style="cursor:default">@User.Identity!.Name</span>
+                @if (User.IsInRole("Cliente"))
+                {
+                    <partial name="_MenuUsuario" />
+                }
+                else
+                {
+                    <span class="dk-nav__link" style="cursor:default">@User.Identity!.Name</span>
 
-                <form asp-controller="Account" asp-action="Logout" method="post" style="display:inline;margin:0">
-                    <button type="submit" class="dk-nav__link">Cerrar sesión</button>
-                </form>
+                    <form asp-controller="Account" asp-action="Logout" method="post" style="display:inline;margin:0">
+                        <button type="submit" class="dk-nav__link">Cerrar sesión</button>
+                    </form>
+                }
             }
             else
             {
@@ -72,6 +79,10 @@
     @if (TempData["Error"] != null)
     {
         <div class="dk-toast dk-toast--err">@TempData["Error"]</div>
+    }
+    @if (TempData["Info"] != null)
+    {
+        <div class="dk-toast dk-toast--info">@TempData["Info"]</div>
     }
 
 
@@ -342,7 +353,7 @@
                         </li>
                         <li>
                             <span class="dk-footer__label">Horario</span>
-                            <span>Lun a Sáb · 10:00 – 22:00</span>
+                            <span>Lun a Sáb · 9:30 – 21:00</span>
                         </li>
                     </ul>
                 </div>
