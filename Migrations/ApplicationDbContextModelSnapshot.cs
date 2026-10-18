@@ -17,7 +17,7 @@ namespace DKaiza.Migrations
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "9.0.20")
+                .HasAnnotation("ProductVersion", "9.0.21")
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
@@ -87,6 +87,12 @@ namespace DKaiza.Migrations
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<DateTime>("Fin")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime?>("HoraFinReal")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime?>("HoraInicioReal")
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<DateTime>("Inicio")

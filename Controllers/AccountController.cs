@@ -62,7 +62,11 @@ public class AccountController : Controller
 
         if (usuario.Rol == RolUsuario.Administrador)
             return Redirect("/admin/categorias");
+            //si es estilista
+        if (usuario.Rol == RolUsuario.Estilista)
+            return RedirectToAction("Index", "Agenda");
 
+        // Si es cliente, se queda en la página principal
         return Redirect("/");
     }
 
