@@ -148,7 +148,106 @@ public class AccountController : Controller
 
         return Redirect("/");
     }
+        // ───────── Mi perfil (actualización de datos del cliente) ─────────
 
+    private async Task<Usuario?> UsuarioActualAsync()
+    {
+        if (!int.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var id))
+            return null;
+        return await _db.Usuarios.FirstOrDefaultAsync(u => u.Id == id && u.Activo);
+    }
+
+    private static PerfilViewModel PerfilDe(Usuario u) => new()
+    {
+        Nombre = u.Nombre,
+        Apellido = u.Apellido,
+        Email = u.Email,
+        Telefono = u.Telefono,
+        FechaRegistro = u.FechaRegistro
+    };
+
+    [Authorize(Roles = "Cliente")]
+    [HttpGet("/cuenta/perfil")]
+    public async Task<IActionResult> Perfil()
+    {
+        var usuario = await UsuarioActualAsync();
+        if (usuario == null) return Redirect("/cuenta/login");
+        return View(PerfilDe(usuario));
+    }
+
+    [Authorize(Roles = "Cliente")]
+    [HttpPost("/cuenta/perfil")]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> Perfil(PerfilViewModel model)
+    {
+        var usuario = await UsuarioActualAsync();
+        if (usuario == null) return Redirect("/cuenta/login");
+
+        // Nombre, apellido y fecha no se editan: se vuelven a cargar para mostrarlos
+        model.Nombre = usuario.Nombre;
+        model.Apellido = usuario.Apellido;
+        model.FechaRegistro = usuario.FechaRegistro;
+
+        if (!ModelState.IsValid)
+        {
+            ViewBag.Editando = true;
+            return View(model);
+        }
+
+        var email = model.Email.Trim().ToLower();
+
+        var duplicado = await _db.Usuarios
+            .AnyAsync(u => u.Id != usuario.Id && u.Email.ToLower() == email);
+
+        if (duplicado)
+        {
+            ModelState.AddModelError("Email", "Ya existe una cuenta registrada con este correo electrónico.");
+            ViewBag.Editando = true;
+            return View(model);
+        }
+
+        usuario.Email = email;
+        usuario.Telefono = model.Telefono.Trim();
+
+        try
+        {
+            await _db.SaveChangesAsync();
+        }
+        catch (DbUpdateException)
+        {
+            ModelState.AddModelError("", "No se pudieron guardar los cambios. Intenta de nuevo.");
+            ViewBag.Editando = true;
+            return View(model);
+        }
+
+        // Refrescar la sesión para que el correo nuevo quede en la cookie
+        var actual = await HttpContext.AuthenticateAsync(CookieAuthenticationDefaults.AuthenticationScheme);
+        var claims = new List<Claim>
+        {
+            new Claim(ClaimTypes.NameIdentifier, usuario.Id.ToString()),
+            new Claim(ClaimTypes.Name, usuario.NombreCompleto),
+            new Claim(ClaimTypes.Email, usuario.Email),
+            new Claim(ClaimTypes.Role, usuario.Rol.ToString())
+        };
+        var identity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
+        await HttpContext.SignInAsync(
+            CookieAuthenticationDefaults.AuthenticationScheme,
+            new ClaimsPrincipal(identity),
+            actual?.Properties ?? new AuthenticationProperties());
+
+        TempData["Success"] = "Datos actualizados";
+        return Redirect("/cuenta/perfil");
+    }
+
+    // La pantalla de citas del cliente aún no existe: por ahora solo avisa.
+    // Cuando exista, esta acción pasa a mostrar la lista de citas.
+    [Authorize(Roles = "Cliente")]
+    [HttpGet("/cuenta/mis-citas")]
+    public IActionResult MisCitas()
+    {
+        TempData["Info"] = "Mis citas estará disponible pronto";
+        return Redirect("/cuenta/perfil");
+    }
     [HttpPost("/cuenta/logout")]
     [ValidateAntiForgeryToken]
     [Authorize]
