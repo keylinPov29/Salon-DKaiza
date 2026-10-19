@@ -180,7 +180,7 @@
             @foreach (var cita in Model.Citas)
             {
                 <div class="col-md-6 col-lg-4">
-                    <div class="cita-card">
+                    <div class="cita-card" style="@(cita.Estado == EstadoCita.Completada ? "opacity: 0.6; filter: grayscale(100%);" : "")">
                         <div class="client-avatar">
                             @if (Model.EsAdmin)
                             {
