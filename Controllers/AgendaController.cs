@@ -5,6 +5,7 @@ using DKaiza.Web.Dominio;
 using DKaiza.Web.Models;      
 using DKaiza.Data;            
 using System.Security.Claims;
+using Microsoft.AspNetCore.Authorization;
 
 namespace DKaiza.Web.Controllers;
 
@@ -28,7 +29,6 @@ public class AgendaController : Controller
         var usuario = await _context.Usuarios.FirstOrDefaultAsync(u => u.Id == int.Parse(userIdString));
         if (usuario == null) return Unauthorized();
 
-        // 1. Consulta base
         var query = _context.Citas
             .Include(c => c.Cliente)
             .Include(c => c.Servicio)
@@ -37,7 +37,6 @@ public class AgendaController : Controller
 
         bool esAdmin = usuario.Rol == RolUsuario.Administrador || usuario.Rol == RolUsuario.Recepcionista;
 
-        // 2. Filtro por Rol
         if (usuario.Rol == RolUsuario.Estilista)
         {
             query = query.Where(c => c.EstilistaId == usuario.EstilistaId);
@@ -47,7 +46,6 @@ public class AgendaController : Controller
             query = query.Where(c => c.EstilistaId == estilistaIdFiltro.Value);
         }
 
-        // 3. Filtro por Fecha
         if (fecha.HasValue)
         {
             var inicioDia = fecha.Value.Date.ToUniversalTime();
@@ -62,7 +60,6 @@ public class AgendaController : Controller
 
         var citas = await query.OrderBy(c => c.Inicio).ToListAsync();
 
-        // 4. Cargar lista de estilistas para el combo
         var listaEstilistas = new List<Estilista>();
         if (esAdmin)
         {
@@ -96,9 +93,6 @@ public class AgendaController : Controller
         return View(viewModel);
     }
 
-    // ==========================================
-    // VER DETALLE (Para el Modal)
-    // ==========================================
     [HttpGet]
     public async Task<IActionResult> DetalleCita(int id)
     {
@@ -130,61 +124,94 @@ public class AgendaController : Controller
     // ==========================================
     // H.U. 12: INICIAR Y FINALIZAR ATENCIÓN
     // ==========================================
+    
     [HttpPost]
+    [Authorize(Roles = "Estilista")] 
     public async Task<IActionResult> IniciarAtencion(int id)
     {
-        var cita = await _context.Citas.FindAsync(id);
-        if (cita == null) return Json(new { success = false, message = "Cita no encontrada." });
+        try
+        {
+            var userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            var usuario = await _context.Usuarios.FirstOrDefaultAsync(u => u.Id == int.Parse(userIdString));
 
-        if (cita.Estado != EstadoCita.Pendiente && cita.Estado != EstadoCita.Confirmada)
-            return Json(new { success = false, message = "Solo se pueden iniciar citas Pendientes o Confirmadas." });
+            if (usuario == null || usuario.EstilistaId == null) return Unauthorized();
 
-        cita.HoraInicioReal = DateTime.UtcNow;
-        cita.Estado = EstadoCita.EnProceso; 
-        await _context.SaveChangesAsync();
-        
-        return Json(new { success = true, message = "Atención iniciada correctamente." });
+            var cita = await _context.Citas.FindAsync(id);
+            if (cita == null) return NotFound();
+
+            if (cita.EstilistaId != usuario.EstilistaId) return Forbid();
+
+            if (cita.Estado != EstadoCita.Pendiente && cita.Estado != EstadoCita.Confirmada)
+                return BadRequest("Solo se pueden iniciar citas Pendientes o Confirmadas.");
+
+            cita.HoraInicioReal = DateTime.UtcNow;
+            cita.Estado = EstadoCita.EnProceso; 
+            await _context.SaveChangesAsync();
+            
+            return RedirectToAction(nameof(EnProceso), new { id = cita.Id });
+        }
+        catch (Exception ex)
+        {
+            return BadRequest("Error al iniciar: " + ex.Message);
+        }
     }
 
+    [Authorize(Roles = "Estilista")] 
     public async Task<IActionResult> EnProceso(int id)
     {
+        var userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        var usuario = await _context.Usuarios.FirstOrDefaultAsync(u => u.Id == int.Parse(userIdString));
+
         var cita = await _context.Citas
-            .Include(c => c.Cliente).Include(c => c.Servicio)
+            .Include(c => c.Cliente)
+            .Include(c => c.Servicio)
             .FirstOrDefaultAsync(c => c.Id == id);
 
-        if (cita == null || cita.Estado != EstadoCita.EnProceso || cita.HoraInicioReal == null)
+        if (cita == null || cita.EstilistaId != usuario.EstilistaId || cita.Estado != EstadoCita.EnProceso || cita.HoraInicioReal == null)
             return RedirectToAction(nameof(Index));
 
         ViewBag.HoraInicioStr = cita.HoraInicioReal.Value.ToLocalTime().ToString("HH:mm:ss");
-        ViewBag.HoraInicioIso = cita.HoraInicioReal.Value.ToString("yyyy-MM-ddTHH:mm:ssZ");
+        // Enviamos la fecha de inicio en milisegundos para que JS no falle
+        ViewBag.HoraInicioMs = new DateTimeOffset(cita.HoraInicioReal.Value).ToUnixTimeMilliseconds();
         ViewBag.DuracionEstimada = (int)(cita.Fin - cita.Inicio).TotalMinutes;
 
         return View(cita);
     }
 
     [HttpPost]
+    [Authorize(Roles = "Estilista")] 
     public async Task<IActionResult> FinalizarAtencion(int id)
     {
-        var cita = await _context.Citas.FindAsync(id);
-        if (cita == null) return Json(new { success = false, message = "Cita no encontrada." });
+        try
+        {
+            var userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            var usuario = await _context.Usuarios.FirstOrDefaultAsync(u => u.Id == int.Parse(userIdString));
 
-        if (cita.Estado != EstadoCita.EnProceso)
-            return Json(new { success = false, message = "La cita debe estar En Proceso." });
+            var cita = await _context.Citas.FindAsync(id);
+            if (cita == null) return NotFound();
 
-        cita.HoraFinReal = DateTime.UtcNow;
-        cita.Estado = EstadoCita.Completada;
-        await _context.SaveChangesAsync();
+            if (cita.EstilistaId != usuario.EstilistaId)
+                return Forbid();
 
-        var tiempoTotal = cita.HoraFinReal.Value - cita.HoraInicioReal!.Value;
+            if (cita.Estado != EstadoCita.EnProceso)
+                return BadRequest("La cita debe estar En Proceso.");
 
-        return Json(new { 
-            success = true, 
-            message = "Atención finalizada correctamente.",
-            resumen = new {
-                horaInicio = cita.HoraInicioReal.Value.ToLocalTime().ToString("HH:mm:ss"),
-                horaFin = cita.HoraFinReal.Value.ToLocalTime().ToString("HH:mm:ss"),
-                tiempoTotal = tiempoTotal.ToString(@"hh\:mm\:ss")
-            }
-        });
+            // Guardamos la hora de fin y cambiamos el estado
+            cita.HoraFinReal = DateTime.UtcNow;
+            cita.Estado = EstadoCita.Completada;
+            
+            await _context.SaveChangesAsync();
+
+            // Guardamos el mensaje en TempData para mostrarlo en la agenda
+            TempData["Success"] = "¡Atención finalizada correctamente!";
+            
+            // Redirigimos a la agenda
+            return RedirectToAction(nameof(Index));
+        }
+        catch (Exception ex)
+        {
+            TempData["Error"] = "Error al finalizar: " + (ex.InnerException?.Message ?? ex.Message);
+            return RedirectToAction(nameof(Index));
+        }
     }
 }
