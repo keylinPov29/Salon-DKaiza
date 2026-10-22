@@ -1,0 +1,109 @@
+@model DKaiza.Web.Models.PerfilViewModel
+@using System.Globalization
+@{
+    ViewData["Title"] = "Mi perfil";
+    bool editando = ViewBag.Editando == true;
+    var n = (Model.Nombre ?? "").Trim();
+    var a = (Model.Apellido ?? "").Trim();
+    var iniciales = ((n.Length > 0 ? n[0].ToString() : "") + (a.Length > 0 ? a[0].ToString() : "")).ToUpper();
+    var desde = Model.FechaRegistro.HasValue
+        ? Model.FechaRegistro.Value.ToLocalTime().ToString("MMMM yyyy", new CultureInfo("es-PE")).ToLower()
+        : "";
+}
+
+<section class="dk-perfil @(editando ? "is-editing" : "")" id="perfil">
+    <div class="dk-perfil__card">
+        <div class="dk-perfil__band"></div>
+
+        <div class="dk-perfil__top">
+            <div class="dk-perfil__avatar">@iniciales</div>
+
+            <div class="dk-perfil__info">
+                <div class="dk-ver">
+                    <h1 class="dk-perfil__name">@Model.Nombre @Model.Apellido</h1>
+                    <div class="dk-perfil__chips">
+                        <span class="dk-pchip">Cliente</span>
+                        <span class="dk-pchip dk-pchip--ok">Cuenta activa</span>
+                        @if (desde != "")
+                        {
+                            <span class="dk-pchip dk-pchip--fecha">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                    <rect x="3" y="5" width="18" height="16" rx="2"></rect>
+                                    <line x1="3" y1="10" x2="21" y2="10"></line>
+                                    <line x1="8" y1="3" x2="8" y2="7"></line>
+                                    <line x1="16" y1="3" x2="16" y2="7"></line>
+                                </svg>
+                                Desde @desde
+                            </span>
+                        }
+                    </div>
+                </div>
+
+                <div class="dk-edit">
+                    <h1 class="dk-perfil__name">Editar mis datos</h1>
+                    <p class="dk-perfil__nota">Solo puedes modificar tu correo y tu teléfono.</p>
+                </div>
+            </div>
+
+            <div class="dk-perfil__act">
+                <button type="button" class="dk-btn dk-btn--primary dk-ver" id="btnEditar">Editar</button>
+            </div>
+        </div>
+
+        <nav class="dk-perfil__tabs">
+            <a class="dk-perfil__tab dk-perfil__tab--on" href="/cuenta/perfil">Mi perfil</a>
+            <a class="dk-perfil__tab" href="/cuenta/mis-citas">Mis citas</a>
+        </nav>
+
+        <form asp-action="Perfil" asp-controller="Account" method="post" class="dk-perfil__body">
+            <div asp-validation-summary="ModelOnly" class="dk-alert"></div>
+
+            <h2 class="dk-perfil__sec">Datos personales</h2>
+            <div class="dk-perfil__grid">
+                <div class="dk-dato dk-dato--lock">
+                    <small>Nombre</small>
+                    <b>@Model.Nombre</b>
+                </div>
+                <div class="dk-dato dk-dato--lock">
+                    <small>Apellido</small>
+                    <b>@Model.Apellido</b>
+                </div>
+            </div>
+
+            <h2 class="dk-perfil__sec">Datos de contacto</h2>
+            <div class="dk-perfil__grid">
+                <div>
+                    <div class="dk-dato">
+                        <small>Correo</small>
+                        <b class="dk-ver">@Model.Email</b>
+                        <input asp-for="Email" type="email" class="dk-edit" autocomplete="email" />
+                    </div>
+                    <span asp-validation-for="Email" class="dk-perfil__err"></span>
+                </div>
+                <div>
+                    <div class="dk-dato">
+                        <small>Teléfono</small>
+                        <b class="dk-ver">@Model.Telefono</b>
+                        <input asp-for="Telefono" type="tel" class="dk-edit" autocomplete="tel" />
+                    </div>
+                    <span asp-validation-for="Telefono" class="dk-perfil__err"></span>
+                </div>
+            </div>
+
+            <div class="dk-perfil__actions dk-edit">
+                <a class="dk-btn dk-btn--outline" href="/cuenta/perfil">Cancelar</a>
+                <button type="submit" class="dk-btn dk-btn--primary">Guardar</button>
+            </div>
+        </form>
+    </div>
+</section>
+
+@section Scripts {
+    <script>
+        document.getElementById('btnEditar').addEventListener('click', function () {
+            document.getElementById('perfil').classList.add('is-editing');
+            var i = document.getElementById('Email');
+            if (i) i.focus();
+        });
+    </script>
+}

@@ -8,7 +8,8 @@ public enum EstadoCita
     Pendiente = 1,      // Reservada, pendiente de pago/confirmación
     Confirmada = 2,     // Pagada y confirmada
     Cancelada = 3,      // Cancelada por cliente o salón
-    Completada = 4      // Servicio prestado
+    Completada = 4,    // Servicio prestado
+    EnProceso = 5      
 }
 
 public class Cita
@@ -40,4 +41,6 @@ public class Cita
 
     [MaxLength(300)]
     public string? Notas { get; set; }
+    public DateTime? HoraInicioReal { get; set; }
+    public DateTime? HoraFinReal { get; set; }
 }

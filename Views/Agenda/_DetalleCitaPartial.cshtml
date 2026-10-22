@@ -1,0 +1,174 @@
+@model DKaiza.Web.Estilistas.DetalleCitaDto
+@using DKaiza.Web.Dominio
+
+<style>
+    .modal-header-flotante {
+        background-color: #a37e6a !important; 
+        color: white !important;
+        padding: 20px !important;
+        text-align: center !important;
+        border-bottom: none !important;
+        position: relative !important;
+        border-radius: 20px 20px 0 0 !important;
+    }
+
+    .modal-header-flotante h4 {
+        margin: 0 !important;
+        font-family: 'Playfair Display', serif !important;
+        font-weight: 600 !important;
+        font-size: 1.3rem !important;
+    }
+
+    .btn-close-custom {
+        position: absolute !important;
+        top: 20px !important;
+        right: 20px !important;
+        background: transparent !important;
+        border: none !important;
+        color: white !important;
+        font-size: 1.2rem !important;
+        cursor: pointer !important;
+        opacity: 0.8 !important;
+        padding: 0 !important;
+    }
+    .btn-close-custom:hover { opacity: 1 !important; }
+
+    .modal-body-flotante {
+        padding: 20px 30px !important;
+        background-color: #fcf9f2 !important;
+    }
+
+    .data-row {
+        display: flex !important;
+        justify-content: space-between !important;
+        padding: 12px 0 !important;
+        border-bottom: 1px solid #eae1d8 !important;
+        color: #5a4b41 !important;
+        font-size: 1rem !important;
+        font-weight: 500 !important;
+    }
+    
+    .data-row:last-child {
+        border-bottom: none !important;
+    }
+
+    .data-row span:first-child {
+        color: #888 !important;
+        font-weight: 400 !important;
+    }
+
+    .modal-footer-flotante {
+        padding: 15px 30px 25px 30px !important;
+        display: flex !important;
+        justify-content: space-between !important;
+        gap: 15px !important;
+        background-color: #fcf9f2 !important;
+        border-top: none !important;
+        border-radius: 0 0 20px 20px !important;
+    }
+
+    .btn-flotante {
+        border-radius: 25px !important;
+        padding: 12px 20px !important;
+        font-weight: 600 !important;
+        font-size: 0.95rem !important;
+        border: none !important;
+        flex: 1 !important;
+        transition: 0.2s !important;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.05) !important;
+    }
+
+    .btn-flotante-secondary {
+        background-color: #eae1d8 !important; 
+        color: #5a4b41 !important;
+    }
+    .btn-flotante-secondary:hover { background-color: #dcd0c4 !important; }
+
+    .btn-flotante-primary {
+        background-color: #5a4b41 !important; 
+        color: white !important;
+    }
+    .btn-flotante-primary:hover { background-color: #433630 !important; }
+</style>
+
+<div class="modal-header-flotante">
+    <h4>Detalle de la cita</h4>
+    <button type="button" class="btn-close-custom" data-bs-dismiss="modal" aria-label="Close">✕</button>
+</div>
+
+<div class="modal-body-flotante">
+    <div class="data-row">
+        <span>Cliente:</span>
+        <span>@Model.ClienteNombre</span>
+    </div>
+    
+    <div class="data-row">
+        <span>Servicio:</span>
+        <span>@Model.ServicioNombre</span>
+    </div>
+
+    <div class="data-row">
+        <span>Fecha:</span>
+        <span>@Model.FechaStr</span>
+    </div>
+
+    <div class="data-row">
+        <span>Hora:</span>
+        <span>@Model.HorarioStr</span>
+    </div>
+
+    <div class="data-row">
+        <span>Estado:</span>
+        <span style="font-weight: bold;">
+            @if (Model.Estado == EstadoCita.Pendiente || Model.Estado == EstadoCita.Confirmada)
+            {
+                <span>Pendiente</span>
+            }
+            else if (Model.Estado == EstadoCita.EnProceso)
+            {
+                <span style="color: #f5b041;">En Proceso</span>
+            }
+            else if (Model.Estado == EstadoCita.Completada)
+            {
+                <span style="color: #27ae60;">Completada</span>
+            }
+        </span>
+    </div>
+
+    @if (!string.IsNullOrEmpty(Model.ClienteTelefono))
+    {
+        <div class="data-row">
+            <span>Teléfono:</span>
+            <span>@Model.ClienteTelefono</span>
+        </div>
+    }
+</div>
+
+<div class="modal-footer-flotante">
+    @if (Model.Estado == EstadoCita.Pendiente || Model.Estado == EstadoCita.Confirmada)
+    {
+        <button class="btn btn-flotante btn-flotante-primary" onclick="iniciarAtencion(@Model.Id)">
+            Iniciar atención
+        </button>
+    }
+    
+    <button type="button" class="btn btn-flotante btn-flotante-secondary" data-bs-dismiss="modal">
+        Cerrar
+    </button>
+</div>
+
+<script>
+    function iniciarAtencion(id) {
+        if (!confirm("¿Estás seguro de iniciar la atención de esta cita?")) return;
+        
+        fetch(`/Agenda/IniciarAtencion?id=${id}`, { method: 'POST' })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    window.location.href = `/Agenda/EnProceso/${id}`;
+                } else {
+                    alert("Error: " + data.message);
+                }
+            });
+    }
+</script>

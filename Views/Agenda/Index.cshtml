@@ -1,0 +1,239 @@
+@model DKaiza.Web.Estilistas.AgendaEstilistaViewModel
+@using DKaiza.Web.Dominio
+
+@{
+    ViewData["Title"] = "Agenda";
+}
+
+<style>
+    :root {
+        --bg-page: #fcf9f2; 
+        --color-terracota: #a37e6a;
+        --color-marron: #5a4b41;
+        --color-crema: #f3ebe1;
+    }
+
+    body { background-color: var(--bg-page) !important; }
+
+    .title-main {
+        font-family: 'Georgia', serif;
+        font-weight: bold;
+        color: var(--color-marron);
+        font-size: 2.5rem;
+        margin-bottom: 20px;
+    }
+
+    .filter-bar {
+        background-color: white;
+        border-radius: 50px;
+        padding: 10px 25px;
+        display: inline-flex;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 15px;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+        margin-bottom: 40px;
+        border: 1px solid #f0e6dc;
+    }
+    
+    .filter-bar input, .filter-bar select {
+        border: none;
+        background: transparent;
+        font-weight: 600;
+        color: var(--color-marron);
+        outline: none;
+        cursor: pointer;
+    }
+
+    .btn-clear {
+        background-color: var(--color-crema);
+        color: var(--color-marron);
+        border-radius: 20px;
+        padding: 6px 15px;
+        font-size: 0.85rem;
+        font-weight: 600;
+        text-decoration: none;
+        transition: 0.2s;
+    }
+    .btn-clear:hover { background-color: #e6dacb; color: var(--color-marron); }
+
+    .cita-card {
+        background-color: #ffffff;
+        border-radius: 24px;
+        padding: 30px 25px;
+        border: 1px solid #f0e6dc;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.03);
+        transition: transform 0.2s;
+        max-width: 350px;
+        margin: 0 auto; 
+        text-align: center;
+    }
+    .cita-card:hover { transform: translateY(-5px); }
+
+    .client-avatar {
+        width: 65px;
+        height: 65px;
+        border-radius: 50%;
+        background-color: var(--color-crema);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--color-terracota);
+        font-weight: bold;
+        font-size: 1.6rem;
+        margin: 0 auto 15px auto;
+    }
+
+    .service-title {
+        font-family: 'Georgia', serif;
+        color: var(--color-marron);
+        font-weight: bold;
+        font-size: 1.4rem;
+        margin-bottom: 5px;
+    }
+    
+    .cita-fecha {
+        font-size: 0.85rem;
+        color: #888;
+        font-weight: 600;
+        margin-bottom: 10px;
+    }
+
+    .btn-detail {
+        background-color: var(--color-marron);
+        color: white;
+        border-radius: 25px;
+        padding: 12px;
+        font-weight: 600;
+        font-size: 0.95rem;
+        border: none;
+        width: 100%;
+        margin-top: 15px;
+        transition: 0.2s;
+    }
+    .btn-detail:hover { background-color: #433630; color: white; }
+    
+    .admin-badge {
+        background-color: #5a4b41;
+        color: white;
+        font-size: 0.75rem;
+        padding: 4px 10px;
+        border-radius: 10px;
+        font-weight: bold;
+        display: inline-block;
+        margin-top: 5px;
+    }
+</style>
+
+<div class="container py-5">
+    <div class="text-center mb-4">
+        <h1 class="title-main">@(Model.EsAdmin ? "Agenda Global (Admin)" : "Mis Citas")</h1>
+        @if (Model.EsAdmin)
+        {
+            <p class="text-muted">Visualiza y filtra las citas de todos los estilistas del salón.</p>
+        }
+    </div>
+
+    <!-- Barra de Filtros -->
+    <div class="d-flex justify-content-center">
+        <div class="filter-bar">
+            <form method="get" class="d-flex align-items-center gap-3 m-0 flex-wrap">
+                
+                <div class="d-flex align-items-center gap-2">
+                    <span style="font-size: 1.2rem;">📅</span>
+                    <input type="date" name="fecha" value="@(Model.FechaSeleccionada?.ToString("yyyy-MM-dd"))" onchange="this.form.submit()" />
+                </div>
+
+                @if (Model.EsAdmin)
+                {
+                    <div class="d-flex align-items-center gap-2 border-start ps-3">
+                        <span style="font-size: 1.2rem;">✂️</span>
+                        <select name="estilistaIdFiltro" onchange="this.form.submit()">
+                            <option value="">Todos los estilistas</option>
+                            @foreach (var est in Model.ListaEstilistas)
+                            {
+                                <option value="@est.Id" selected="@(Model.EstilistaIdFiltro == est.Id)">
+                                    @est.NombreCompleto
+                                </option>
+                            }
+                        </select>
+                    </div>
+                }
+
+                @if (Model.FechaSeleccionada.HasValue || (Model.EsAdmin && Model.EstilistaIdFiltro.HasValue))
+                {
+                    <a href="/Agenda" class="btn-clear ms-2">✕ Ver todas</a>
+                }
+            </form>
+        </div>
+    </div>
+
+    @if (!Model.Citas.Any())
+    {
+        <div class="text-center py-5">
+            <h4 class="text-muted" style="font-family: 'Georgia', serif;">No se encontraron citas con estos filtros.</h4>
+        </div>
+    }
+    else
+    {
+        <div class="row g-4 justify-content-center">
+            @foreach (var cita in Model.Citas)
+            {
+                <div class="col-md-6 col-lg-4">
+                    <div class="cita-card">
+                        <div class="client-avatar">
+                            @if (Model.EsAdmin)
+                            {
+                                <span>@(cita.EstilistaNombre.Length > 0 ? cita.EstilistaNombre.Substring(0, 1).ToUpper() : "E")</span>
+                            }
+                            else
+                            {
+                                <span>@(cita.ClienteNombre.Length > 0 ? cita.ClienteNombre.Substring(0, 1).ToUpper() : "C")</span>
+                            }
+                        </div>
+                        
+                        <div class="service-title">@cita.ServicioNombre</div>
+                        
+                        <div class="cita-fecha">@cita.Inicio.ToString("dd MMM yyyy - HH:mm")</div>
+                        
+                        <p class="text-muted small mb-0">Cliente: @cita.ClienteNombre</p>
+                        
+                        @if (Model.EsAdmin)
+                        {
+                            <div class="admin-badge">Atendido por: @cita.EstilistaNombre</div>
+                        }
+                        else 
+                        {
+                            <div style="height: 24px;"></div>
+                        }
+
+                        <button class="btn btn-detail" onclick="verDetalle(@cita.Id)">Ver detalle</button>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+</div>
+
+<!-- MODAL ESTRUCTURA -->
+<div class="modal fade" id="modalDetalle" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered"> 
+        <div class="modal-content" id="contenidoModal" style="border-radius: 20px; border: none; overflow: hidden; box-shadow: 0 15px 30px rgba(0,0,0,0.2);">
+            <!-- AJAX -->
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        function verDetalle(id) {
+            fetch(`/Agenda/DetalleCita?id=${id}`)
+                .then(response => response.text())
+                .then(html => {
+                    document.getElementById('contenidoModal').innerHTML = html;
+                    var myModal = new bootstrap.Modal(document.getElementById('modalDetalle'));
+                    myModal.show();
+                });
+        }
+    </script>
+}

@@ -1,73 +1,256 @@
+﻿
 <!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
     <title>@ViewData["Title"] — Salón de belleza D'Kaiza</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600&family=Playfair+Display:ital,wght@0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600&family=Playfair+Display:ital,wght@0,400;0,500;0,600;1,400&display=swap"
+          rel="stylesheet" />
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
+          rel="stylesheet" />
+
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+
     @RenderSection("Styles", required: false)
+
+    <style>
+        .badge-rol {
+            background-color: #c47d5c;
+            color: white;
+            font-size: 0.65rem;
+            padding: 3px 8px;
+            border-radius: 10px;
+            text-transform: uppercase;
+            font-weight: bold;
+            margin-right: 5px;
+        }
+
+        .footer-link {
+            color: #ffffff;
+            transition: color 0.2s;
+            font-weight: 500;
+        }
+
+        .footer-link:hover {
+            color: #e6dacb;
+            text-decoration: underline !important;
+        }
+
+        .social-link {
+            color: #ffffff;
+            font-size: 0.9rem;
+            font-weight: 500;
+            transition: color 0.2s;
+        }
+
+        .social-link:hover {
+            color: #e6dacb;
+            text-decoration: underline !important;
+        }
+    </style>
 </head>
+
 <body>
     <nav class="dk-nav">
-        <a class="dk-nav__brand" href="/">Salón de belleza D'Kaiza</a>
+        <a class="dk-nav__brand" href="/">
+            Salón de belleza D'Kaiza
+        </a>
+
         <div class="dk-nav__links">
+
             @if (User.IsInRole("Administrador"))
             {
-                <a class="dk-nav__link" href="/admin/categorias">Catálogo de servicios</a>
+                <a class="dk-nav__link" href="/admin/categorias">Catálogo</a>
                 <a class="dk-nav__link" href="/admin/estilistas">Estilistas</a>
+                <a class="dk-nav__link" href="/Agenda">Agenda Diaria</a>
             }
-            else
+            else if (User.IsInRole("Estilista"))
+            {
+                <a class="dk-nav__link" href="/Agenda">Mi Agenda</a>
+            }
+            else if (User.IsInRole("Cliente"))
+            {
+                <a class="dk-nav__link" href="/">Servicios</a>
+            }
+            else if (User.Identity?.IsAuthenticated != true)
             {
                 <a class="dk-nav__link" href="/">Servicios</a>
             }
 
             @if (User.Identity?.IsAuthenticated == true)
             {
-                <span class="dk-nav__user">@User.Identity!.Name</span>
-                <form asp-controller="Account" asp-action="Logout" method="post" class="dk-nav__form">
-                    <button type="submit" class="dk-nav__link">Cerrar sesión</button>
-                </form>
+                <span class="dk-nav__user">
+                    <span class="badge-rol">
+                        @(User.IsInRole("Administrador")
+                            ? "Admin"
+                            : User.IsInRole("Estilista")
+                                ? "Estilista"
+                                : User.IsInRole("Cliente")
+                                    ? "Cliente"
+                                    : "Usuario")
+                    </span>
+
+                    @User.Identity!.Name
+                </span>
+
+                @if (User.IsInRole("Cliente"))
+                {
+                    <partial name="_MenuUsuario" />
+                }
+                else
+                {
+                    <form asp-controller="Account"
+                          asp-action="Logout"
+                          method="post"
+                          class="dk-nav__form">
+
+                        <button type="submit" class="dk-nav__link">
+                            Cerrar sesión
+                        </button>
+                    </form>
+                }
             }
             else
             {
-                <a class="dk-nav__link" href="/cuenta/login">Iniciar sesión</a>
-                <a class="dk-nav__link" href="/cuenta/registro">Registrarse</a>
+                <a class="dk-nav__link" href="/cuenta/login">
+                    Iniciar sesión
+                </a>
+
+                <a class="dk-nav__link" href="/cuenta/registro">
+                    Registrarse
+                </a>
             }
         </div>
     </nav>
 
     @if (TempData["Success"] != null)
     {
-        <div class="dk-toast dk-toast--ok">@TempData["Success"]</div>
+        <div class="dk-toast dk-toast--ok">
+            @TempData["Success"]
+        </div>
     }
+
     @if (TempData["Error"] != null)
     {
-        <div class="dk-toast dk-toast--err">@TempData["Error"]</div>
+        <div class="dk-toast dk-toast--err">
+            @TempData["Error"]
+        </div>
+    }
+
+    @if (TempData["Info"] != null)
+    {
+        <div class="dk-toast dk-toast--info">
+            @TempData["Info"]
+        </div>
     }
 
     <main>
         @RenderBody()
     </main>
 
-    <footer class="dk-footer">
-        <div class="dk-container">
-            <div class="dk-footer__bottom" style="padding-top:0">
-                <span class="dk-footer__copy">&copy; @DateTime.Now.Year Salón de belleza D'Kaiza</span>
+    <footer style="background-color: #9b7b6d; padding: 50px 0 20px 0; margin-top: 50px; font-family: 'Montserrat', sans-serif;">
+        <div class="container">
+            <div class="row">
+
+                <div class="col-md-4 mb-4">
+                    <h4 style="font-family: 'Playfair Display', serif; color: #fcf9f2; font-weight: bold; margin-bottom: 15px; font-size: 1.5rem;">
+                        D'Kaiza
+                    </h4>
+
+                    <p style="color: #f5ebe6; font-size: 0.9rem; line-height: 1.6;">
+                        Elegancia que transforma. Tu salón de belleza premium en Lima.
+                        Descubre una nueva forma de cuidarte.
+                    </p>
+                </div>
+
+                <div class="col-md-4 mb-4">
+                    <h6 class="text-uppercase mb-3"
+                        style="font-size: 0.8rem; letter-spacing: 1.5px; color: #fcf9f2; font-weight: 700;">
+                        Enlaces rápidos
+                    </h6>
+
+                    <ul class="list-unstyled" style="font-size: 0.9rem;">
+                        <li class="mb-2">
+                            <a href="/" class="text-decoration-none footer-link">Inicio</a>
+                        </li>
+                        <li class="mb-2">
+                            <a href="/" class="text-decoration-none footer-link">Nuestros servicios</a>
+                        </li>
+                        <li class="mb-2">
+                            <a href="#sobre-nosotros" class="text-decoration-none footer-link">Sobre nosotros</a>
+                        </li>
+                    </ul>
+                </div>
+
+                <div class="col-md-4 mb-4">
+                    <h6 class="text-uppercase mb-3"
+                        style="font-size: 0.8rem; letter-spacing: 1.5px; color: #fcf9f2; font-weight: 700;">
+                        Contacto
+                    </h6>
+
+                    <ul class="list-unstyled" style="font-size: 0.9rem; color: #f5ebe6;">
+                        <li class="mb-2 d-flex align-items-center gap-2">
+                            <span style="color: #fcf9f2;">📍</span>
+                            Av. Principal 123, Lima
+                        </li>
+
+                        <li class="mb-2 d-flex align-items-center gap-2">
+                            <span style="color: #fcf9f2;">📞</span>
+                            +51 999 888 777
+                        </li>
+
+                        <li class="mb-2 d-flex align-items-center gap-2">
+                            <span style="color: #fcf9f2;">✉️</span>
+                            hola@dkaiza.com
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+            <hr style="border-color: #bca59a; margin-top: 20px; margin-bottom: 20px;" />
+
+            <div class="d-flex justify-content-between align-items-center flex-wrap">
+                <div class="small" style="color: #f5ebe6;">
+                    &copy; @DateTime.Now.Year Salón de belleza D'Kaiza.
+                    Todos los derechos reservados.
+                </div>
+
+                <div class="d-flex gap-3 mt-2 mt-md-0">
+                    <a href="#" class="text-decoration-none social-link">Instagram</a>
+                    <a href="#" class="text-decoration-none social-link">Facebook</a>
+                    <a href="#" class="text-decoration-none social-link">TikTok</a>
+                </div>
             </div>
         </div>
     </footer>
 
     <script src="https://cdn.jsdelivr.net/npm/jquery@3.7.1/dist/jquery.min.js"></script>
+
     <script src="https://cdn.jsdelivr.net/npm/jquery-validation@1.19.5/dist/jquery.validate.min.js"></script>
+
     <script src="https://cdn.jsdelivr.net/npm/jquery-validation-unobtrusive@4.0.0/dist/jquery.validate.unobtrusive.min.js"></script>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
     <script>
-        document.querySelectorAll('.dk-toast').forEach(function (t) {
-            setTimeout(function () { t.style.opacity = '0'; setTimeout(function () { t.remove(); }, 300); }, 3000);
+        document.querySelectorAll('.dk-toast').forEach(function (toast) {
+            setTimeout(function () {
+                toast.style.opacity = '0';
+
+                setTimeout(function () {
+                    toast.remove();
+                }, 300);
+            }, 3000);
         });
     </script>
+
     @await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>
