@@ -1,0 +1,25 @@
+@model int
+<a class="dk-nav__link dk-nav__notification" href="/Notificaciones" aria-label="Notificaciones de citas">
+    <svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M10 21h4" />
+    </svg>
+    <span>Notificaciones</span>
+    <span class="dk-nav__notification-count" aria-live="polite" style="@(Model > 0 ? "" : "display:none")">@Model</span>
+</a>
+<script>
+(() => {
+    const badge = document.querySelector('.dk-nav__notification-count');
+    if (!badge) return;
+    window.setInterval(async () => {
+        try {
+            const response = await fetch('/Notificaciones/contador', { headers: { 'Accept': 'application/json' } });
+            if (!response.ok) return;
+            const result = await response.json();
+            badge.textContent = result.count;
+            badge.style.display = result.count > 0 ? 'inline-grid' : 'none';
+        } catch (error) {
+            console.error('No se pudo actualizar el contador de notificaciones.', error);
+        }
+    }, 60000);
+})();
+</script>

@@ -91,3 +91,22 @@ public class PagoTarjetaRequest
     [System.ComponentModel.DataAnnotations.Required, System.ComponentModel.DataAnnotations.StringLength(30)]
     public string IdentificationNumber { get; set; } = "";
 }
+
+public class NotificacionesClienteViewModel
+{
+    public List<NotificacionClienteDto> Recordatorios { get; set; } = new();
+}
+
+public class NotificacionClienteDto
+{
+    public int NotificacionId { get; set; }
+    public int CitaId { get; set; }
+    public string Servicio { get; set; } = "";
+    public string Estilista { get; set; } = "";
+    public DateTime Inicio { get; set; }
+    public DateTime Fin { get; set; }
+    public DateTime CreadaEn { get; set; }
+    public bool AsistenciaConfirmada { get; set; }
+    public decimal Precio { get; set; }
+    public string EstadoPago { get; set; } = "";
+}

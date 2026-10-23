@@ -13,6 +13,7 @@ public class ApplicationDbContext : DbContext
     public DbSet<Servicio> Servicios => Set<Servicio>();
     public DbSet<Estilista> Estilistas => Set<Estilista>();
     public DbSet<Cita> Citas => Set<Cita>();
+    public DbSet<NotificacionCita> NotificacionesCita => Set<NotificacionCita>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -88,6 +89,7 @@ public class ApplicationDbContext : DbContext
         {
             e.ToTable("Citas");
             e.Property(x => x.Estado).HasConversion<int>();
+            e.Property(x => x.AsistenciaConfirmada).HasDefaultValue(false);
             e.Property(x => x.PrecioTotal).HasColumnType("numeric(10,2)");
             e.Property(x => x.PrecioBase).HasColumnType("numeric(10,2)");
             e.Property(x => x.Descuento).HasColumnType("numeric(10,2)");
@@ -110,6 +112,23 @@ public class ApplicationDbContext : DbContext
 
             // Índice para consultas rápidas por estilista + fecha
             e.HasIndex(c => new { c.EstilistaId, c.Inicio });
+        });
+
+        modelBuilder.Entity<NotificacionCita>(e =>
+        {
+            e.ToTable("NotificacionesCita");
+            e.HasIndex(n => n.CitaId).IsUnique();
+            e.HasIndex(n => new { n.ClienteId, n.ResueltaEn });
+
+            e.HasOne(n => n.Cita)
+             .WithMany()
+             .HasForeignKey(n => n.CitaId)
+             .OnDelete(DeleteBehavior.Cascade);
+
+            e.HasOne(n => n.Cliente)
+             .WithMany()
+             .HasForeignKey(n => n.ClienteId)
+             .OnDelete(DeleteBehavior.Restrict);
         });
     }
 }
