@@ -47,8 +47,7 @@ public class RecepcionistaController : Controller
         var inicioHoyUtc = TimeZoneInfo.ConvertTimeToUtc(hoyLocal.ToDateTime(TimeOnly.MinValue), ZonaSalon);
         var inicioMananaUtc = TimeZoneInfo.ConvertTimeToUtc(hoyLocal.AddDays(1).ToDateTime(TimeOnly.MinValue), ZonaSalon);
         var totalCobradoHoy = await _db.Citas
-            .Where(c => c.Estado == EstadoCita.Pagada &&
-                        c.FechaPago >= inicioHoyUtc &&
+            .Where(c => c.FechaPago >= inicioHoyUtc &&
                         c.FechaPago < inicioMananaUtc)
             .Select(c => (decimal?)c.PrecioTotal)
             .SumAsync() ?? 0m;
@@ -60,7 +59,7 @@ public class RecepcionistaController : Controller
             .Include(c => c.Cliente)
             .Include(c => c.Servicio)
             .Include(c => c.Estilista)
-            .Where(c => c.Estado == EstadoCita.Pagada &&
+            .Where(c => c.FechaPago != null &&
                         c.FechaPago >= inicioFiltroUtc &&
                         c.FechaPago < finFiltroUtc);
 

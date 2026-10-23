@@ -57,6 +57,7 @@ public class Cita
     public bool PagoEnProceso { get; set; }
 
     public EstadoCita Estado { get; set; } = EstadoCita.Pendiente;
+    public bool AsistenciaConfirmada { get; set; }
 
     public DateTime FechaReserva { get; set; } = DateTime.UtcNow;
 

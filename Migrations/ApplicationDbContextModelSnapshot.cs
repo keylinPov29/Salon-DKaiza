@@ -74,6 +74,11 @@ namespace DKaiza.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
+                    b.Property<bool>("AsistenciaConfirmada")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(false);
+
                     b.Property<int>("ClienteId")
                         .HasColumnType("integer");
 
@@ -264,6 +269,36 @@ namespace DKaiza.Migrations
                         });
                 });
 
+            modelBuilder.Entity("DKaiza.Web.Dominio.NotificacionCita", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("CitaId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("ClienteId")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime>("CreadaEn")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime?>("ResueltaEn")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CitaId")
+                        .IsUnique();
+
+                    b.HasIndex("ClienteId", "ResueltaEn");
+
+                    b.ToTable("NotificacionesCita", (string)null);
+                });
+
             modelBuilder.Entity("DKaiza.Web.Dominio.Servicio", b =>
                 {
                     b.Property<int>("Id")
@@ -403,6 +438,25 @@ namespace DKaiza.Migrations
                     b.Navigation("Estilista");
 
                     b.Navigation("Servicio");
+                });
+
+            modelBuilder.Entity("DKaiza.Web.Dominio.NotificacionCita", b =>
+                {
+                    b.HasOne("DKaiza.Web.Dominio.Cita", "Cita")
+                        .WithMany()
+                        .HasForeignKey("CitaId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("DKaiza.Web.Models.Usuario", "Cliente")
+                        .WithMany()
+                        .HasForeignKey("ClienteId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Cita");
+
+                    b.Navigation("Cliente");
                 });
 
             modelBuilder.Entity("DKaiza.Web.Dominio.Servicio", b =>

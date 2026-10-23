@@ -82,6 +82,7 @@
             else if (User.IsInRole("Cliente"))
             {
                 <a class="dk-nav__link" href="/">Servicios</a>
+                @await Component.InvokeAsync("Notificaciones")
             }
             else if (User.Identity?.IsAuthenticated != true)
             {
