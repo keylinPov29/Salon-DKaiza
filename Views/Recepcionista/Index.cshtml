@@ -1,0 +1,186 @@
+@model DKaiza.Web.Models.RecepcionistaViewModel
+@using DKaiza.Web.Dominio
+@{
+    ViewData["Title"] = "Recepción y pagos";
+    var zonaSalon = TimeZoneInfo.FindSystemTimeZoneById("SA Pacific Standard Time");
+}
+
+<section class="dk-recepcion">
+    <div class="dk-recepcion__container">
+        <header class="dk-recepcion__header">
+            <div>
+                <span class="dk-recepcion__eyebrow">Panel de trabajo</span>
+                <h1>Recepción y pagos</h1>
+                <p>Confirma los pagos recibidos en el salón y consulta el historial de operaciones.</p>
+            </div>
+            <div class="dk-recepcion__fecha">
+                <span>Hoy</span>
+                <strong>@TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, zonaSalon).ToString("dddd d 'de' MMMM", new System.Globalization.CultureInfo("es-PE"))</strong>
+            </div>
+        </header>
+
+        <div class="dk-recepcion__metricas">
+            <article class="dk-recepcion__metrica">
+                <span class="dk-recepcion__metrica-icono dk-recepcion__metrica-icono--pendiente" aria-hidden="true">◷</span>
+                <div><span>Pagos en efectivo pendientes</span><strong>@Model.PagosPendientesCount</strong></div>
+            </article>
+            <article class="dk-recepcion__metrica">
+                <span class="dk-recepcion__metrica-icono dk-recepcion__metrica-icono--monto" aria-hidden="true">S/</span>
+                <div><span>Total pendiente de cobro</span><strong>S/ @Model.TotalPendiente.ToString("N2")</strong></div>
+            </article>
+            <article class="dk-recepcion__metrica">
+                <span class="dk-recepcion__metrica-icono dk-recepcion__metrica-icono--cobrado" aria-hidden="true">✓</span>
+                <div><span>Cobrado hoy</span><strong>S/ @Model.TotalCobradoHoy.ToString("N2")</strong></div>
+            </article>
+        </div>
+
+        <section class="dk-recepcion__panel">
+            <div class="dk-recepcion__panel-head">
+                <div>
+                    <span class="dk-recepcion__eyebrow">Acción requerida</span>
+                    <h2>Pagos pendientes en el salón</h2>
+                    <p>Confirma el pago únicamente después de recibirlo del cliente.</p>
+                </div>
+                <span class="dk-recepcion__contador">@Model.Pendientes.Count pendientes</span>
+            </div>
+
+            @if (Model.Pendientes.Count == 0)
+            {
+                <div class="dk-recepcion__vacio">
+                    <span aria-hidden="true">✓</span>
+                    <strong>Todo al día</strong>
+                    <p>No hay pagos en efectivo pendientes de confirmación.</p>
+                </div>
+            }
+            else
+            {
+                <div class="dk-recepcion__tabla-wrap">
+                    <table class="dk-recepcion__tabla">
+                        <thead>
+                            <tr>
+                                <th>Cliente</th>
+                                <th>Servicio y cita</th>
+                                <th>Estilista</th>
+                                <th>Total</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var pago in Model.Pendientes)
+                            {
+                                var inicioLocal = TimeZoneInfo.ConvertTimeFromUtc(pago.Inicio, zonaSalon);
+                                <tr>
+                                    <td data-label="Cliente">
+                                        <strong>@pago.Cliente</strong>
+                                        <small>@pago.Telefono</small>
+                                    </td>
+                                    <td data-label="Servicio y cita">
+                                        <strong>@pago.Servicio</strong>
+                                        <small>@inicioLocal.ToString("dd/MM/yyyy · HH:mm")</small>
+                                    </td>
+                                    <td data-label="Estilista">@pago.Estilista</td>
+                                    <td data-label="Total">
+                                        <strong class="dk-recepcion__monto">S/ @pago.Monto.ToString("N2")</strong>
+                                        @if (!string.IsNullOrWhiteSpace(pago.CuponCodigo))
+                                        {
+                                            <small>Cupón @pago.CuponCodigo</small>
+                                        }
+                                    </td>
+                                    <td data-label="Acción">
+                                        <form asp-controller="Recepcionista" asp-action="ConfirmarPagoEfectivo"
+                                              asp-route-id="@pago.CitaId" method="post"
+                                              onsubmit="return confirm('Confirma que recibiste este pago en efectivo del cliente.');">
+                                            @Html.AntiForgeryToken()
+                                            <button type="submit" class="dk-recepcion__confirmar">Confirmar pago</button>
+                                        </form>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+        </section>
+
+        <section class="dk-recepcion__panel dk-recepcion__panel--historial">
+            <div class="dk-recepcion__panel-head dk-recepcion__panel-head--historial">
+                <div>
+                    <span class="dk-recepcion__eyebrow">Registro</span>
+                    <h2>Historial de pagos</h2>
+                    <p>Pagos con tarjeta aprobados y pagos en efectivo confirmados.</p>
+                </div>
+                <form method="get" asp-controller="Recepcionista" asp-action="Index" class="dk-recepcion__filtros">
+                    <label>
+                        <span>Desde</span>
+                        <input type="date" name="desde" value="@Model.Desde.ToString("yyyy-MM-dd")" />
+                    </label>
+                    <label>
+                        <span>Hasta</span>
+                        <input type="date" name="hasta" value="@Model.Hasta.ToString("yyyy-MM-dd")" />
+                    </label>
+                    <label class="dk-recepcion__buscar">
+                        <span>Cliente, correo u operación</span>
+                        <input type="search" name="buscar" value="@Model.Buscar" placeholder="Buscar en historial" />
+                    </label>
+                    <button type="submit">Filtrar</button>
+                    <a asp-controller="Recepcionista" asp-action="Index">Limpiar</a>
+                </form>
+            </div>
+
+            @if (!Model.Historial.Any())
+            {
+                <div class="dk-recepcion__vacio dk-recepcion__vacio--compacto">
+                    <strong>No hay pagos en este periodo</strong>
+                    <p>Prueba con otras fechas o cambia el texto de búsqueda.</p>
+                </div>
+            }
+            else
+            {
+                <div class="dk-recepcion__tabla-wrap">
+                    <table class="dk-recepcion__tabla">
+                        <thead>
+                            <tr>
+                                <th>Operación y fecha de pago</th>
+                                <th>Cliente</th>
+                                <th>Servicio</th>
+                                <th>Método</th>
+                                <th>Importe</th>
+                                <th>Estado</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var pago in Model.Historial)
+                            {
+                                var fechaPagoLocal = pago.FechaPago.HasValue
+                                    ? TimeZoneInfo.ConvertTimeFromUtc(pago.FechaPago.Value, zonaSalon)
+                                    : (DateTime?)null;
+                                var citaLocal = TimeZoneInfo.ConvertTimeFromUtc(pago.Inicio, zonaSalon);
+                                <tr>
+                                    <td data-label="Operación y fecha">
+                                        <strong>@(pago.NumeroOperacion ?? $"CITA-{pago.CitaId}")</strong>
+                                        <small>@fechaPagoLocal?.ToString("dd/MM/yyyy · HH:mm")</small>
+                                    </td>
+                                    <td data-label="Cliente">
+                                        <strong>@pago.Cliente</strong>
+                                        <small>@pago.Email</small>
+                                    </td>
+                                    <td data-label="Servicio">
+                                        <strong>@pago.Servicio</strong>
+                                        <small>@pago.Estilista · cita @citaLocal.ToString("dd/MM/yyyy HH:mm")</small>
+                                    </td>
+                                    <td data-label="Método">
+                                        <span class="dk-recepcion__metodo">
+                                            @(pago.MetodoPago == MetodoPagoCita.Tarjeta ? "Tarjeta · Mercado Pago" : "Efectivo")
+                                        </span>
+                                    </td>
+                                    <td data-label="Importe"><strong class="dk-recepcion__monto">S/ @pago.Monto.ToString("N2")</strong></td>
+                                    <td data-label="Estado"><span class="dk-recepcion__estado">Pagado</span></td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+        </section>
+    </div>
+</section>

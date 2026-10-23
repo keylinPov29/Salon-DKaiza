@@ -65,6 +65,8 @@ public class AccountController : Controller
             //si es estilista
         if (usuario.Rol == RolUsuario.Estilista)
             return RedirectToAction("Index", "Agenda");
+        if (usuario.Rol == RolUsuario.Recepcionista)
+            return RedirectToAction("Index", "Recepcionista");
 
         // Si es cliente, se queda en la página principal
         return Redirect("/");

@@ -1,4 +1,5 @@
 using System.Security.Claims;
+using System.Text.Json;
 using DKaiza.Data;
 using DKaiza.Web.Dominio;
 using DKaiza.Web.Models;
@@ -21,13 +22,28 @@ namespace DKaiza.Web.Controllers;
 public class ReservasController : Controller
 {
     private const int MesesCalendarioReserva = 3;
+    private const string CodigoCuponValido = "DKAIZA10";
+    private const decimal PorcentajeDescuentoCupon = 0.10m;
     private readonly ApplicationDbContext _db;
+    private readonly IHttpClientFactory _httpClientFactory;
+    private readonly IConfiguration _configuration;
+    private readonly ILogger<ReservasController> _logger;
 
     // Zona horaria del salón (Perú = UTC-5, sin cambio de horario)
     private static readonly TimeZoneInfo ZonaSalon =
         TimeZoneInfo.FindSystemTimeZoneById("SA Pacific Standard Time");
 
-    public ReservasController(ApplicationDbContext db) => _db = db;
+    public ReservasController(
+        ApplicationDbContext db,
+        IHttpClientFactory httpClientFactory,
+        IConfiguration configuration,
+        ILogger<ReservasController> logger)
+    {
+        _db = db;
+        _httpClientFactory = httpClientFactory;
+        _configuration = configuration;
+        _logger = logger;
+    }
 
     // ────────────────────────────────────────────────────────────────
     //  PASO 1 — Calendario (mes actual y los dos siguientes)
@@ -365,6 +381,7 @@ public class ReservasController : Controller
                 Inicio       = inicioUtc,
                 Fin          = finUtc,
                 PrecioTotal  = servicio.Precio,
+                PrecioBase   = servicio.Precio,
                 Estado       = EstadoCita.Pendiente,
                 FechaReserva = DateTime.UtcNow
             };
@@ -412,10 +429,274 @@ public class ReservasController : Controller
             EstilistaNombre = cita.Estilista!.NombreCompleto,
             Inicio         = inicioLocal,
             Fin            = finLocal,
-            PrecioTotal    = cita.PrecioTotal
+            PrecioBase     = cita.PrecioBase,
+            Descuento      = cita.Descuento,
+            PrecioTotal    = cita.PrecioTotal,
+            CuponCodigo    = cita.CuponCodigo,
+            MetodoPago     = cita.MetodoPago?.ToString(),
+            NumeroOperacion = cita.NumeroOperacion,
+            Estado         = cita.Estado switch
+            {
+                EstadoCita.Pagada => "Pagada",
+                EstadoCita.PendientePago => "Pendiente de pago",
+                EstadoCita.Pendiente => "Pendiente",
+                EstadoCita.Confirmada => "Confirmada",
+                EstadoCita.Cancelada => "Cancelada",
+                EstadoCita.EnProceso => "En proceso",
+                EstadoCita.Completada => "Completada",
+                _ => "Pendiente"
+            },
+            PagoEnProceso = cita.PagoEnProceso,
+            MercadoPagoPublicKey = _configuration["MercadoPago:PublicKey"] ?? "",
+            ClienteEmail = User.FindFirstValue(ClaimTypes.Email) ?? ""
         };
 
         return View("Resumen", vm);
+    }
+
+    [HttpPost("{id:int}/cupon")]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> AplicarCupon(int id, [FromForm] string codigo)
+    {
+        if (!int.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var clienteId))
+            return Forbid();
+
+        var cita = await _db.Citas.FirstOrDefaultAsync(c => c.Id == id && c.ClienteId == clienteId);
+        if (cita == null) return NotFound();
+
+        if (cita.Estado != EstadoCita.Pendiente || cita.MetodoPago != null || cita.PagoEnProceso ||
+            cita.PrecioTotal <= 0)
+        {
+            return BadRequest(new { success = false, message = "No se puede aplicar un cupón a esta reserva." });
+        }
+
+        if (!string.Equals(codigo?.Trim(), CodigoCuponValido, StringComparison.OrdinalIgnoreCase))
+        {
+            return BadRequest(new { success = false, message = "El cupón ingresado no es válido." });
+        }
+
+        var descuento = Math.Round(cita.PrecioBase * PorcentajeDescuentoCupon, 2, MidpointRounding.AwayFromZero);
+        var total = cita.PrecioBase - descuento;
+        var actualizadas = await _db.Citas
+            .Where(c => c.Id == id
+                && c.ClienteId == clienteId
+                && c.Estado == EstadoCita.Pendiente
+                && c.MetodoPago == null
+                && !c.PagoEnProceso
+                && c.PrecioTotal > 0)
+            .ExecuteUpdateAsync(setters => setters
+                .SetProperty(c => c.Descuento, descuento)
+                .SetProperty(c => c.PrecioTotal, total)
+                .SetProperty(c => c.CuponCodigo, CodigoCuponValido));
+
+        if (actualizadas != 1)
+        {
+            return Conflict(new { success = false, message = "No se puede aplicar un cupón mientras el pago está en proceso." });
+        }
+
+        return Json(new
+        {
+            success = true,
+            message = "Cupón aplicado correctamente",
+            precioBase = cita.PrecioBase,
+            descuento,
+            total
+        });
+    }
+
+    [HttpPost("{id:int}/pago-efectivo")]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> PagarEnEfectivo(int id)
+    {
+        if (!int.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var clienteId))
+            return Forbid();
+
+        var cita = await _db.Citas.FirstOrDefaultAsync(c => c.Id == id && c.ClienteId == clienteId);
+        if (cita == null) return NotFound();
+
+        if (cita.Estado == EstadoCita.PendientePago && cita.MetodoPago == MetodoPagoCita.Efectivo)
+        {
+            TempData["Success"] = "Reserva realizada, realice el pago al asistir";
+            return RedirectToAction(nameof(Resumen), new { id });
+        }
+
+        if (cita.Estado != EstadoCita.Pendiente || cita.MetodoPago != null || cita.PagoEnProceso)
+        {
+            TempData["Error"] = "Esta reserva ya tiene un pago registrado o en proceso.";
+            return RedirectToAction(nameof(Resumen), new { id });
+        }
+
+        var actualizadas = await _db.Citas
+            .Where(c => c.Id == id
+                && c.ClienteId == clienteId
+                && c.Estado == EstadoCita.Pendiente
+                && c.MetodoPago == null
+                && !c.PagoEnProceso)
+            .ExecuteUpdateAsync(setters => setters
+                .SetProperty(c => c.MetodoPago, MetodoPagoCita.Efectivo)
+                .SetProperty(c => c.Estado, EstadoCita.PendientePago));
+
+        if (actualizadas != 1)
+        {
+            TempData["Error"] = "Esta reserva ya tiene un pago registrado o en proceso.";
+            return RedirectToAction(nameof(Resumen), new { id });
+        }
+
+        TempData["Success"] = "Reserva realizada, realice el pago al asistir";
+        return RedirectToAction(nameof(Resumen), new { id });
+    }
+
+    [HttpPost("{id:int}/pago-tarjeta")]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> PagarConTarjeta(int id, [FromBody] PagoTarjetaRequest? request)
+    {
+        if (!int.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var clienteId))
+            return Forbid();
+
+        var accessToken = _configuration["MercadoPago:AccessToken"];
+        if (string.IsNullOrWhiteSpace(accessToken) ||
+            string.IsNullOrWhiteSpace(_configuration["MercadoPago:PublicKey"]))
+        {
+            return StatusCode(StatusCodes.Status503ServiceUnavailable,
+                new { success = false, message = "El pago con tarjeta no está configurado." });
+        }
+
+        if (request == null || !ModelState.IsValid ||
+            string.IsNullOrWhiteSpace(request.Token) ||
+            string.IsNullOrWhiteSpace(request.PaymentMethodId) ||
+            string.IsNullOrWhiteSpace(request.IdentificationNumber))
+        {
+            return BadRequest(new { success = false, message = "Los datos de la tarjeta están incompletos." });
+        }
+
+        var idempotencyKey = Guid.NewGuid().ToString();
+        var reservado = await _db.Citas
+            .Where(c => c.Id == id && c.ClienteId == clienteId
+                && c.Estado == EstadoCita.Pendiente
+                && c.MetodoPago == null
+                && !c.PagoEnProceso
+                && c.PrecioTotal > 0)
+            .ExecuteUpdateAsync(setters => setters.SetProperty(c => c.PagoEnProceso, true));
+
+        if (reservado != 1)
+        {
+            return Conflict(new { success = false, message = "La reserva no está disponible para pagar." });
+        }
+
+        var cita = await _db.Citas
+            .Include(c => c.Cliente)
+            .Include(c => c.Servicio)
+            .FirstAsync(c => c.Id == id && c.ClienteId == clienteId);
+
+        var paymentRequest = new
+        {
+            transaction_amount = cita.PrecioTotal,
+            token = request.Token,
+            description = $"Reserva {cita.Servicio!.Nombre}",
+            installments = request.Installments,
+            payment_method_id = request.PaymentMethodId,
+            issuer_id = request.IssuerId,
+            external_reference = cita.Id.ToString(),
+            payer = new
+            {
+                email = cita.Cliente!.Email,
+                identification = new
+                {
+                    type = request.IdentificationType,
+                    number = request.IdentificationNumber
+                }
+            }
+        };
+
+        using var httpRequest = new HttpRequestMessage(HttpMethod.Post, "https://api.mercadopago.com/v1/payments")
+        {
+            Content = System.Net.Http.Json.JsonContent.Create(paymentRequest)
+        };
+        httpRequest.Headers.Authorization =
+            new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", accessToken);
+        httpRequest.Headers.Add("X-Idempotency-Key", idempotencyKey);
+
+        using var client = _httpClientFactory.CreateClient();
+        HttpResponseMessage response;
+        try
+        {
+            response = await client.SendAsync(httpRequest);
+        }
+        catch (HttpRequestException ex)
+        {
+            _logger.LogError(ex, "No se pudo conectar con Mercado Pago para la cita {CitaId}", id);
+            cita.PagoEnProceso = false;
+            await _db.SaveChangesAsync();
+            return StatusCode(StatusCodes.Status502BadGateway,
+                new { success = false, message = "No se pudo conectar con Mercado Pago. Intenta nuevamente." });
+        }
+        catch (TaskCanceledException ex)
+        {
+            _logger.LogError(ex, "Tiempo de espera agotado al procesar el pago de la cita {CitaId}", id);
+            cita.PagoEnProceso = false;
+            await _db.SaveChangesAsync();
+            return StatusCode(StatusCodes.Status504GatewayTimeout,
+                new { success = false, message = "Mercado Pago no respondió a tiempo. Intenta nuevamente." });
+        }
+
+        using (response)
+        {
+            var responseBody = await response.Content.ReadAsStringAsync();
+            JsonDocument payment;
+            try
+            {
+                payment = JsonDocument.Parse(responseBody);
+            }
+            catch (JsonException ex)
+            {
+                _logger.LogError(ex, "Mercado Pago devolvió una respuesta inválida para la cita {CitaId}", id);
+                cita.PagoEnProceso = false;
+                await _db.SaveChangesAsync();
+                return StatusCode(StatusCodes.Status502BadGateway,
+                    new { success = false, message = "No se pudo validar la respuesta de Mercado Pago." });
+            }
+
+            using (payment)
+            {
+                var root = payment.RootElement;
+                var estadoPago = root.TryGetProperty("status", out var statusElement)
+                    ? statusElement.GetString()
+                    : null;
+                if (!response.IsSuccessStatusCode)
+                {
+                    _logger.LogWarning(
+                        "Mercado Pago rechazó la solicitud de pago para la cita {CitaId} con HTTP {StatusCode}",
+                        id, (int)response.StatusCode);
+                }
+
+                if (response.IsSuccessStatusCode && estadoPago == "approved" &&
+                    root.TryGetProperty("id", out var operationElement))
+                {
+                    cita.PagoEnProceso = false;
+                    cita.MetodoPago = MetodoPagoCita.Tarjeta;
+                    cita.Estado = EstadoCita.Pagada;
+                    cita.NumeroOperacion = operationElement.ToString();
+                    cita.FechaPago = DateTime.UtcNow;
+                    await _db.SaveChangesAsync();
+
+                    return Json(new
+                    {
+                        success = true,
+                        message = "Pago exitoso",
+                        operacion = cita.NumeroOperacion,
+                        redirectUrl = Url.Action(nameof(Resumen), new { id })
+                    });
+                }
+
+                cita.PagoEnProceso = false;
+                await _db.SaveChangesAsync();
+                return BadRequest(new
+                {
+                    success = false,
+                    message = "Mercado Pago no aprobó el pago. Verifica los datos o intenta con otra tarjeta."
+                });
+            }
+        }
     }
 
     // ────────────────────────────────────────────────────────────────

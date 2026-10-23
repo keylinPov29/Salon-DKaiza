@@ -59,5 +59,35 @@ public class ReservaResumenViewModel
     public string EstilistaNombre { get; set; } = "";
     public DateTime Inicio { get; set; }
     public DateTime Fin { get; set; }
+    public decimal PrecioBase { get; set; }
+    public decimal Descuento { get; set; }
     public decimal PrecioTotal { get; set; }
+    public string? CuponCodigo { get; set; }
+    public string? MetodoPago { get; set; }
+    public string? NumeroOperacion { get; set; }
+    public string Estado { get; set; } = "";
+    public bool PagoEnProceso { get; set; }
+    public string MercadoPagoPublicKey { get; set; } = "";
+    public string ClienteEmail { get; set; } = "";
+}
+
+public class PagoTarjetaRequest
+{
+    [System.ComponentModel.DataAnnotations.Required, System.ComponentModel.DataAnnotations.StringLength(400)]
+    public string Token { get; set; } = "";
+
+    [System.ComponentModel.DataAnnotations.Required, System.ComponentModel.DataAnnotations.StringLength(50)]
+    public string PaymentMethodId { get; set; } = "";
+
+    [System.ComponentModel.DataAnnotations.StringLength(50)]
+    public string? IssuerId { get; set; }
+
+    [System.ComponentModel.DataAnnotations.Range(1, 36)]
+    public int Installments { get; set; }
+
+    [System.ComponentModel.DataAnnotations.Required, System.ComponentModel.DataAnnotations.StringLength(10)]
+    public string IdentificationType { get; set; } = "";
+
+    [System.ComponentModel.DataAnnotations.Required, System.ComponentModel.DataAnnotations.StringLength(30)]
+    public string IdentificationNumber { get; set; } = "";
 }
