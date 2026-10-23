@@ -31,7 +31,9 @@
     <div class="data-row">
         <span>Estado:</span>
         <span style="font-weight: bold;">
-            @if (Model.Estado == EstadoCita.Pendiente || Model.Estado == EstadoCita.Confirmada) { <span>Pendiente</span> }
+            @if (Model.Estado == EstadoCita.PendientePago) { <span>Pendiente de pago</span> }
+            else if (Model.Estado == EstadoCita.Pagada) { <span style="color: #27ae60;">Pagada</span> }
+            else if (Model.Estado == EstadoCita.Pendiente || Model.Estado == EstadoCita.Confirmada) { <span>Pendiente</span> }
             else if (Model.Estado == EstadoCita.EnProceso) { <span style="color: #f5b041;">En Proceso</span> }
             else if (Model.Estado == EstadoCita.Completada) { <span style="color: #27ae60;">Completada</span> }
         </span>
@@ -43,7 +45,7 @@
 </div>
 
 <div class="modal-footer-flotante">
-    @if (User.IsInRole("Estilista") && (Model.Estado == EstadoCita.Pendiente || Model.Estado == EstadoCita.Confirmada))
+    @if (User.IsInRole("Estilista") && (Model.Estado == EstadoCita.Pendiente || Model.Estado == EstadoCita.PendientePago || Model.Estado == EstadoCita.Pagada || Model.Estado == EstadoCita.Confirmada))
     {
         <form asp-action="IniciarAtencion" asp-controller="Agenda" method="post" style="flex: 1; margin: 0;">
             <input type="hidden" name="id" value="@Model.Id" />

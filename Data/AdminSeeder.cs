@@ -10,25 +10,65 @@ public static class AdminSeeder
         using var scope = services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
         var cfg = scope.ServiceProvider.GetRequiredService<IConfiguration>();
+        var environment = scope.ServiceProvider.GetRequiredService<IWebHostEnvironment>();
 
         await db.Database.MigrateAsync();
 
-        if (await db.Usuarios.AnyAsync(u => u.Rol == RolUsuario.Administrador)) return;
-
-        var email = cfg["AdminInicial:Email"];
-        var pass = cfg["AdminInicial:Password"];
-        if (string.IsNullOrWhiteSpace(email) || string.IsNullOrWhiteSpace(pass)) return;
-
-        db.Usuarios.Add(new Usuario
+        if (!await db.Usuarios.AnyAsync(u => u.Rol == RolUsuario.Administrador))
         {
-            Nombre = "Administrador",
-            Apellido = "D'Kaiza",
-            Email = email.Trim(),
-            Telefono = "999999999",
-            PasswordHash = BCrypt.Net.BCrypt.HashPassword(pass),
-            Rol = RolUsuario.Administrador,
-            DebeCambiarPassword = true
-        });
+            var adminEmail = cfg["AdminInicial:Email"];
+            var adminPassword = cfg["AdminInicial:Password"];
+            if (!string.IsNullOrWhiteSpace(adminEmail) && !string.IsNullOrWhiteSpace(adminPassword))
+            {
+                db.Usuarios.Add(new Usuario
+                {
+                    Nombre = "Administrador",
+                    Apellido = "D'Kaiza",
+                    Email = adminEmail.Trim(),
+                    Telefono = "999999999",
+                    PasswordHash = BCrypt.Net.BCrypt.HashPassword(adminPassword),
+                    Rol = RolUsuario.Administrador,
+                    DebeCambiarPassword = true
+                });
+            }
+        }
+
+        if (environment.IsDevelopment() &&
+            !await db.Usuarios.AnyAsync(u => u.Rol == RolUsuario.Recepcionista))
+        {
+            var receptionistEmail = cfg["RecepcionistaInicial:Email"];
+            if (string.IsNullOrWhiteSpace(receptionistEmail))
+                receptionistEmail = "recepcionista@dkaiza.local";
+            var receptionistPassword = cfg["RecepcionistaInicial:Password"];
+            if (!string.IsNullOrWhiteSpace(receptionistPassword))
+            {
+                var emailEnUso = await db.Usuarios.AnyAsync(u =>
+                    u.Email.ToLower() == receptionistEmail.Trim().ToLower());
+
+                if (!emailEnUso)
+                {
+                    db.Usuarios.Add(new Usuario
+                    {
+                        Nombre = "Recepcionista",
+                        Apellido = "D'Kaiza",
+                        Email = receptionistEmail.Trim(),
+                        Telefono = "999999998",
+                        PasswordHash = BCrypt.Net.BCrypt.HashPassword(receptionistPassword),
+                        Rol = RolUsuario.Recepcionista,
+                        DebeCambiarPassword = true
+                    });
+                }
+                else
+                {
+                    var logger = scope.ServiceProvider.GetRequiredService<ILoggerFactory>()
+                        .CreateLogger(nameof(AdminSeeder));
+                    logger.LogWarning(
+                        "No se creó el usuario de recepción porque el correo {Email} ya está registrado.",
+                        receptionistEmail);
+                }
+            }
+        }
+
         await db.SaveChangesAsync();
     }
 }

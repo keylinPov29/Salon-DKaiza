@@ -75,6 +75,10 @@
             {
                 <a class="dk-nav__link" href="/Agenda">Mi Agenda</a>
             }
+            else if (User.IsInRole("Recepcionista"))
+            {
+                <a class="dk-nav__link" href="/Recepcionista">Pagos y recepción</a>
+            }
             else if (User.IsInRole("Cliente"))
             {
                 <a class="dk-nav__link" href="/">Servicios</a>
@@ -94,7 +98,9 @@
                                 ? "Estilista"
                                 : User.IsInRole("Cliente")
                                     ? "Cliente"
-                                    : "Usuario")
+                                        : User.IsInRole("Recepcionista")
+                                            ? "Recepción"
+                                        : "Usuario")
                     </span>
 
                     @User.Identity!.Name

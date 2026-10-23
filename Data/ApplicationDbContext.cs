@@ -89,6 +89,9 @@ public class ApplicationDbContext : DbContext
             e.ToTable("Citas");
             e.Property(x => x.Estado).HasConversion<int>();
             e.Property(x => x.PrecioTotal).HasColumnType("numeric(10,2)");
+            e.Property(x => x.PrecioBase).HasColumnType("numeric(10,2)");
+            e.Property(x => x.Descuento).HasColumnType("numeric(10,2)");
+            e.Property(x => x.MetodoPago).HasConversion<int?>();
 
             e.HasOne(c => c.Cliente)
              .WithMany()

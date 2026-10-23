@@ -1,16 +1,16 @@
 @model DKaiza.Web.Models.ReservaResumenViewModel
 @{
-    ViewData["Title"] = "Cita confirmada";
+    ViewData["Title"] = "Confirmar y pagar";
     var dias = new[] {"domingo","lunes","martes","miércoles","jueves","viernes","sábado"};
     var meses = new[] {"","enero","febrero","marzo","abril","mayo","junio","julio","agosto","septiembre","octubre","noviembre","diciembre"};
     var diaStr = dias[(int)Model.Inicio.DayOfWeek];
     var fechaStr = $"{char.ToUpper(diaStr[0])}{diaStr[1..]} {Model.Inicio.Day} de {meses[Model.Inicio.Month]} de {Model.Inicio.Year}";
+    var pagoCompletado = Model.Estado == "Pagada";
+    var efectivoSeleccionado = Model.Estado == "Pendiente de pago";
 }
 
 <section class="dk-reserva">
     <div class="dk-container">
-
-        <!-- Progreso -->
         <div class="dk-steps">
             <div class="dk-step dk-step--done"><span class="dk-step__num">✓</span><span class="dk-step__label">Fecha</span></div>
             <div class="dk-step__line dk-step__line--done"></div>
@@ -21,27 +21,25 @@
             <div class="dk-step dk-step--active"><span class="dk-step__num">4</span><span class="dk-step__label">Confirmar</span></div>
         </div>
 
-        <!-- Tarjeta de confirmación -->
         <div class="dk-ticket">
             <div class="dk-ticket__top">
                 <span class="dk-ticket__icono">✦</span>
-                <h1 class="dk-ticket__titulo">¡Cita reservada!</h1>
-                <p class="dk-ticket__sub">Tu cita ha sido agendada correctamente. Aquí está tu resumen.</p>
+                <h1 class="dk-ticket__titulo">
+                    @if (pagoCompletado) { <text>¡Pago exitoso!</text> }
+                    else if (efectivoSeleccionado) { <text>¡Cita reservada!</text> }
+                    else { <text>Confirma tu reserva</text> }
+                </h1>
+                <p class="dk-ticket__sub">
+                    @if (pagoCompletado) { <text>Tu pago fue aprobado y tu cita está pagada.</text> }
+                    else if (efectivoSeleccionado) { <text>Reserva realizada, realice el pago al asistir</text> }
+                    else { <text>Revisa los datos de tu cita y elige cómo pagar.</text> }
+                </p>
             </div>
 
             <div class="dk-ticket__cuerpo">
-                <div class="dk-ticket__fila">
-                    <span class="dk-ticket__label">Servicio</span>
-                    <strong class="dk-ticket__valor">@Model.ServicioNombre</strong>
-                </div>
-                <div class="dk-ticket__fila">
-                    <span class="dk-ticket__label">Estilista</span>
-                    <strong class="dk-ticket__valor">@Model.EstilistaNombre</strong>
-                </div>
-                <div class="dk-ticket__fila">
-                    <span class="dk-ticket__label">Fecha</span>
-                    <strong class="dk-ticket__valor">@fechaStr</strong>
-                </div>
+                <div class="dk-ticket__fila"><span class="dk-ticket__label">Servicio</span><strong class="dk-ticket__valor">@Model.ServicioNombre</strong></div>
+                <div class="dk-ticket__fila"><span class="dk-ticket__label">Estilista</span><strong class="dk-ticket__valor">@Model.EstilistaNombre</strong></div>
+                <div class="dk-ticket__fila"><span class="dk-ticket__label">Fecha</span><strong class="dk-ticket__valor">@fechaStr</strong></div>
                 <div class="dk-ticket__fila">
                     <span class="dk-ticket__label">Hora</span>
                     <strong class="dk-ticket__valor">
@@ -49,22 +47,258 @@
                         – @Model.Fin.ToString("h:mm tt", new System.Globalization.CultureInfo("es-PE"))
                     </strong>
                 </div>
+                <div class="dk-ticket__fila"><span class="dk-ticket__label">Estado</span><strong class="dk-ticket__valor">@Model.Estado</strong></div>
+                <div class="dk-ticket__fila" id="filaDescuento" style="@(Model.Descuento > 0 ? "" : "display:none")">
+                    <span class="dk-ticket__label">Descuento <span id="codigoAplicado">@Model.CuponCodigo</span></span>
+                    <strong class="dk-ticket__valor" id="montoDescuento">− S/ @Model.Descuento.ToString("F2")</strong>
+                </div>
                 <div class="dk-ticket__fila dk-ticket__fila--total">
                     <span class="dk-ticket__label">Total a pagar</span>
-                    <strong class="dk-ticket__total">S/ @Model.PrecioTotal.ToString("F2")</strong>
+                    <strong class="dk-ticket__total" id="totalPagar" data-total="@Model.PrecioTotal.ToString("F2", System.Globalization.CultureInfo.InvariantCulture)">
+                        S/ @Model.PrecioTotal.ToString("F2")
+                    </strong>
                 </div>
+                @if (pagoCompletado && !string.IsNullOrWhiteSpace(Model.NumeroOperacion))
+                {
+                    <div class="dk-ticket__fila"><span class="dk-ticket__label">Número de operación</span><strong class="dk-ticket__valor">@Model.NumeroOperacion</strong></div>
+                }
             </div>
 
-            <div class="dk-ticket__acciones">
-                <!-- En una futura iteración este botón enlazaría con la pasarela de pago -->
-                <button type="button" class="dk-btn dk-btn--primary dk-btn--pago" disabled>
-                    Proceder al pago
-                    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
-                </button>
-                <p class="dk-ticket__pago-hint">El módulo de pago estará disponible próximamente.</p>
+            <div class="dk-ticket__acciones dk-pago">
+                @if (Model.Estado == "Pendiente" && !Model.PagoEnProceso)
+                {
+                    @if (string.IsNullOrWhiteSpace(Model.CuponCodigo))
+                    {
+                        <div class="dk-cupon">
+                            <label for="codigoCupon">¿Tienes un cupón de descuento?</label>
+                            <div class="dk-cupon__fila">
+                                <input id="codigoCupon" type="text" maxlength="30" autocomplete="off" placeholder="Código de cupón" />
+                                <button type="button" class="dk-btn dk-btn--secondary" id="aplicarCupon">Aplicar</button>
+                            </div>
+                            <p id="mensajeCupon" class="dk-pago__mensaje" role="status" aria-live="polite"></p>
+                            @Html.AntiForgeryToken()
+                        </div>
+                    }
+
+                    <div class="dk-metodos-pago">
+                        @if (!string.IsNullOrWhiteSpace(Model.MercadoPagoPublicKey))
+                        {
+                            <button type="button" class="dk-btn dk-btn--primary dk-btn--pago" id="mostrarTarjeta">
+                                Pagar con Mercado Pago
+                            </button>
+                        }
+                        else
+                        {
+                            <p class="dk-pago__mensaje dk-pago__mensaje--error">El pago con tarjeta no está configurado. Configura la clave pública de Mercado Pago.</p>
+                        }
+
+                        <form method="post" action="/reservas/@Model.CitaId/pago-efectivo">
+                            @Html.AntiForgeryToken()
+                            <button type="submit" class="dk-btn dk-btn--secondary">Continuar con efectivo</button>
+                        </form>
+                    </div>
+
+                    @if (!string.IsNullOrWhiteSpace(Model.MercadoPagoPublicKey))
+                    {
+                        <div id="panelTarjeta" class="dk-tarjeta" hidden data-public-key="@Model.MercadoPagoPublicKey">
+                            <div class="dk-tarjeta__encabezado">
+                                <span class="dk-tarjeta__icono" aria-hidden="true">
+                                    <svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+                                        <rect x="2.5" y="4.5" width="19" height="15" rx="2.5" />
+                                        <path d="M3 9h18M7 15h3" />
+                                    </svg>
+                                </span>
+                                <div>
+                                    <h2>Pago con tarjeta</h2>
+                                    <p>Completa los datos para procesar tu pago de forma segura.</p>
+                                </div>
+                                <span class="dk-tarjeta__seguro">
+                                    <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                        <rect x="4" y="10" width="16" height="11" rx="2" />
+                                        <path d="M8 10V7a4 4 0 0 1 8 0v3" />
+                                    </svg>
+                                    Pago seguro
+                                </span>
+                            </div>
+                            <form id="form-checkout">
+                                @Html.AntiForgeryToken()
+                                <div class="dk-tarjeta__grupo">
+                                    <label for="form-checkout__cardNumber">Número de tarjeta</label>
+                                    <div class="dk-tarjeta__campo" id="form-checkout__cardNumber"></div>
+                                    <span class="dk-tarjeta__ayuda">Ingresa los números tal como aparecen en tu tarjeta.</span>
+                                </div>
+                                <div class="dk-tarjeta__rejilla">
+                                    <div class="dk-tarjeta__grupo">
+                                        <label for="form-checkout__expirationDate">Vencimiento</label>
+                                        <div class="dk-tarjeta__campo" id="form-checkout__expirationDate"></div>
+                                    </div>
+                                    <div class="dk-tarjeta__grupo">
+                                        <label for="form-checkout__securityCode">Código de seguridad</label>
+                                        <div class="dk-tarjeta__campo" id="form-checkout__securityCode"></div>
+                                    </div>
+                                </div>
+                                <div class="dk-tarjeta__grupo">
+                                    <label for="form-checkout__cardholderName">Nombre del titular</label>
+                                    <input id="form-checkout__cardholderName" type="text" autocomplete="cc-name" placeholder="Como aparece en la tarjeta" />
+                                </div>
+                                <div class="dk-tarjeta__rejilla">
+                                    <div class="dk-tarjeta__grupo">
+                                        <label for="form-checkout__issuer">Banco emisor</label>
+                                        <select id="form-checkout__issuer" aria-label="Banco emisor"></select>
+                                    </div>
+                                    <div class="dk-tarjeta__grupo">
+                                        <label for="form-checkout__installments">Cuotas</label>
+                                        <select id="form-checkout__installments" aria-label="Cuotas"></select>
+                                    </div>
+                                </div>
+                                <div class="dk-tarjeta__rejilla dk-tarjeta__rejilla--documento">
+                                    <div class="dk-tarjeta__grupo">
+                                        <label for="form-checkout__identificationType">Tipo de documento</label>
+                                        <select id="form-checkout__identificationType" aria-label="Tipo de documento"></select>
+                                    </div>
+                                    <div class="dk-tarjeta__grupo">
+                                        <label for="form-checkout__identificationNumber">Número de documento</label>
+                                        <input id="form-checkout__identificationNumber" type="text" autocomplete="off" placeholder="Número de documento" />
+                                    </div>
+                                </div>
+                                <div class="dk-tarjeta__grupo">
+                                    <label for="form-checkout__cardholderEmail">Correo electrónico</label>
+                                    <input id="form-checkout__cardholderEmail" type="email" value="@Model.ClienteEmail" autocomplete="email" />
+                                </div>
+                                <div class="dk-tarjeta__resumen">
+                                    <span>Total a pagar</span>
+                                    <strong id="resumenPagoTarjeta">S/ @Model.PrecioTotal.ToString("F2")</strong>
+                                </div>
+                                <button type="submit" id="form-checkout__submit" class="dk-btn dk-btn--primary">
+                                    <span>Continuar al pago</span>
+                                    <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                        <path d="M5 12h14M13 6l6 6-6 6" />
+                                    </svg>
+                                </button>
+                                <p class="dk-tarjeta__nota">Tus datos de tarjeta se procesan de forma segura por Mercado Pago.</p>
+                                <p id="mensajePago" class="dk-pago__mensaje" role="status" aria-live="polite"></p>
+                            </form>
+                        </div>
+                    }
+                }
+                else if (efectivoSeleccionado)
+                {
+                    <p class="dk-pago__confirmacion">Reserva realizada, realice el pago al asistir</p>
+                }
+                else if (pagoCompletado)
+                {
+                    <p class="dk-pago__confirmacion">Pago exitoso</p>
+                }
+                else if (Model.PagoEnProceso)
+                {
+                    <p class="dk-pago__mensaje">El pago está siendo procesado. Actualiza esta página en unos instantes.</p>
+                }
+
                 <a href="/" class="dk-back" style="margin-top:1rem">Ver más servicios &rarr;</a>
             </div>
         </div>
-
     </div>
 </section>
+
+@if (Model.Estado == "Pendiente" && !Model.PagoEnProceso && !string.IsNullOrWhiteSpace(Model.MercadoPagoPublicKey))
+{
+    <script src="https://sdk.mercadopago.com/js/v2"></script>
+}
+
+@section Scripts {
+<script>
+(() => {
+    const couponButton = document.getElementById('aplicarCupon');
+    const money = value => Number(value).toLocaleString('es-PE', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    const antiforgeryToken = document.querySelector('input[name="__RequestVerificationToken"]')?.value;
+
+    if (couponButton) {
+        couponButton.addEventListener('click', async () => {
+            const message = document.getElementById('mensajeCupon');
+            couponButton.disabled = true;
+            message.textContent = '';
+            try {
+                const body = new URLSearchParams({ codigo: document.getElementById('codigoCupon').value });
+                const response = await fetch('/reservas/@Model.CitaId/cupon', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'RequestVerificationToken': antiforgeryToken },
+                    body
+                });
+                const result = await response.json();
+                if (!response.ok) throw new Error(result.message || 'No se pudo aplicar el cupón.');
+
+                message.textContent = result.message;
+                document.getElementById('totalPagar').textContent = 'S/ ' + money(result.total);
+                document.getElementById('totalPagar').dataset.total = Number(result.total).toFixed(2);
+                const cardTotal = document.getElementById('resumenPagoTarjeta');
+                if (cardTotal) cardTotal.textContent = 'S/ ' + money(result.total);
+                document.getElementById('montoDescuento').textContent = '− S/ ' + money(result.descuento);
+                document.getElementById('codigoAplicado').textContent = 'DKAIZA10';
+                document.getElementById('filaDescuento').style.display = '';
+                document.getElementById('codigoCupon').disabled = true;
+            } catch (error) {
+                message.textContent = error.message;
+                couponButton.disabled = false;
+            }
+        });
+    }
+
+    const showCardButton = document.getElementById('mostrarTarjeta');
+    if (showCardButton) {
+        let cardForm;
+        showCardButton.addEventListener('click', () => {
+            const panel = document.getElementById('panelTarjeta');
+            panel.hidden = false;
+            panel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            if (cardForm) return;
+
+            const mp = new MercadoPago(panel.dataset.publicKey, { locale: 'es-PE' });
+            cardForm = mp.cardForm({
+                amount: document.getElementById('totalPagar').dataset.total,
+                iframe: true,
+                form: {
+                    id: 'form-checkout',
+                    cardNumber: { id: 'form-checkout__cardNumber', placeholder: 'Número de tarjeta' },
+                    expirationDate: { id: 'form-checkout__expirationDate', placeholder: 'MM/YY' },
+                    securityCode: { id: 'form-checkout__securityCode', placeholder: 'CVV' },
+                    cardholderName: { id: 'form-checkout__cardholderName' },
+                    issuer: { id: 'form-checkout__issuer' },
+                    installments: { id: 'form-checkout__installments' },
+                    identificationType: { id: 'form-checkout__identificationType' },
+                    identificationNumber: { id: 'form-checkout__identificationNumber' },
+                    cardholderEmail: { id: 'form-checkout__cardholderEmail' }
+                },
+                callbacks: {
+                    onFormMounted: error => {
+                        if (error) document.getElementById('mensajePago').textContent = 'No se pudieron cargar los campos de Mercado Pago.';
+                    },
+                    onSubmit: async event => {
+                        event.preventDefault();
+                        const submit = document.getElementById('form-checkout__submit');
+                        const message = document.getElementById('mensajePago');
+                        submit.disabled = true;
+                        message.textContent = 'Procesando pago…';
+
+                        try {
+                            const data = cardForm.getCardFormData();
+                            const response = await fetch('/reservas/@Model.CitaId/pago-tarjeta', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json', 'RequestVerificationToken': antiforgeryToken },
+                                body: JSON.stringify(data)
+                            });
+                            const result = await response.json();
+                            if (!response.ok) throw new Error(result.message || 'No se pudo procesar el pago.');
+                            message.textContent = result.message + '. Operación: ' + result.operacion;
+                            window.location.assign(result.redirectUrl);
+                        } catch (error) {
+                            message.textContent = error.message;
+                            submit.disabled = false;
+                        }
+                    }
+                }
+            });
+        });
+    }
+})();
+</script>
+}

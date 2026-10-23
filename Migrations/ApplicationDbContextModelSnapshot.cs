@@ -77,11 +77,21 @@ namespace DKaiza.Migrations
                     b.Property<int>("ClienteId")
                         .HasColumnType("integer");
 
+                    b.Property<string>("CuponCodigo")
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)");
+
+                    b.Property<decimal>("Descuento")
+                        .HasColumnType("numeric(10,2)");
+
                     b.Property<int>("Estado")
                         .HasColumnType("integer");
 
                     b.Property<int>("EstilistaId")
                         .HasColumnType("integer");
+
+                    b.Property<DateTime?>("FechaPago")
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<DateTime>("FechaReserva")
                         .HasColumnType("timestamp with time zone");
@@ -98,9 +108,22 @@ namespace DKaiza.Migrations
                     b.Property<DateTime>("Inicio")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<int?>("MetodoPago")
+                        .HasColumnType("integer");
+
                     b.Property<string>("Notas")
                         .HasMaxLength(300)
                         .HasColumnType("character varying(300)");
+
+                    b.Property<string>("NumeroOperacion")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<bool>("PagoEnProceso")
+                        .HasColumnType("boolean");
+
+                    b.Property<decimal>("PrecioBase")
+                        .HasColumnType("numeric(10,2)");
 
                     b.Property<decimal>("PrecioTotal")
                         .HasColumnType("numeric(10,2)");

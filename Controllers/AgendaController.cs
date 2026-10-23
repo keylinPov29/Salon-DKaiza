@@ -141,8 +141,11 @@ public class AgendaController : Controller
 
             if (cita.EstilistaId != usuario.EstilistaId) return Forbid();
 
-            if (cita.Estado != EstadoCita.Pendiente && cita.Estado != EstadoCita.Confirmada)
-                return BadRequest("Solo se pueden iniciar citas Pendientes o Confirmadas.");
+            if (cita.Estado != EstadoCita.Pendiente &&
+                cita.Estado != EstadoCita.PendientePago &&
+                cita.Estado != EstadoCita.Pagada &&
+                cita.Estado != EstadoCita.Confirmada)
+                return BadRequest("Solo se pueden iniciar citas Pendientes o con pago registrado.");
 
             cita.HoraInicioReal = DateTime.UtcNow;
             cita.Estado = EstadoCita.EnProceso; 
