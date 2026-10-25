@@ -56,9 +56,12 @@
             {
                 <a class="dk-nav__link" href="/Agenda">Mi Agenda</a>
             }
-            else if (User.IsInRole("Cliente") || User.Identity?.IsAuthenticated != true)
+            else
             {
-                <a class="dk-nav__link" href="/">Servicios</a>
+                <!-- Usamos un botón para que JavaScript pueda mostrar los servicios sin recargar -->
+                <button type="button" class="dk-nav__link" id="navServicios" style="background:none; border:none; cursor:pointer; padding:0;">
+                    Servicios
+                </button>
             }
 
             @if (User.Identity?.IsAuthenticated == true)
@@ -357,8 +360,38 @@
         </div>
     </footer>
 
+    <!-- Scripts -->
     <script src="https://cdn.jsdelivr.net/npm/jquery@3.7.1/dist/jquery.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="~/js/dkaiza.js" asp-append-version="true"></script>
+    
+    <!-- Script para la navegación de la página -->
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            const btnNavServicios = document.getElementById('navServicios');
+            const btnFooterServicios = document.getElementById('footerServicios');
+            const seccionInicio = document.getElementById('inicio');
+            const seccionServicios = document.getElementById('servicios');
+            const btnAtras = document.getElementById('btnAtras');
+
+            function mostrarServicios(e) {
+                if(e) e.preventDefault();
+                if(seccionInicio) seccionInicio.hidden = true;
+                if(seccionServicios) seccionServicios.hidden = false;
+                window.scrollTo(0, 0); 
+            }
+
+            function mostrarInicio(e) {
+                if(e) e.preventDefault();
+                if(seccionServicios) seccionServicios.hidden = true;
+                if(seccionInicio) seccionInicio.hidden = false;
+                window.scrollTo(0, 0);
+            }
+
+            if(btnNavServicios) btnNavServicios.addEventListener('click', mostrarServicios);
+            if(btnFooterServicios) btnFooterServicios.addEventListener('click', mostrarServicios);
+            if(btnAtras) btnAtras.addEventListener('click', mostrarInicio);
+        });
+    </script>
 </body>
 </html>
