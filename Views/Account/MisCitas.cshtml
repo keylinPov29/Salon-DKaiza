@@ -1,0 +1,209 @@
+@model MisCitasViewModel
+@using System.Globalization
+
+@functions {
+    static readonly string[] Meses = { "enero", "febrero", "marzo", "abril", "mayo", "junio", "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre" };
+    static readonly string[] MesesCorto = { "ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "sep", "oct", "nov", "dic" };
+    static readonly string[] NombresDia = { "domingo", "lunes", "martes", "miércoles", "jueves", "viernes", "sábado" };
+    static readonly string[] DiaCorto = { "dom", "lun", "mar", "mié", "jue", "vie", "sáb" };
+
+    const string Svg = "<svg viewBox=\"0 0 24 24\" width=\"15\" height=\"15\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\">";
+    static readonly string IcoReloj = Svg + "<circle cx=\"12\" cy=\"12\" r=\"9\"/><path d=\"M12 7v5l3 2\"/></svg>";
+    static readonly string IcoCalendario = Svg + "<rect x=\"3\" y=\"5\" width=\"18\" height=\"16\" rx=\"3\"/><path d=\"M8 3v4M16 3v4M3 11h18\"/></svg>";
+    static readonly string IcoRepetir = Svg + "<path d=\"M17 2l4 4-4 4\"/><path d=\"M3 11V9a3 3 0 0 1 3-3h15\"/><path d=\"M7 22l-4-4 4-4\"/><path d=\"M21 13v2a3 3 0 0 1-3 3H3\"/></svg>";
+    static readonly string IcoX = Svg + "<path d=\"M18 6L6 18M6 6l12 12\"/></svg>";
+    static readonly string IcoBrillo = Svg + "<path d=\"M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9z\"/></svg>";
+
+    static string Faltan(int n) => n <= 0 ? "Hoy" : n == 1 ? "Mañana" : $"En {n} días";
+
+    static string Iniciales(string? nombre)
+    {
+        var partes = (nombre ?? "").Split(' ', StringSplitOptions.RemoveEmptyEntries);
+        var s = string.Concat(partes.Take(2).Select(p => char.ToUpperInvariant(p[0])));
+        return s.Length == 0 ? "?" : s;
+    }
+
+    static int Minutos(DateTime inicio, DateTime fin) => (int)(fin - inicio).TotalMinutes;
+    static string Precio(decimal p) => "S/ " + p.ToString("N2", CultureInfo.InvariantCulture);
+
+    static string Resumen(CitaItemViewModel c) =>
+        $"{c.Servicio} · {NombresDia[(int)c.Inicio.DayOfWeek]} {c.Inicio.Day} de {Meses[c.Inicio.Month - 1]} a las {c.Inicio:HH:mm}";
+}
+
+@{
+    ViewData["Title"] = "Mis citas";
+    var citas = Model.Citas;
+    var pagadas = citas.Count(c => c.EstadoClase == "ok");
+    var pendientes = citas.Count - pagadas;
+    var primera = citas.FirstOrDefault();
+    var resto = citas.Skip(1).ToList();
+    var nombre = (User.Identity?.Name ?? "").Split(' ', StringSplitOptions.RemoveEmptyEntries).FirstOrDefault() ?? "";
+    var ultimoMes = "";
+}
+
+<section class="dk-mc">
+    <div class="dk-mc__card">
+
+        <div class="dk-mc__band">
+            <div class="dk-mc__bandtxt">
+                <span class="dk-mc__hola">Hola, @nombre</span>
+                <h1 class="dk-mc__title">Mis citas</h1>
+            </div>
+            <div class="dk-mc__bandico">@Html.Raw(IcoCalendario)</div>
+        </div>
+
+        <div class="dk-mc__body">
+
+            @if (primera == null)
+            {
+                <div class="dk-mc__vacio">
+                    <div class="dk-mc__vacio-ico">@Html.Raw(IcoCalendario)</div>
+                    <h2>Aún no tienes citas próximas</h2>
+                    <p>Cuando reserves un servicio, aparecerá aquí.</p>
+                    <a class="dk-mc__btn dk-mc__btn--main" href="/">Reservar cita</a>
+                </div>
+            }
+            else
+            {
+                <div class="dk-mc__resumen">
+                    <span class="dk-mc__chip"><b>@citas.Count</b> Próximas</span>
+                    <span class="dk-mc__chip dk-mc__chip--ok"><b>@pagadas</b> Pagadas</span>
+                    <span class="dk-mc__chip dk-mc__chip--pen"><b>@pendientes</b> Pago pendiente</span>
+                </div>
+
+                var dias0 = (primera.Inicio.Date - Model.Hoy.Date).Days;
+
+                <article class="dk-mc__hero">
+                    <div class="dk-mc__herotop">
+                        <span class="dk-mc__kicker">Tu próxima cita</span>
+                        <span class="dk-mc__cuenta">@Faltan(dias0)</span>
+                    </div>
+
+                    <div class="dk-mc__heromain">
+                        <div class="dk-mc__herodia">
+                            <b>@primera.Inicio.Day</b>
+                            <small>@MesesCorto[primera.Inicio.Month - 1]</small>
+                        </div>
+                        <div class="dk-mc__heroinfo">
+                            <h2 class="dk-mc__herosv">@primera.Servicio</h2>
+                            <div class="dk-mc__herometa">
+                                <span>@Html.Raw(IcoCalendario) @NombresDia[(int)primera.Inicio.DayOfWeek]</span>
+                                <span>@Html.Raw(IcoReloj) @primera.Inicio.ToString("HH:mm") · @Minutos(primera.Inicio, primera.Fin) min</span>
+                                <span><i class="dk-mc__av dk-mc__av--claro">@Iniciales(primera.Estilista)</i> @primera.Estilista</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="dk-mc__herofoot">
+                        <div class="dk-mc__heroprecio">
+                            <b>@Precio(primera.Precio)</b>
+                            <span class="dk-mc__pill dk-mc__pill--hero @(primera.EstadoClase == "ok" ? "dk-mc__pill--ok" : "")">@primera.Estado</span>
+                        </div>
+                        <div class="dk-mc__acciones">
+                                                        <a class="dk-mc__btn dk-mc__btn--blanco" href="/reservas/reprogramar/@primera.Id">@Html.Raw(IcoRepetir) Reprogramar</a>
+                            <button type="button" class="dk-mc__btn dk-mc__btn--linea" data-cancelar data-id="@primera.Id" data-resumen="@Resumen(primera)">@Html.Raw(IcoX) Cancelar</button>
+                        </div>
+                    </div>
+                </article>
+
+                if (resto.Count > 0)
+                {
+                    <div class="dk-mc__sep"><span>Siguientes citas</span></div>
+                    <div class="dk-mc__linea">
+                        @foreach (var c in resto)
+                        {
+                            var clave = c.Inicio.ToString("yyyy-MM");
+                            if (clave != ultimoMes)
+                            {
+                                ultimoMes = clave;
+                                var enMes = resto.Count(x => x.Inicio.ToString("yyyy-MM") == clave);
+                                <div class="dk-mc__mes">
+                                    @Meses[c.Inicio.Month - 1] @c.Inicio.Year
+                                    <em>· @enMes @(enMes == 1 ? "cita" : "citas")</em>
+                                </div>
+                            }
+
+                            var diasN = (c.Inicio.Date - Model.Hoy.Date).Days;
+
+                            <article class="dk-mc__item @(c.EstadoClase == "ok" ? "dk-mc__item--ok" : "")">
+                                <div class="dk-mc__itemtop">
+                                    <div class="dk-mc__dia">
+                                        <b>@c.Inicio.ToString("dd")</b>
+                                        <small>@DiaCorto[(int)c.Inicio.DayOfWeek]</small>
+                                    </div>
+                                    <div class="dk-mc__iteminfo">
+                                        <div class="dk-mc__sv">
+                                            <span class="dk-mc__svico">@Html.Raw(IcoBrillo)</span>
+                                            <h3>@c.Servicio</h3>
+                                        </div>
+                                        <div class="dk-mc__meta">
+                                            <span><i class="dk-mc__av">@Iniciales(c.Estilista)</i> @c.Estilista</span>
+                                            <span>@Html.Raw(IcoReloj) @c.Inicio.ToString("HH:mm") · @Minutos(c.Inicio, c.Fin) min</span>
+                                        </div>
+                                    </div>
+                                    <div class="dk-mc__der">
+                                        <b>@Precio(c.Precio)</b>
+                                        <span class="dk-mc__pill @(c.EstadoClase == "ok" ? "dk-mc__pill--ok" : "")">@c.Estado</span>
+                                    </div>
+                                </div>
+                                <div class="dk-mc__itemfoot">
+                                    <small>@Faltan(diasN)</small>
+                                                                        <a class="dk-mc__btn dk-mc__btn--main dk-mc__btn--sm" href="/reservas/reprogramar/@c.Id">@Html.Raw(IcoRepetir) Reprogramar</a>
+                                    <button type="button" class="dk-mc__btn dk-mc__btn--peligro dk-mc__btn--sm" data-cancelar data-id="@c.Id" data-resumen="@Resumen(c)">@Html.Raw(IcoX) Cancelar</button>
+                                </div>
+                            </article>
+                        }
+                    </div>
+                }
+
+                <div class="dk-mc__cta">
+                    <div>
+                        <b>¿Quieres agendar otro servicio?</b>
+                        <span>Reserva en pocos pasos.</span>
+                    </div>
+                    <a class="dk-mc__btn dk-mc__btn--main" href="/">Reservar cita</a>
+                </div>
+            }
+
+        </div>
+    </div>
+
+    <dialog class="dk-mc__dlg" id="dkCancelar">
+        <form method="post" id="dkCancelarForm">
+            @Html.AntiForgeryToken()
+            <div class="dk-mc__dlgico">@Html.Raw(IcoX)</div>
+            <h3>¿Desea cancelar la cita?</h3>
+            <p class="dk-mc__dlgres" id="dkCancelarTxt"></p>
+            <p>Se eliminará la reserva y el horario quedará disponible.</p>
+            <div class="dk-mc__dlgbtn">
+                <button type="submit" class="dk-mc__btn dk-mc__btn--rojo">Sí, cancelar</button>
+                <button type="button" class="dk-mc__btn dk-mc__btn--main" data-cerrar>No, mantener</button>
+            </div>
+        </form>
+    </dialog>
+</section>
+
+@section Scripts {
+    <script>
+        (function () {
+            var dlg = document.getElementById('dkCancelar');
+            var form = document.getElementById('dkCancelarForm');
+            var txt = document.getElementById('dkCancelarTxt');
+            if (!dlg) return;
+
+            document.querySelectorAll('[data-cancelar]').forEach(function (b) {
+                b.addEventListener('click', function () {
+                    form.action = '/cuenta/mis-citas/' + b.dataset.id + '/cancelar';
+                    txt.textContent = b.dataset.resumen;
+                    dlg.showModal();
+                });
+            });
+
+            dlg.querySelector('[data-cerrar]').addEventListener('click', function () { dlg.close(); });
+            dlg.addEventListener('click', function (e) { if (e.target === dlg) dlg.close(); });
+            form.addEventListener('submit', function () {
+                form.querySelector('[type=submit]').disabled = true;
+            });
+        })();
+    </script>
+}

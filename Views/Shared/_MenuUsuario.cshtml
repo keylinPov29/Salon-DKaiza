@@ -1,8 +1,11 @@
 <details class="dk-user" id="dkUser">
-    <summary class="dk-nav__link">@User.Identity!.Name <span aria-hidden="true">▾</span></summary>
+    <summary class="dk-nav__link">
+        <span class="badge-rol">Cliente</span>
+        @User.Identity!.Name <span aria-hidden="true">▾</span>
+    </summary>
     <div class="dk-user__menu">
         <a href="/cuenta/perfil">Mi perfil</a>
-        <a href="/cuenta/mis-citas">Mis citas</a>
+        <a href="/cuenta/mis-citas">Ver mis citas</a>
         <form asp-controller="Account" asp-action="Logout" method="post">
             <button type="submit">Cerrar sesión</button>
         </form>

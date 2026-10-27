@@ -91,28 +91,26 @@
 
             @if (User.Identity?.IsAuthenticated == true)
             {
-                <span class="dk-nav__user">
-                    <span class="badge-rol">
-                        @(User.IsInRole("Administrador")
-                            ? "Admin"
-                            : User.IsInRole("Estilista")
-                                ? "Estilista"
-                                : User.IsInRole("Cliente")
-                                    ? "Cliente"
-                                        : User.IsInRole("Recepcionista")
-                                            ? "Recepción"
-                                        : "Usuario")
-                    </span>
-
-                    @User.Identity!.Name
-                </span>
-
-                @if (User.IsInRole("Cliente"))
+                if (User.IsInRole("Cliente"))
                 {
                     <partial name="_MenuUsuario" />
                 }
                 else
                 {
+                    <span class="dk-nav__user">
+                        <span class="badge-rol">
+                            @(User.IsInRole("Administrador")
+                                ? "Admin"
+                                : User.IsInRole("Estilista")
+                                    ? "Estilista"
+                                    : User.IsInRole("Recepcionista")
+                                        ? "Recepción"
+                                        : "Usuario")
+                        </span>
+
+                        @User.Identity!.Name
+                    </span>
+
                     <form asp-controller="Account"
                           asp-action="Logout"
                           method="post"
