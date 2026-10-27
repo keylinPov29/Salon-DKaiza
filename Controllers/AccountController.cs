@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
+using DKaiza.Web.Dominio;
 
 namespace DKaiza.Web.Controllers;
 
@@ -62,7 +63,7 @@ public class AccountController : Controller
 
         if (usuario.Rol == RolUsuario.Administrador)
             return Redirect("/admin/categorias");
-            //si es estilista
+        //si es estilista
         if (usuario.Rol == RolUsuario.Estilista)
             return RedirectToAction("Index", "Agenda");
         if (usuario.Rol == RolUsuario.Recepcionista)
@@ -150,7 +151,8 @@ public class AccountController : Controller
 
         return Redirect("/");
     }
-        // ───────── Mi perfil (actualización de datos del cliente) ─────────
+
+    // ───────── Mi perfil (actualización de datos del cliente) ─────────
 
     private async Task<Usuario?> UsuarioActualAsync()
     {
@@ -241,15 +243,121 @@ public class AccountController : Controller
         return Redirect("/cuenta/perfil");
     }
 
-    // La pantalla de citas del cliente aún no existe: por ahora solo avisa.
-    // Cuando exista, esta acción pasa a mostrar la lista de citas.
+    // ───────── Mis citas (HU-03 · T1) ─────────
+
+    private static readonly TimeZoneInfo ZonaSalon =
+        TimeZoneInfo.FindSystemTimeZoneById("SA Pacific Standard Time");
+
     [Authorize(Roles = "Cliente")]
     [HttpGet("/cuenta/mis-citas")]
-    public IActionResult MisCitas()
+    public async Task<IActionResult> MisCitas()
     {
-        TempData["Info"] = "Mis citas estará disponible pronto";
-        return Redirect("/cuenta/perfil");
+        if (!int.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var clienteId))
+            return Forbid();
+
+        var ahora = DateTime.UtcNow;
+        var vigentes = new[]
+        {
+            EstadoCita.Pendiente, EstadoCita.Confirmada,
+            EstadoCita.PendientePago, EstadoCita.Pagada
+        };
+
+        var filas = await _db.Citas.AsNoTracking()
+            .Where(c => c.ClienteId == clienteId && c.Inicio >= ahora && vigentes.Contains(c.Estado))
+            .OrderBy(c => c.Inicio)
+            .Select(c => new FilaCitaDto(c.Id, c.Inicio, c.Fin, c.PrecioTotal, c.Estado,
+                c.Servicio!.Nombre, c.Estilista!.Nombres, c.Estilista!.Apellidos))
+            .ToListAsync();
+
+        var vm = new MisCitasViewModel
+        {
+            Hoy = TimeZoneInfo.ConvertTimeFromUtc(ahora, ZonaSalon).Date,
+            Citas = filas.Select(MapearCita).ToList()
+        };
+
+        return View(vm);
     }
+
+    private static CitaItemViewModel MapearCita(FilaCitaDto x)
+    {
+        var (texto, clase) = x.Estado switch
+        {
+            EstadoCita.Confirmada => ("Confirmada", "ok"),
+            EstadoCita.Pagada => ("Pagada", "ok"),
+            EstadoCita.PendientePago => ("Pago pendiente", "pen"),
+            _ => ("Pendiente", "pen")
+        };
+
+        return new CitaItemViewModel
+        {
+            Id = x.Id,
+            Inicio = TimeZoneInfo.ConvertTimeFromUtc(x.Inicio, ZonaSalon),
+            Fin = TimeZoneInfo.ConvertTimeFromUtc(x.Fin, ZonaSalon),
+            Duracion = (int)(x.Fin - x.Inicio).TotalMinutes,
+            Servicio = x.Servicio,
+            Estilista = $"{x.Nombres} {x.Apellidos}".Trim(),
+            Precio = x.Precio,
+            Estado = texto,
+            EstadoClase = clase
+        };
+    }
+
+    // ───────── Cancelar cita (HU-03 · T4 y T5) ─────────
+
+    [Authorize(Roles = "Cliente")]
+    [HttpPost("/cuenta/mis-citas/{id:int}/cancelar")]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> CancelarCita(int id)
+    {
+        if (!int.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var clienteId))
+            return Forbid();
+
+        var ahora = DateTime.UtcNow;
+        var cancelables = new[]
+        {
+            EstadoCita.Pendiente, EstadoCita.Confirmada,
+            EstadoCita.PendientePago, EstadoCita.Pagada
+        };
+
+        // Un solo UPDATE: solo cancela si la cita es de este cliente, es futura y sigue vigente.
+        var filas = await _db.Citas
+            .Where(c => c.Id == id
+                     && c.ClienteId == clienteId
+                     && c.Inicio > ahora
+                     && cancelables.Contains(c.Estado))
+            .ExecuteUpdateAsync(s => s.SetProperty(c => c.Estado, EstadoCita.Cancelada));
+
+        if (filas == 0)
+        {
+            TempData["Error"] = "No se pudo cancelar la cita. Puede que ya esté cancelada o que ya haya pasado.";
+            return Redirect("/cuenta/mis-citas");
+        }
+
+        TempData["Success"] = "Cita cancelada. El horario ya está disponible.";
+        return Redirect("/cuenta/mis-citas");
+    }
+
+    // ───────── Cita reprogramada: muestra los datos actualizados (HU-03) ─────────
+
+    [Authorize(Roles = "Cliente")]
+    [HttpGet("/cuenta/mis-citas/{id:int}/reprogramada")]
+    public async Task<IActionResult> CitaReprogramada(int id)
+    {
+        if (!int.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var clienteId))
+            return Forbid();
+
+        var fila = await _db.Citas.AsNoTracking()
+            .Where(c => c.Id == id && c.ClienteId == clienteId)
+            .Select(c => new FilaCitaDto(c.Id, c.Inicio, c.Fin, c.PrecioTotal, c.Estado,
+                c.Servicio!.Nombre, c.Estilista!.Nombres, c.Estilista!.Apellidos))
+            .FirstOrDefaultAsync();
+
+        if (fila == null) return Redirect("/cuenta/mis-citas");
+
+        ViewBag.Antes = TempData["Antes"] as string;
+        return View(MapearCita(fila));
+    }
+
     [HttpPost("/cuenta/logout")]
     [ValidateAntiForgeryToken]
     [Authorize]

@@ -1,4 +1,4 @@
-@model DKaiza.Web.Models.Servicio
+﻿@model DKaiza.Web.Models.Servicio
 @{
     Layout = null;
 }
@@ -64,18 +64,25 @@
                 </button>
             }
 
-            @if (User.Identity?.IsAuthenticated == true)
+                                             @if (User.Identity?.IsAuthenticated == true)
             {
-                <span class="dk-nav__link" style="cursor:default; display: flex; align-items: center; gap: 8px;">
-                    <span class="badge-rol">
-                        @(User.IsInRole("Administrador") ? "Admin" : User.IsInRole("Estilista") ? "Estilista" : "Cliente")
+                if (User.IsInRole("Cliente"))
+                {
+                    <partial name="_MenuUsuario" />
+                }
+                else
+                {
+                    <span class="dk-nav__link" style="cursor:default; display: flex; align-items: center; gap: 8px;">
+                        <span class="badge-rol">
+                            @(User.IsInRole("Administrador") ? "Admin" : "Estilista")
+                        </span>
+                        @User.Identity!.Name
                     </span>
-                    @User.Identity!.Name
-                </span>
 
-                <form asp-controller="Account" asp-action="Logout" method="post" style="display:inline;margin:0">
-                    <button type="submit" class="dk-nav__link">Cerrar sesión</button>
-                </form>
+                    <form asp-controller="Account" asp-action="Logout" method="post" style="display:inline;margin:0">
+                        <button type="submit" class="dk-nav__link">Cerrar sesión</button>
+                    </form>
+                }
             }
             else
             {

@@ -3,6 +3,7 @@
     ViewData["Title"] = "Elegir estilista";
     var fechaDisplay = Model.Fecha.ToString("dddd d 'de' MMMM 'de' yyyy", new System.Globalization.CultureInfo("es-PE"));
     fechaDisplay = char.ToUpper(fechaDisplay[0]) + fechaDisplay[1..];
+    var rq = Model.ReprogramarId.HasValue ? $"&reprogramarId={Model.ReprogramarId}" : "";
 }
 
 <section class="dk-reserva">
@@ -31,9 +32,14 @@
             </div>
         </div>
 
+        @if (Model.ReprogramarId.HasValue)
+        {
+            <partial name="_AvisoReprogramar" model="Model.ReprogramarResumen" />
+        }
+
         <!-- Cabecera -->
         <div class="dk-reserva__head">
-            <a href="/reservas/nueva?servicioId=@Model.ServicioId" class="dk-back">&larr; Cambiar fecha</a>
+            <a href="/reservas/nueva?servicioId=@(Model.ServicioId + rq)" class="dk-back">&larr; Cambiar fecha</a>
             <div class="dk-reserva__servicio">
                 <span class="dk-reserva__eyebrow">— @Model.ServicioNombre —</span>
                 <h1 class="dk-reserva__titulo">Elige tu estilista</h1>
@@ -51,7 +57,7 @@
                 <span class="dk-empty__icon">✦</span>
                 <h3 class="dk-empty__title">Sin disponibilidad</h3>
                 <p class="dk-empty__text">No hay estilistas disponibles ese día. Por favor elige otra fecha.</p>
-                <a href="/reservas/nueva?servicioId=@Model.ServicioId" class="dk-btn dk-btn--primary">Ver otras fechas</a>
+                <a href="/reservas/nueva?servicioId=@(Model.ServicioId + rq)" class="dk-btn dk-btn--primary">Ver otras fechas</a>
             </div>
         }
         else
@@ -60,7 +66,7 @@
                 @foreach (var e in Model.Estilistas)
                 {
                     <a class="dk-estilista-card"
-                       href="/reservas/horarios?servicioId=@Model.ServicioId&fecha=@Model.Fecha.ToString("yyyy-MM-dd")&estilistaId=@e.Id">
+                       href="/reservas/horarios?servicioId=@Model.ServicioId&fecha=@Model.Fecha.ToString("yyyy-MM-dd")&estilistaId=@(e.Id + rq)">
 
                         <div class="dk-estilista-card__avatar">
                             @if (e.TieneFoto)

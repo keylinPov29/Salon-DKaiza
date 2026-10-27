@@ -6,6 +6,7 @@ using DKaiza.Web.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using System.Globalization;
 
 namespace DKaiza.Web.Controllers;
 
@@ -46,10 +47,84 @@ public class ReservasController : Controller
     }
 
     // ────────────────────────────────────────────────────────────────
+    //  REPROGRAMAR (HU-03) — apoyo
+    // ────────────────────────────────────────────────────────────────
+    private static readonly EstadoCita[] EstadosReprogramables =
+    {
+        EstadoCita.Pendiente, EstadoCita.Confirmada,
+        EstadoCita.PendientePago, EstadoCita.Pagada
+    };
+
+    /// <summary>Devuelve la cita del cliente si todavía se puede reprogramar; si no, null.</summary>
+    private async Task<Cita?> CitaReprogramableAsync(int? reprogramarId, int servicioId)
+    {
+        if (reprogramarId == null ||
+            !int.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var clienteId))
+            return null;
+
+        var ahora = DateTime.UtcNow;
+        return await _db.Citas.AsNoTracking()
+            .Include(c => c.Estilista)
+            .FirstOrDefaultAsync(c => c.Id == reprogramarId.Value
+                                   && c.ClienteId == clienteId
+                                   && c.ServicioId == servicioId
+                                   && c.Inicio > ahora
+                                   && !c.PagoEnProceso
+                                   && EstadosReprogramables.Contains(c.Estado));
+    }
+
+    private static string ResumenCita(Cita c)
+    {
+        var ini = TimeZoneInfo.ConvertTimeFromUtc(c.Inicio, ZonaSalon);
+        var texto = ini.ToString("dddd d 'de' MMMM", new CultureInfo("es-PE"));
+        return $"{texto} a las {ini:HH:mm} con {c.Estilista?.NombreCompleto}";
+    }
+
+    private async Task<(IActionResult? Error, string? Resumen)> ValidarReprogramacionAsync(
+        int? reprogramarId, int servicioId)
+    {
+        if (!reprogramarId.HasValue) return (null, null);
+
+        var cita = await CitaReprogramableAsync(reprogramarId, servicioId);
+        if (cita == null)
+        {
+            TempData["Error"] = "Esa cita ya no se puede reprogramar.";
+            return (Redirect("/cuenta/mis-citas"), null);
+        }
+        return (null, ResumenCita(cita));
+    }
+
+    // Entrada desde "Mis citas": busca el servicio de la cita y abre el flujo de reserva.
+    [HttpGet("reprogramar/{id:int}")]
+    public async Task<IActionResult> Reprogramar(int id)
+    {
+        if (!int.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var clienteId))
+            return Forbid();
+
+        var ahora = DateTime.UtcNow;
+        var servicioId = await _db.Citas.AsNoTracking()
+            .Where(c => c.Id == id
+                     && c.ClienteId == clienteId
+                     && c.Inicio > ahora
+                     && !c.PagoEnProceso
+                     && EstadosReprogramables.Contains(c.Estado))
+            .Select(c => (int?)c.ServicioId)
+            .FirstOrDefaultAsync();
+
+        if (servicioId == null)
+        {
+            TempData["Error"] = "Esa cita ya no se puede reprogramar.";
+            return Redirect("/cuenta/mis-citas");
+        }
+
+        return RedirectToAction(nameof(PasoUno), new { servicioId = servicioId.Value, reprogramarId = id });
+    }
+
+    // ────────────────────────────────────────────────────────────────
     //  PASO 1 — Calendario (mes actual y los dos siguientes)
     // ────────────────────────────────────────────────────────────────
     [HttpGet("nueva")]
-    public async Task<IActionResult> PasoUno(int servicioId)
+    public async Task<IActionResult> PasoUno(int servicioId, int? reprogramarId = null)
     {
         var servicio = await _db.Servicios
             .AsNoTracking()
@@ -61,6 +136,10 @@ public class ReservasController : Controller
             TempData["Error"] = "El servicio seleccionado no existe o no está disponible.";
             return Redirect("/");
         }
+
+        var (errRepro, resumenRepro) = await ValidarReprogramacionAsync(reprogramarId, servicioId);
+        if (errRepro != null) return errRepro;
+        var excluirId = reprogramarId ?? 0;
 
         var hoyLocal = DateOnly.FromDateTime(TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, ZonaSalon));
         var hasta = FinVentanaReserva(hoyLocal);
@@ -85,10 +164,11 @@ public class ReservasController : Controller
             .Where(e => CoincideEspecialidad(e.Especialidad, servicio.Categoria?.Nombre))
             .ToList();
 
-        // Citas ya reservadas en el rango (no canceladas)
+        // Citas ya reservadas en el rango (no canceladas; la que se reprograma no cuenta)
         var citasExistentes = await _db.Citas
             .AsNoTracking()
             .Where(c => c.Estado != EstadoCita.Cancelada
+                     && c.Id != excluirId
                      && c.Inicio >= inicioRangoUtc
                      && c.Inicio < finRangoUtc)
             .Select(c => new { c.EstilistaId, c.Inicio, c.Fin })
@@ -139,7 +219,9 @@ public class ReservasController : Controller
             Precio          = servicio.Precio,
             DiasDisponibles = diasDisponibles,
             FechaMinima = hoyLocal,
-            FechaMaxima = hasta
+            FechaMaxima = hasta,
+            ReprogramarId = reprogramarId,
+            ReprogramarResumen = resumenRepro
         };
 
         return View("PasoUno", vm);
@@ -149,12 +231,12 @@ public class ReservasController : Controller
     //  PASO 2 — Estilistas disponibles ese día
     // ────────────────────────────────────────────────────────────────
     [HttpGet("estilistas")]
-    public async Task<IActionResult> PasoDos(int servicioId, string fecha)
+    public async Task<IActionResult> PasoDos(int servicioId, string fecha, int? reprogramarId = null)
     {
         if (!DateOnly.TryParse(fecha, out var fechaElegida) || !EsFechaReservaValida(fechaElegida))
         {
             TempData["Error"] = "La fecha seleccionada ya no está disponible.";
-            return RedirectToAction(nameof(PasoUno), new { servicioId });
+            return RedirectToAction(nameof(PasoUno), new { servicioId, reprogramarId });
         }
 
         var servicio = await _db.Servicios
@@ -163,6 +245,10 @@ public class ReservasController : Controller
             .FirstOrDefaultAsync(s => s.Id == servicioId && s.Activo);
 
         if (servicio == null) return Redirect("/");
+
+        var (errRepro, resumenRepro) = await ValidarReprogramacionAsync(reprogramarId, servicioId);
+        if (errRepro != null) return errRepro;
+        var excluirId = reprogramarId ?? 0;
 
         var estilistas = await _db.Estilistas
             .AsNoTracking()
@@ -185,6 +271,7 @@ public class ReservasController : Controller
         var citasDelDia = await _db.Citas
             .AsNoTracking()
             .Where(c => c.Estado != EstadoCita.Cancelada
+                     && c.Id != excluirId
                      && c.Inicio >= inicioDiaUtc && c.Inicio < finDiaUtc)
             .Select(c => new { c.EstilistaId, c.Inicio, c.Fin })
             .ToListAsync();
@@ -226,7 +313,9 @@ public class ReservasController : Controller
             DuracionMinutos = servicio.DuracionMinutos,
             Precio          = servicio.Precio,
             Fecha           = fechaElegida,
-            Estilistas      = lista
+            Estilistas      = lista,
+            ReprogramarId   = reprogramarId,
+            ReprogramarResumen = resumenRepro
         };
 
         return View("PasoDos", vm);
@@ -236,12 +325,12 @@ public class ReservasController : Controller
     //  PASO 3 — Horarios disponibles
     // ────────────────────────────────────────────────────────────────
     [HttpGet("horarios")]
-    public async Task<IActionResult> PasoTres(int servicioId, string fecha, int estilistaId)
+    public async Task<IActionResult> PasoTres(int servicioId, string fecha, int estilistaId, int? reprogramarId = null)
     {
         if (!DateOnly.TryParse(fecha, out var fechaElegida) || !EsFechaReservaValida(fechaElegida))
         {
             TempData["Error"] = "La fecha seleccionada ya no está disponible.";
-            return RedirectToAction(nameof(PasoUno), new { servicioId });
+            return RedirectToAction(nameof(PasoUno), new { servicioId, reprogramarId });
         }
 
         var servicio = await _db.Servicios
@@ -257,8 +346,12 @@ public class ReservasController : Controller
         if (!CoincideEspecialidad(estilista.Especialidad, servicio.Categoria?.Nombre))
         {
             TempData["Error"] = "Ese estilista no realiza el servicio seleccionado.";
-            return RedirectToAction(nameof(PasoDos), new { servicioId, fecha });
+            return RedirectToAction(nameof(PasoDos), new { servicioId, fecha, reprogramarId });
         }
+
+        var (errRepro, resumenRepro) = await ValidarReprogramacionAsync(reprogramarId, servicioId);
+        if (errRepro != null) return errRepro;
+        var excluirId = reprogramarId ?? 0;
 
         var inicioDiaUtc = TimeZoneInfo.ConvertTimeToUtc(fechaElegida.ToDateTime(TimeOnly.MinValue), ZonaSalon);
         var finDiaUtc    = inicioDiaUtc.AddDays(1);
@@ -267,6 +360,7 @@ public class ReservasController : Controller
             .AsNoTracking()
             .Where(c => c.EstilistaId == estilistaId
                      && c.Estado != EstadoCita.Cancelada
+                     && c.Id != excluirId
                      && c.Inicio >= inicioDiaUtc && c.Inicio < finDiaUtc)
             .Select(c => new { c.Inicio, c.Fin })
             .ToListAsync();
@@ -281,6 +375,23 @@ public class ReservasController : Controller
             var utcF = utcI.AddMinutes(servicio.DuracionMinutos);
             return !citasDelDia.Any(c => utcI < c.Fin && utcF > c.Inicio);
         }).ToList();
+      
+        // Reprogramación: la hora de la cita actual se muestra, pero deshabilitada
+        TimeOnly? horaActual = null;
+        if (reprogramarId.HasValue)
+        {
+            var inicioActual = await _db.Citas.AsNoTracking()
+                .Where(c => c.Id == reprogramarId.Value && c.EstilistaId == estilistaId)
+                .Select(c => c.Inicio)
+                .FirstOrDefaultAsync();
+
+            if (inicioActual != default)
+            {
+                var local = TimeZoneInfo.ConvertTimeFromUtc(inicioActual, ZonaSalon);
+                if (DateOnly.FromDateTime(local) == fechaElegida)
+                    horaActual = TimeOnly.FromDateTime(local);
+            }
+        }
 
         var vm = new ReservaPasoTresViewModel
         {
@@ -292,24 +403,29 @@ public class ReservasController : Controller
             EstilistaId           = estilista.Id,
             EstilistaNombre       = estilista.NombreCompleto,
             EstilistaEspecialidad = estilista.Especialidad,
-            HorariosDisponibles   = libres
+            HorariosDisponibles   = libres,
+             ReprogramarId         = reprogramarId,
+            ReprogramarResumen    = resumenRepro,
+            HoraActual            = horaActual
         };
 
         return View("PasoTres", vm);
     }
 
     // ────────────────────────────────────────────────────────────────
-    //  POST CONFIRMAR — Crea la cita con bloqueo atómico
+    //  POST CONFIRMAR — Crea la cita (o reprograma una existente) con bloqueo atómico
     // ────────────────────────────────────────────────────────────────
     [HttpPost("confirmar")]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Confirmar(int servicioId, string fecha, int estilistaId, string hora)
+    public async Task<IActionResult> Confirmar(int servicioId, string fecha, int estilistaId, string hora, int? reprogramarId = null)
     {
+        var salida = reprogramarId.HasValue ? "/cuenta/mis-citas" : "/";
+
         if (!DateOnly.TryParse(fecha, out var fechaElegida) || !EsFechaReservaValida(fechaElegida) ||
             !TimeOnly.TryParse(hora, out var horaElegida))
         {
             TempData["Error"] = "Datos de reserva inválidos. Por favor vuelve a intentarlo.";
-            return Redirect("/");
+            return Redirect(salida);
         }
 
         var clienteIdStr = User.FindFirstValue(ClaimTypes.NameIdentifier);
@@ -325,13 +441,13 @@ public class ReservasController : Controller
         if (servicio == null || estilista == null)
         {
             TempData["Error"] = "El servicio o estilista no están disponibles.";
-            return Redirect("/");
+            return Redirect(salida);
         }
 
         if (!CoincideEspecialidad(estilista.Especialidad, servicio.Categoria?.Nombre))
         {
             TempData["Error"] = "Ese estilista no realiza el servicio seleccionado.";
-            return RedirectToAction(nameof(PasoDos), new { servicioId, fecha });
+            return RedirectToAction(nameof(PasoDos), new { servicioId, fecha, reprogramarId });
         }
 
         var horariosPermitidos = GenerarSlots(
@@ -345,13 +461,14 @@ public class ReservasController : Controller
         if (!horariosPermitidos.Contains(horaElegida))
         {
             TempData["Error"] = "El horario seleccionado ya no está disponible.";
-            return RedirectToAction("PasoTres", new { servicioId, fecha, estilistaId });
+            return RedirectToAction("PasoTres", new { servicioId, fecha, estilistaId, reprogramarId });
         }
 
         // Convertir hora local del salón → UTC
         var inicioLocal = fechaElegida.ToDateTime(horaElegida);
         var inicioUtc   = TimeZoneInfo.ConvertTimeToUtc(inicioLocal, ZonaSalon);
         var finUtc      = inicioUtc.AddMinutes(servicio.DuracionMinutos);
+        var excluirId   = reprogramarId ?? 0;
 
         // ── BLOQUEO ATÓMICO ──────────────────────────────────────────
         // Usamos una transacción serializable para evitar doble reserva.
@@ -359,10 +476,12 @@ public class ReservasController : Controller
             System.Data.IsolationLevel.Serializable);
         try
         {
-            // Verifica si el slot sigue libre (dentro de la transacción)
+            // Verifica si el slot sigue libre (dentro de la transacción).
+            // Al reprogramar, la propia cita no cuenta como conflicto.
             bool conflicto = await _db.Citas
                 .AnyAsync(c => c.EstilistaId == estilistaId
                             && c.Estado != EstadoCita.Cancelada
+                            && c.Id != excluirId
                             && c.Inicio < finUtc
                             && c.Fin > inicioUtc);
 
@@ -370,9 +489,45 @@ public class ReservasController : Controller
             {
                 await tx.RollbackAsync();
                 TempData["Error"] = "¡Lo sentimos! Ese horario acaba de ser reservado por otra persona. Por favor elige otro.";
-                return RedirectToAction("PasoTres", new { servicioId, fecha, estilistaId });
+                return RedirectToAction("PasoTres", new { servicioId, fecha, estilistaId, reprogramarId });
             }
 
+            // ── REPROGRAMACIÓN: se actualiza la misma cita ───────────
+            if (reprogramarId.HasValue)
+            {
+                var vigente = await CitaReprogramableAsync(reprogramarId, servicioId);
+                if (vigente == null)
+                {
+                    await tx.RollbackAsync();
+                    TempData["Error"] = "Esa cita ya no se puede reprogramar.";
+                    return Redirect("/cuenta/mis-citas");
+                }
+                    if (vigente.EstilistaId == estilista.Id && vigente.Inicio == inicioUtc)
+                {
+                    await tx.RollbackAsync();
+                    TempData["Error"] = "Elige un horario distinto al de tu cita actual.";
+                    return RedirectToAction("PasoTres", new { servicioId, fecha, estilistaId, reprogramarId });
+                }
+
+                var antes = ResumenCita(vigente);
+
+                var citaMover = await _db.Citas.FirstAsync(c => c.Id == reprogramarId.Value);
+                citaMover.EstilistaId = estilista.Id;
+                citaMover.Inicio      = inicioUtc;
+                citaMover.Fin         = finUtc;
+                await _db.SaveChangesAsync();
+
+                // Que el recordatorio de 24 h se vuelva a generar con la nueva fecha
+                await _db.Database.ExecuteSqlInterpolatedAsync(
+                    $"""DELETE FROM "NotificacionesCita" WHERE "CitaId" = {citaMover.Id}""");
+
+                await tx.CommitAsync();
+
+                TempData["Antes"] = antes;
+                return Redirect($"/cuenta/mis-citas/{citaMover.Id}/reprogramada");
+            }
+
+            // ── RESERVA NUEVA (flujo original) ───────────────────────
             var cita = new Cita
             {
                 ClienteId    = clienteId,
@@ -397,7 +552,7 @@ public class ReservasController : Controller
         {
             await tx.RollbackAsync();
             TempData["Error"] = "Ocurrió un error al confirmar tu reserva. Por favor intenta de nuevo.";
-            return RedirectToAction("PasoTres", new { servicioId, fecha, estilistaId });
+            return RedirectToAction("PasoTres", new { servicioId, fecha, estilistaId, reprogramarId });
         }
     }
 

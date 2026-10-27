@@ -8,6 +8,11 @@ public class ReservaPasoUnoViewModel
     public int DuracionMinutos { get; set; }
     public decimal Precio { get; set; }
 
+    // Reprogramación (HU-03): id de la cita que se está moviendo y su resumen para el aviso
+    public int? ReprogramarId { get; set; }
+    public string? ReprogramarResumen { get; set; }
+
+
     // Días disponibles desde mañana hasta el final del segundo mes siguiente.
     public List<DateOnly> DiasDisponibles { get; set; } = new();
     public DateOnly FechaMinima { get; set; }
@@ -22,6 +27,10 @@ public class ReservaPasoDosViewModel
     public int DuracionMinutos { get; set; }
     public decimal Precio { get; set; }
     public DateOnly Fecha { get; set; }
+
+    // Reprogramación (HU-03)
+    public int? ReprogramarId { get; set; }
+    public string? ReprogramarResumen { get; set; }
 
     public List<EstilistaDisponibleDto> Estilistas { get; set; } = new();
 }
@@ -46,6 +55,13 @@ public class ReservaPasoTresViewModel
     public int EstilistaId { get; set; }
     public string EstilistaNombre { get; set; } = "";
     public string EstilistaEspecialidad { get; set; } = "";
+
+     // Reprogramación (HU-03)
+    public int? ReprogramarId { get; set; }
+    public string? ReprogramarResumen { get; set; }
+
+    // Hora de la cita que se está moviendo (mismo día y estilista); se muestra deshabilitada
+    public TimeOnly? HoraActual { get; set; }
 
     // Slots de tiempo disponibles (en hora local del salón)
     public List<TimeOnly> HorariosDisponibles { get; set; } = new();
