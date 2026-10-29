@@ -63,8 +63,7 @@ public static class AdminSeeder
                     var logger = scope.ServiceProvider.GetRequiredService<ILoggerFactory>()
                         .CreateLogger(nameof(AdminSeeder));
                     logger.LogWarning(
-                        "No se creó el usuario de recepción porque el correo {Email} ya está registrado.",
-                        receptionistEmail);
+                        "No se creó el usuario de recepción porque el correo configurado ya está registrado.");
                 }
             }
         }
