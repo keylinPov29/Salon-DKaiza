@@ -17,10 +17,52 @@ namespace DKaiza.Migrations
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "9.0.21")
+                .HasAnnotation("ProductVersion", "9.0.20")
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
+
+            modelBuilder.Entity("DKaiza.Web.Dominio.Calificacion", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("CitaId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("ClienteId")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Comentario")
+                        .HasMaxLength(250)
+                        .HasColumnType("character varying(250)");
+
+                    b.Property<int>("EstilistaId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("Estrellas")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime>("FechaCreacion")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CitaId")
+                        .IsUnique();
+
+                    b.HasIndex("ClienteId");
+
+                    b.HasIndex("EstilistaId", "FechaCreacion");
+
+                    b.ToTable("Calificaciones", null, t =>
+                        {
+                            t.HasCheckConstraint("CK_Calificaciones_Estrellas", "\"Estrellas\" BETWEEN 1 AND 5");
+                        });
+                });
 
             modelBuilder.Entity("DKaiza.Web.Dominio.CategoriaServicio", b =>
                 {
@@ -411,6 +453,33 @@ namespace DKaiza.Migrations
                     b.HasIndex("EstilistaId");
 
                     b.ToTable("Usuarios", (string)null);
+                });
+
+            modelBuilder.Entity("DKaiza.Web.Dominio.Calificacion", b =>
+                {
+                    b.HasOne("DKaiza.Web.Dominio.Cita", "Cita")
+                        .WithMany()
+                        .HasForeignKey("CitaId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("DKaiza.Web.Models.Usuario", "Cliente")
+                        .WithMany()
+                        .HasForeignKey("ClienteId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("DKaiza.Web.Dominio.Estilista", "Estilista")
+                        .WithMany()
+                        .HasForeignKey("EstilistaId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Cita");
+
+                    b.Navigation("Cliente");
+
+                    b.Navigation("Estilista");
                 });
 
             modelBuilder.Entity("DKaiza.Web.Dominio.Cita", b =>

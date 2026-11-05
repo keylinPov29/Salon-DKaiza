@@ -79,9 +79,10 @@
             {
                 <a class="dk-nav__link" href="/Recepcionista">Pagos y recepción</a>
             }
-            else if (User.IsInRole("Cliente"))
+                      else if (User.IsInRole("Cliente"))
             {
                 <a class="dk-nav__link" href="/">Servicios</a>
+                <a class="dk-nav__link" href="/estilistas">Estilistas</a>
                 @await Component.InvokeAsync("Notificaciones")
             }
             else if (User.Identity?.IsAuthenticated != true)

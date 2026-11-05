@@ -1,0 +1,166 @@
+@model PerfilEstilistaViewModel
+@using System.Globalization
+
+@functions {
+    static readonly string[] MesesCorto = { "ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "sep", "oct", "nov", "dic" };
+
+    const string Svg = "<svg viewBox=\"0 0 24 24\" width=\"16\" height=\"16\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\">";
+    static readonly string IcoReloj = Svg + "<circle cx=\"12\" cy=\"12\" r=\"9\"/><path d=\"M12 7v5l3 2\"/></svg>";
+    static readonly string IcoCheck = Svg + "<path d=\"M5 12.5l4.5 4.5L19 7.5\"/></svg>";
+    static readonly string IcoVolver = Svg + "<path d=\"M15 18l-6-6 6-6\"/></svg>";
+    static readonly string IcoEtiqueta = Svg + "<path d=\"M20 12l-8 8-9-9V4h7z\"/><circle cx=\"8\" cy=\"8\" r=\"1.2\"/></svg>";
+
+    static string Iniciales(string? nombre)
+    {
+        var partes = (nombre ?? "").Split(' ', StringSplitOptions.RemoveEmptyEntries);
+        var s = string.Concat(partes.Take(2).Select(p => char.ToUpperInvariant(p[0])));
+        return s.Length == 0 ? "?" : s;
+    }
+
+    static string EstrellasN(int n)
+    {
+        n = Math.Clamp(n, 0, 5);
+        return "<span class=\"dk-stars\" aria-label=\"" + n + " de 5 estrellas\">" +
+               "<span class=\"dk-stars__on\">" + new string('★', n) + "</span>" +
+               "<span class=\"dk-stars__off\">" + new string('★', 5 - n) + "</span></span>";
+    }
+
+    static string EstrellasProm(double p) => EstrellasN((int)Math.Round(p, MidpointRounding.AwayFromZero));
+
+    static string Prom(double p) => p.ToString("0.0", CultureInfo.InvariantCulture);
+
+    // Enlace conservando el filtro de estrellas
+    static string Enlace(int id, int? filtro, int pagina)
+    {
+        var partes = new List<string>();
+        if (filtro.HasValue) partes.Add("estrellas=" + filtro.Value);
+        if (pagina > 1) partes.Add("pagina=" + pagina);
+        return "/estilistas/" + id + (partes.Count > 0 ? "?" + string.Join("&", partes) : "");
+    }
+}
+
+@{
+    ViewData["Title"] = Model.Nombre;
+    var total = Model.TotalCalificaciones;
+    var ini = Math.Max(1, Model.Pagina - 2);
+    var fin = Math.Min(Model.TotalPaginas, Model.Pagina + 2);
+}
+
+<section class="dk-mc dk-pe">
+    <div class="dk-pe__wrap">
+
+        <a class="dk-pe__volver" href="/estilistas">@Html.Raw(IcoVolver) Todas las estilistas</a>
+
+        <div class="dk-pe__hero">
+            <div class="dk-pe__banda"></div>
+            <div class="dk-pe__top">
+                <div class="dk-pe__av">
+                    @if (Model.TieneFoto)
+                    {
+                        <img src="/media/estilistas/@Model.Id" alt="" />
+                    }
+                    else
+                    {
+                        @Iniciales(Model.Nombre)
+                    }
+                </div>
+                <div class="dk-pe__nm">
+                    <h1>@Model.Nombre</h1>
+                    <div class="dk-pe__li">
+                                              @foreach (var esp in Model.Especialidades)
+                        {
+                            <span class="dk-pe__esp">@esp</span>
+                        }
+                        <span class="dk-pe__hr">@Html.Raw(IcoReloj) Atiende de @Model.InicioJornada.ToString("HH:mm") a @Model.FinJornada.ToString("HH:mm")</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="dk-pe__score">
+                @if (Model.Promedio.HasValue)
+                {
+                    <div class="dk-pe__big">
+                        <b>@Prom(Model.Promedio.Value)</b>
+                        @Html.Raw(EstrellasProm(Model.Promedio.Value))
+                        <small>@total @(total == 1 ? "calificación" : "calificaciones")</small>
+                    </div>
+                    <div class="dk-pe__dist">
+                        @for (var n = 5; n >= 1; n--)
+                        {
+                            var pct = (int)Math.Round(Model.Distribucion[n] * 100.0 / total);
+                            <div class="dk-pe__drow">
+                                <span>@n ★</span>
+                                <div class="dk-pe__bar"><i style="width:@(pct)%"></i></div>
+                                <em>@Model.Distribucion[n]</em>
+                            </div>
+                        }
+                    </div>
+                }
+                else
+                {
+                    <p class="dk-pe__nueva">Es nueva en el equipo y todavía no tiene calificaciones.</p>
+                }
+            </div>
+        </div>
+
+        <div class="dk-pe__fil">
+            <h2>Lo que dicen sus clientas</h2>
+            <nav class="dk-pe__chips" aria-label="Filtrar por estrellas">
+                <a class="@(Model.Filtro == null ? "is-on" : "")" href="@Enlace(Model.Id, null, 1)">Todas</a>
+                <a class="@(Model.Filtro == 5 ? "is-on" : "")" href="@Enlace(Model.Id, 5, 1)">5 ★</a>
+                <a class="@(Model.Filtro == 4 ? "is-on" : "")" href="@Enlace(Model.Id, 4, 1)">4 ★</a>
+                <a class="@(Model.Filtro == 3 ? "is-on" : "")" href="@Enlace(Model.Id, 3, 1)">3 ★ o menos</a>
+            </nav>
+        </div>
+
+        @if (Model.Comentarios.Count == 0)
+        {
+            <p class="dk-pe__vacio">
+                @(Model.Filtro != null
+                    ? "No hay opiniones con este filtro."
+                    : "Todavía no hay opiniones con comentario.")
+            </p>
+        }
+        else
+        {
+            <div class="dk-pe__grid">
+                @foreach (var c in Model.Comentarios)
+                {
+                    <article class="dk-pe__qc">
+                        @Html.Raw(EstrellasN(c.Estrellas))
+                        <p>@c.Comentario</p>
+                        <div class="dk-pe__ft">
+                            <span class="dk-pe__cav">@Iniciales(c.Cliente)</span>
+                            <div class="dk-pe__who">
+                                <b>@c.Cliente</b>
+                                <span>@c.Fecha.Day @MesesCorto[c.Fecha.Month - 1] @c.Fecha.Year</span>
+                            </div>
+                            <span class="dk-pe__sv">@Html.Raw(IcoEtiqueta) @c.Servicio</span>
+                        </div>
+                        <span class="dk-pe__asistio">@Html.Raw(IcoCheck) Asistió</span>
+                    </article>
+                }
+            </div>
+
+            @if (Model.TotalPaginas > 1)
+            {
+                <nav class="dk-pe__pag" aria-label="Páginas de opiniones">
+                    @if (Model.Pagina > 1)
+                    {
+                        <a href="@Enlace(Model.Id, Model.Filtro, Model.Pagina - 1)" aria-label="Página anterior">‹</a>
+                    }
+                    @for (var p = ini; p <= fin; p++)
+                    {
+                        <a class="@(p == Model.Pagina ? "is-on" : "")" href="@Enlace(Model.Id, Model.Filtro, p)">@p</a>
+                    }
+                    @if (Model.Pagina < Model.TotalPaginas)
+                    {
+                        <a href="@Enlace(Model.Id, Model.Filtro, Model.Pagina + 1)" aria-label="Página siguiente">›</a>
+                    }
+                </nav>
+            }
+
+            <p class="dk-pe__pie">@Model.TotalComentarios @(Model.TotalComentarios == 1 ? "opinión" : "opiniones") · 10 por página</p>
+        }
+    </div>
+</section>
