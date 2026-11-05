@@ -1,0 +1,150 @@
+@model EstilistasViewModel
+@using System.Globalization
+
+@functions {
+    const string Svg = "<svg viewBox=\"0 0 24 24\" width=\"16\" height=\"16\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\">";
+    static readonly string IcoInfo = Svg + "<circle cx=\"12\" cy=\"12\" r=\"9\"/><path d=\"M12 11v5M12 8h.01\"/></svg>";
+
+    static string Iniciales(string? nombre)
+    {
+        var partes = (nombre ?? "").Split(' ', StringSplitOptions.RemoveEmptyEntries);
+        var s = string.Concat(partes.Take(2).Select(p => char.ToUpperInvariant(p[0])));
+        return s.Length == 0 ? "?" : s;
+    }
+
+    static string Estrellas(double promedio)
+    {
+        var n = (int)Math.Round(promedio, MidpointRounding.AwayFromZero);
+        n = Math.Clamp(n, 0, 5);
+        return "<span class=\"dk-stars\" aria-label=\"" + n + " de 5 estrellas\">" +
+               "<span class=\"dk-stars__on\">" + new string('★', n) + "</span>" +
+               "<span class=\"dk-stars__off\">" + new string('★', 5 - n) + "</span></span>";
+    }
+
+    static string Prom(double p) => p.ToString("0.0", CultureInfo.InvariantCulture);
+
+    static string Recortar(string texto, int max) =>
+        texto.Length <= max ? texto : texto.Substring(0, max).TrimEnd() + "…";
+}
+
+@{
+    ViewData["Title"] = "Nuestras estilistas";
+}
+
+<section class="dk-mc dk-es">
+    <div class="dk-es__wrap">
+
+        <header class="dk-es__cab">
+            <span class="dk-es__kicker">Nuestro equipo</span>
+            <h1 class="dk-es__tit">Conoce a nuestras estilistas</h1>
+            <p class="dk-es__sub">Revisa las opiniones de otras clientas para elegir a la persona ideal para ti.</p>
+        </header>
+
+        <div class="dk-es__tools">
+            <p class="dk-es__nota">@Html.Raw(IcoInfo) Las opiniones son de clientas que asistieron a su cita.</p>
+            <div class="dk-es__ord" role="group" aria-label="Ordenar estilistas">
+                <span>Ordenar por</span>
+                <button type="button" class="is-on" data-o="mejor">Mejor calificadas</button>
+                <button type="button" data-o="nombre">Nombre</button>
+            </div>
+        </div>
+
+        @if (Model.Estilistas.Count == 0)
+        {
+            <p class="dk-es__vacio">Por el momento no hay estilistas disponibles.</p>
+        }
+        else
+        {
+            <div class="dk-es__grid" id="esGrid">
+                @{ var orden = 0; }
+                @foreach (var e in Model.Estilistas)
+                {
+                    orden++;
+                    <article class="dk-es__card" data-nom="@e.Nombre" data-orden="@orden">
+                        <div class="dk-es__top">
+                            @if (e.Promedio.HasValue)
+                            {
+                                <span class="dk-es__badge"><span class="dk-es__star">★</span> @Prom(e.Promedio.Value)</span>
+                            }
+                            else
+                            {
+                                <span class="dk-es__badge dk-es__badge--nueva">Nueva</span>
+                            }
+                            <div class="dk-es__av">
+                                @if (e.TieneFoto)
+                                {
+                                    <img src="/media/estilistas/@e.Id" alt="" loading="lazy" />
+                                }
+                                else
+                                {
+                                    @Iniciales(e.Nombre)
+                                }
+                            </div>
+                        </div>
+
+                        <div class="dk-es__bd">
+                            <h2>@e.Nombre</h2>
+                                                       @if (e.Especialidades.Count > 0)
+                            {
+                                <div class="dk-es__esps">
+                                    @foreach (var esp in e.Especialidades)
+                                    {
+                                        <span class="dk-es__esp">@esp</span>
+                                    }
+                                </div>
+                            }
+
+                            @if (e.Promedio.HasValue)
+                            {
+                                <div class="dk-es__rt">
+                                    @Html.Raw(Estrellas(e.Promedio.Value))
+                                    <span>@e.Total @(e.Total == 1 ? "calificación" : "calificaciones")</span>
+                                </div>
+                            }
+
+                            @if (!string.IsNullOrWhiteSpace(e.UltimoComentario))
+                            {
+                                <blockquote class="dk-es__qm">
+                                    “@Recortar(e.UltimoComentario!, 120)”
+                                    <small>— @e.UltimoCliente · @e.UltimoServicio</small>
+                                </blockquote>
+                            }
+                            else
+                            {
+                                <blockquote class="dk-es__qm dk-es__qm--vac">
+                                    @(e.Total == 0 ? "Todavía no tiene opiniones." : "Aún no tiene comentarios escritos.")
+                                </blockquote>
+                            }
+
+                            <a class="dk-es__ver" href="/estilistas/@e.Id">Ver opiniones <span aria-hidden="true">→</span></a>
+                        </div>
+                    </article>
+                }
+            </div>
+        }
+    </div>
+</section>
+
+<script>
+    (function () {
+        var grid = document.getElementById('esGrid');
+        var botones = document.querySelectorAll('.dk-es__ord button');
+        if (!grid || !botones.length) return;
+
+        function ordenar(modo) {
+            var cards = Array.prototype.slice.call(grid.children);
+            cards.sort(function (a, b) {
+                if (modo === 'nombre') {
+                    return a.getAttribute('data-nom').localeCompare(b.getAttribute('data-nom'), 'es');
+                }
+                return parseInt(a.getAttribute('data-orden'), 10) - parseInt(b.getAttribute('data-orden'), 10);
+            });
+            cards.forEach(function (c) { grid.appendChild(c); });
+            botones.forEach(function (b) { b.classList.toggle('is-on', b.getAttribute('data-o') === modo); });
+        }
+
+        botones.forEach(function (b) {
+            b.addEventListener('click', function () { ordenar(b.getAttribute('data-o')); });
+        });
+    })();
+</script>

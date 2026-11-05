@@ -56,12 +56,17 @@
             {
                 <a class="dk-nav__link" href="/Agenda">Mi Agenda</a>
             }
-            else
+                        else
             {
                 <!-- Usamos un botón para que JavaScript pueda mostrar los servicios sin recargar -->
                 <button type="button" class="dk-nav__link" id="navServicios" style="background:none; border:none; cursor:pointer; padding:0;">
                     Servicios
                 </button>
+
+                if (User.IsInRole("Cliente"))
+                {
+                    <a class="dk-nav__link" href="/estilistas">Estilistas</a>
+                }
             }
 
                                              @if (User.Identity?.IsAuthenticated == true)
