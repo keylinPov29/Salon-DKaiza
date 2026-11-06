@@ -311,6 +311,37 @@ namespace DKaiza.Migrations
                         });
                 });
 
+            modelBuilder.Entity("DKaiza.Web.Dominio.NotaCliente", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("AutorId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("ClienteId")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime>("FechaCreacion")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Texto")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AutorId");
+
+                    b.HasIndex("ClienteId", "FechaCreacion");
+
+                    b.ToTable("NotasCliente", (string)null);
+                });
+
             modelBuilder.Entity("DKaiza.Web.Dominio.NotificacionCita", b =>
                 {
                     b.Property<int>("Id")
@@ -507,6 +538,25 @@ namespace DKaiza.Migrations
                     b.Navigation("Estilista");
 
                     b.Navigation("Servicio");
+                });
+
+            modelBuilder.Entity("DKaiza.Web.Dominio.NotaCliente", b =>
+                {
+                    b.HasOne("DKaiza.Web.Models.Usuario", "Autor")
+                        .WithMany()
+                        .HasForeignKey("AutorId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("DKaiza.Web.Models.Usuario", "Cliente")
+                        .WithMany()
+                        .HasForeignKey("ClienteId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Autor");
+
+                    b.Navigation("Cliente");
                 });
 
             modelBuilder.Entity("DKaiza.Web.Dominio.NotificacionCita", b =>

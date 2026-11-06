@@ -71,10 +71,11 @@
                 <a class="dk-nav__link" href="/admin/estilistas">Estilistas</a>
                 <a class="dk-nav__link" href="/Agenda">Agenda Diaria</a>
             }
-            else if (User.IsInRole("Estilista"))
-            {
-                <a class="dk-nav__link" href="/Agenda">Mi Agenda</a>
-            }
+           else if (User.IsInRole("Estilista"))
+{
+    <a class="dk-nav__link" href="/Agenda">Mi Agenda</a>
+    <a class="dk-nav__link" href="/clientes">Clientes</a>
+}
             else if (User.IsInRole("Recepcionista"))
             {
                 <a class="dk-nav__link" href="/Recepcionista">Pagos y recepción</a>

@@ -15,6 +15,7 @@ public class ApplicationDbContext : DbContext
     public DbSet<Cita> Citas => Set<Cita>();
     public DbSet<NotificacionCita> NotificacionesCita => Set<NotificacionCita>();
     public DbSet<Calificacion> Calificaciones => Set<Calificacion>();
+    public DbSet<NotaCliente> NotasCliente => Set<NotaCliente>();
  
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -160,6 +161,26 @@ public class ApplicationDbContext : DbContext
              .WithMany()
              .HasForeignKey(c => c.ClienteId)
              .OnDelete(DeleteBehavior.Restrict);
+        });
+ 
+        // HU-08: notas del estilista sobre el cliente
+        modelBuilder.Entity<NotaCliente>(e =>
+        {
+            e.ToTable("NotasCliente");
+            e.Property(x => x.Texto).HasMaxLength(500);
+ 
+            e.HasOne(n => n.Cliente)
+             .WithMany()
+             .HasForeignKey(n => n.ClienteId)
+             .OnDelete(DeleteBehavior.Cascade);
+ 
+            e.HasOne(n => n.Autor)
+             .WithMany()
+             .HasForeignKey(n => n.AutorId)
+             .OnDelete(DeleteBehavior.Restrict);
+ 
+            // Para listar rápido las notas de un cliente, de la más reciente a la más antigua
+            e.HasIndex(n => new { n.ClienteId, n.FechaCreacion });
         });
     }
 }
