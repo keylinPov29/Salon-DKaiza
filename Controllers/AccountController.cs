@@ -61,8 +61,8 @@ public class AccountController : Controller
         if (!string.IsNullOrEmpty(returnUrl) && Url.IsLocalUrl(returnUrl))
             return LocalRedirect(returnUrl);
 
-        if (usuario.Rol == RolUsuario.Administrador)
-            return Redirect("/admin/categorias");
+                if (usuario.Rol == RolUsuario.Administrador)
+            return Redirect("/");
         //si es estilista
         if (usuario.Rol == RolUsuario.Estilista)
             return RedirectToAction("Index", "Agenda");

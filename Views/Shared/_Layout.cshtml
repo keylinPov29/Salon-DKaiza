@@ -65,11 +65,12 @@
 
         <div class="dk-nav__links">
 
-            @if (User.IsInRole("Administrador"))
+                       @if (User.IsInRole("Administrador"))
             {
                 <a class="dk-nav__link" href="/admin/categorias">Catálogo</a>
                 <a class="dk-nav__link" href="/admin/estilistas">Estilistas</a>
                 <a class="dk-nav__link" href="/Agenda">Agenda Diaria</a>
+                <a class="dk-nav__link" href="/admin/clientes">Historial clientes</a>
             }
            else if (User.IsInRole("Estilista"))
 {

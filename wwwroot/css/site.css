@@ -2313,3 +2313,70 @@ tr[hidden] { display: none; }
 .dk-cl__card { max-width: 1100px; }
 .dk-cl__tabla table { min-width: 0; }
 .dk-cl__tabla td { padding: 16px 12px; }
+/* ═════════ HU-08 · Administrador: historial de clientes ═════════ */
+
+/* Indicadores */
+.dk-ad__kpis { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-bottom: 26px; }
+.dk-ad__kpis--4 { margin: 22px 0 0; }
+.dk-ad__kpi { display: flex; align-items: center; gap: 14px; padding: 18px 20px; background: #fff; border: 1px solid var(--dk-border); border-radius: 20px; box-shadow: 0 4px 14px rgba(126,103,90,.07); }
+.dk-ad__kpi-ico { flex: none; width: 46px; height: 46px; border-radius: 50%; display: flex; align-items: center; justify-content: center; background: var(--dk-bg-alt); color: var(--dk-mocha); }
+.dk-ad__kpi-ico svg { width: 22px; height: 22px; }
+.dk-ad__kpi b { display: block; font-family: var(--dk-serif); font-weight: 400; font-size: 32px; line-height: 1; color: var(--dk-text); }
+.dk-ad__kpi div span { display: block; margin-top: 5px; font-size: 10px; letter-spacing: 1.6px; text-transform: uppercase; color: var(--dk-muted); }
+.dk-ad__kpi--vip { background: #FBF1DE; border-color: #EBD6A8; }
+.dk-ad__kpi--vip .dk-ad__kpi-ico { background: #fff; color: #A9781F; }
+.dk-ad__kpi--vip b { color: #8A5A14; }
+.dk-ad__kpi--ok { background: #EAF3DE; border-color: #C5DCAF; }
+.dk-ad__kpi--ok .dk-ad__kpi-ico { background: #fff; color: #4E9A2F; }
+.dk-ad__kpi--ok b { color: #27500A; }
+.dk-ad__kpi--rd { background: #F8E1DC; border-color: #EBC3BB; }
+.dk-ad__kpi--rd .dk-ad__kpi-ico { background: #fff; color: #B83232; }
+.dk-ad__kpi--rd b { color: #9B2F20; }
+.dk-ad__kpi--am { background: #FAEEDA; border-color: #EBCF9F; }
+.dk-ad__kpi--am .dk-ad__kpi-ico { background: #fff; color: #B9730F; }
+.dk-ad__kpi--am b { color: #854F0B; }
+
+/* Encabezado de la lista */
+.dk-ad__top { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; margin: 0 0 12px; }
+.dk-ad__top h2 { margin: 0; font-family: var(--dk-serif); font-weight: 400; font-size: 24px; color: var(--dk-text); }
+.dk-ad__top span { font-size: 13px; color: var(--dk-muted); }
+
+/* Frecuencia */
+.dk-ad__frec { display: inline-flex; align-items: center; gap: 7px; padding: 6px 14px; border-radius: 50px; font-size: 11px; font-weight: 500; letter-spacing: 1.2px; text-transform: uppercase; border: 1px solid transparent; white-space: nowrap; }
+.dk-ad__frec::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
+.dk-ad__frec--alta { background: #EAF3DE; border-color: #C5DCAF; color: #27500A; }
+.dk-ad__frec--media { background: #FAEEDA; border-color: #EBCF9F; color: #854F0B; }
+.dk-ad__frec--baja { background: #F1EBE4; border-color: #D9C9BD; color: #6B574B; }
+
+/* VIP */
+.dk-ad__vip { display: inline-flex; align-items: center; gap: 6px; font-size: 11px; font-weight: 600; letter-spacing: 1.2px; text-transform: uppercase; color: #8A5A14; }
+.dk-ad__vip svg { width: 16px; height: 16px; color: #C9941F; }
+.dk-ad__vipchip { display: inline-flex; align-items: center; gap: 6px; margin-left: 10px; padding: 5px 13px; border-radius: 50px; background: linear-gradient(135deg, #F6DFA5, #E5B95A); color: #5E3E0A; font-family: var(--dk-sans); font-size: 11px; font-weight: 600; letter-spacing: 1.4px; text-transform: uppercase; vertical-align: middle; }
+.dk-ad__vipchip svg { width: 14px; height: 14px; }
+.dk-ad__tabla tr.es-vip td { background: #FFFAF0; }
+.dk-ad__tabla tr.es-vip .dk-cl__av { background: linear-gradient(135deg, #D9B26A, #A9814F); box-shadow: 0 0 0 3px #F6E4BF; }
+.dk-ad__num { font-family: var(--dk-serif); font-size: 26px; line-height: 1; color: var(--dk-mocha-dk); }
+
+/* Filtro de fechas */
+.dk-ad__filtro { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 14px; padding: 20px 24px; margin: 22px 0 14px; background: #fff; border: 1px solid var(--dk-border); border-radius: 20px; box-shadow: 0 4px 14px rgba(126,103,90,.07); }
+.dk-ad__filtro label { display: block; margin-bottom: 6px; font-size: 10px; letter-spacing: 1.6px; text-transform: uppercase; color: var(--dk-muted); }
+.dk-ad__fecha { display: flex; align-items: center; gap: 8px; height: 44px; padding: 0 14px; min-width: 170px; background: #FDFAF6; border: 1px solid var(--dk-border); border-radius: 12px; font-size: 14px; color: var(--dk-text); }
+.dk-ad__fecha svg { flex: none; width: 16px; height: 16px; color: var(--dk-mocha); }
+.dk-ad__fecha input { flex: 1; min-width: 0; height: 100%; border: 0; outline: 0; background: transparent; font: inherit; color: inherit; }
+.dk-ad__fecha:focus-within { border-color: var(--dk-mocha); box-shadow: 0 0 0 3px rgba(126,103,90,.12); }
+
+/* Etiqueta de frecuencia dentro de la cabecera del cliente */
+.dk-ad__frecpill { display: inline-flex; align-items: center; gap: 8px; margin-top: 12px; padding: 6px 14px; border-radius: 50px; background: rgba(255,255,255,.16); border: 1px solid rgba(255,255,255,.35); font-size: 12px; color: #fff; }
+.dk-ad__frecpill svg { width: 14px; height: 14px; }
+
+/* El botón de la cabecera es un <button> dentro de un form */
+.dk-mc__herotop form { margin: 0; }
+.dk-mc__herotop button.dk-mc__btn { cursor: pointer; font-family: inherit; }
+
+@media (max-width: 860px) {
+  .dk-ad__kpis { grid-template-columns: repeat(2, 1fr); }
+}
+@media (max-width: 520px) {
+  .dk-ad__filtro { padding: 16px; }
+  .dk-ad__fecha { min-width: 0; width: 100%; }
+}
