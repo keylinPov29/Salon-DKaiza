@@ -26,23 +26,22 @@ public class AdminAgendaController : Controller
             .Include(c => c.Estilista)
             .AsQueryable();
 
+        // Filtro por Fecha (Solo si el usuario selecciona una fecha)
         if (fecha.HasValue)
         {
             var inicioDia = fecha.Value.Date.ToUniversalTime();
             var finDia = inicioDia.AddDays(1);
             query = query.Where(c => c.Inicio >= inicioDia && c.Inicio < finDia);
         }
-        else
-        {
-            var hoyUtc = DateTime.UtcNow.Date;
-            query = query.Where(c => c.Inicio >= hoyUtc);
-        }
+        // NOTA: Quitamos el 'else' que filtraba por el día de hoy, para que muestre todas.
 
+        // Filtro por Estilista
         if (estilistaIdFiltro.HasValue && estilistaIdFiltro > 0)
         {
             query = query.Where(c => c.EstilistaId == estilistaIdFiltro.Value);
         }
 
+        // Filtro por Estado (Las tarjetas)
         if (!string.IsNullOrEmpty(estadoFiltro))
         {
             if (estadoFiltro == "pendientes")
@@ -53,9 +52,15 @@ public class AdminAgendaController : Controller
             {
                 query = query.Where(c => c.Estado == EstadoCita.Completada);
             }
+            else if (estadoFiltro == "canceladas") 
+            {
+                query = query.Where(c => c.Estado == EstadoCita.Cancelada);
+            }
         }
 
-        var citas = await query.OrderBy(c => c.Inicio).ToListAsync();
+        // Traemos todas las citas que cumplan los filtros
+        var citas = await query.OrderByDescending(c => c.Inicio).ToListAsync(); 
+        // (Usé OrderByDescending para que las más recientes salgan primero)
 
         var listaEstilistas = await _context.Estilistas
             .Where(e => e.Activo)
@@ -112,7 +117,6 @@ public class AdminAgendaController : Controller
             Notas = cita.Notas
         };
 
-        // Retornamos la misma vista parcial que usa el estilista, pero la lógica de los botones está protegida
         return PartialView("~/Views/Agenda/_DetalleCitaPartial.cshtml", model);
     }
 }

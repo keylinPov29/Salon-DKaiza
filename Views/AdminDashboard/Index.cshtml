@@ -3,114 +3,294 @@
 }
 
 <style>
-    .dashboard-card {
-        background-color: #fff;
-        border-radius: 20px;
-        padding: 30px;
-        border: 1px solid #f0e6dc;
-        box-shadow: 0 5px 15px rgba(0,0,0,0.03);
-        transition: transform 0.2s, box-shadow 0.2s;
-        text-decoration: none;
+    /* ===== PALETA ===== */
+    :root {
+        --camelia-rosa:   #ebcbc7;
+        --arroz-doce:     #f3ebe8;
+        --almas-gemeas:   #e9dedb;
+        --mosquitinho:    #d9b9b5;
+        --pedreira:       #c9bcb9;
+        --miragem:        #d6c0ba;
+        --rosa-giz:       #bfa09b;
+        --nude:           #c8b2ad;
+        --matine:         #ab8e86;
+        --ameixa:         #7f6b66;
+        --cafe-en-polvo:  #5f5350;
+
+        --bg-page:    #fbf7f5;
+        --texto:      #4a3b3a;
+        --texto-suave:#8c7a76;
+        --borde:      #efe4e1;
+        --sombra:     0 1px 2px rgba(127,107,102,.06), 0 8px 22px rgba(127,107,102,.07);
+        --sombra-hover: 0 2px 4px rgba(127,107,102,.08), 0 18px 36px rgba(127,107,102,.14);
+    }
+
+    body {
+        background-color: var(--bg-page) !important;
+        font-family: 'Montserrat', sans-serif;
+        color: var(--texto);
+    }
+
+    /* ===== HERO DE BIENVENIDA ===== */
+    .hero {
+        position: relative;
+        overflow: hidden;
+        background: linear-gradient(120deg, var(--camelia-rosa) 0%, var(--arroz-doce) 70%);
+        border: 1px solid var(--borde);
+        border-radius: 24px;
+        padding: 42px 40px;
+        margin-bottom: 36px;
+        box-shadow: var(--sombra);
+    }
+    .hero::before,
+    .hero::after {
+        content: '';
+        position: absolute;
+        border-radius: 50%;
+        pointer-events: none;
+    }
+    .hero::before {
+        width: 260px; height: 260px;
+        right: -60px; top: -90px;
+        background: rgba(255,255,255,.45);
+    }
+    .hero::after {
+        width: 140px; height: 140px;
+        right: 120px; bottom: -70px;
+        background: rgba(217,185,181,.45);
+    }
+    .hero-content { position: relative; z-index: 1; max-width: 560px; }
+    .hero-fecha {
+        display: inline-block;
+        font-size: .8rem;
+        font-weight: 600;
+        color: var(--ameixa);
+        background: rgba(255,255,255,.7);
+        padding: 6px 14px;
+        border-radius: 999px;
+        margin-bottom: 16px;
+        text-transform: capitalize;
+    }
+    .hero-title {
+        font-family: 'Playfair Display', serif;
+        font-weight: 700;
+        font-size: 2.4rem;
+        color: var(--texto);
+        margin: 0 0 8px;
+    }
+    .hero-sub { color: var(--ameixa); font-size: .98rem; margin: 0; }
+
+    /* ===== TÍTULO DE SECCIÓN ===== */
+    .section-title {
+        font-family: 'Playfair Display', serif;
+        font-weight: 700;
+        font-size: 1.4rem;
+        color: var(--texto);
+        margin: 0 0 18px;
+    }
+
+    /* ===== GRILLA DE ACCESOS ===== */
+    .grid-accesos {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 20px;
+    }
+    .acceso-destacado { grid-column: span 2; }
+
+    .acceso {
+        position: relative;
         display: flex;
         flex-direction: column;
-        align-items: center;
-        text-align: center;
-        height: 100%;
+        justify-content: space-between;
+        gap: 28px;
+        min-height: 200px;
+        padding: 26px;
+        background: #ffffff;
+        border: 1px solid var(--borde);
+        border-radius: 20px;
+        box-shadow: var(--sombra);
+        color: inherit;
+        text-decoration: none;
+        transition: transform .25s ease, box-shadow .25s ease, border-color .25s ease;
+    }
+    .acceso:hover {
+        transform: translateY(-4px);
+        box-shadow: var(--sombra-hover);
+        border-color: var(--mosquitinho);
         color: inherit;
     }
-    .dashboard-card:hover {
-        transform: translateY(-5px);
-        box-shadow: 0 10px 25px rgba(0,0,0,0.08);
-        border-color: #c47d5c;
+    .acceso:focus-visible {
+        outline: 2px solid var(--ameixa);
+        outline-offset: 3px;
     }
-    
-    .stat-card {
-        background: linear-gradient(135deg, #9b7b6d 0%, #c47d5c 100%);
-        color: white;
-        border-radius: 20px;
-        padding: 25px;
-        text-align: center;
-        box-shadow: 0 10px 20px rgba(196, 125, 92, 0.3);
-        height: 100%;
-    }
-    .stat-card h2 {
-        font-size: 2.5rem;
-        font-weight: bold;
-        margin: 10px 0 0 0;
-        font-family: 'Playfair Display', serif;
-    }
-    .stat-card p {
-        margin: 0;
-        font-size: 0.85rem;
-        text-transform: uppercase;
-        letter-spacing: 1px;
-        opacity: 0.9;
-    }
-    
+
+    .acceso-top { display: flex; align-items: flex-start; justify-content: space-between; }
+
     .icon-box {
-        width: 70px;
-        height: 70px;
-        background-color: #f3ebe1;
+        width: 52px; height: 52px;
+        border-radius: 14px;
+        background: var(--camelia-rosa);
+        color: var(--ameixa);
+        display: flex; align-items: center; justify-content: center;
+        transition: background-color .25s ease, color .25s ease;
+    }
+    .icon-box svg { width: 24px; height: 24px; }
+    .acceso:hover .icon-box { background: var(--ameixa); color: #ffffff; }
+
+    .flecha {
+        width: 36px; height: 36px;
         border-radius: 50%;
-        display: flex;
-        justify-content: center;
+        border: 1px solid var(--borde);
+        color: var(--rosa-giz);
+        display: flex; align-items: center; justify-content: center;
+        transition: transform .25s ease, background-color .25s ease, color .25s ease, border-color .25s ease;
+    }
+    .flecha svg { width: 16px; height: 16px; }
+    .acceso:hover .flecha {
+        transform: translateX(3px);
+        background: var(--camelia-rosa);
+        border-color: var(--camelia-rosa);
+        color: var(--ameixa);
+    }
+
+    .acceso-titulo {
+        font-family: 'Playfair Display', serif;
+        font-weight: 700;
+        font-size: 1.25rem;
+        color: var(--texto);
+        margin: 0 0 6px;
+    }
+    .acceso-desc { font-size: .88rem; line-height: 1.5; color: var(--texto-suave); margin: 0; }
+
+    /* Tarjeta destacada: Agenda Global */
+    .acceso-destacado {
+        background: linear-gradient(135deg, #ffffff 0%, var(--arroz-doce) 55%, var(--camelia-rosa) 140%);
+    }
+    .acceso-destacado .acceso-titulo { font-size: 1.6rem; }
+    .acceso-destacado .acceso-desc { max-width: 380px; font-size: .92rem; }
+    .acceso-destacado .icon-box { background: var(--ameixa); color: #ffffff; }
+    .acceso-destacado:hover .icon-box { background: var(--cafe-en-polvo); }
+
+    .pill {
+        display: inline-flex;
         align-items: center;
-        font-size: 2rem;
-        color: #c47d5c;
-        margin-bottom: 20px;
+        gap: 8px;
+        margin-top: 18px;
+        padding: 9px 18px;
+        border-radius: 999px;
+        background: var(--ameixa);
+        color: #ffffff;
+        font-size: .82rem;
+        font-weight: 600;
+        transition: background-color .25s ease;
+    }
+    .pill svg { width: 14px; height: 14px; }
+    .acceso-destacado:hover .pill { background: var(--cafe-en-polvo); }
+
+    @@media (max-width: 991px) {
+        .grid-accesos { grid-template-columns: repeat(2, 1fr); }
+        .acceso-destacado { grid-column: span 2; }
+    }
+    @@media (max-width: 575px) {
+        .hero { padding: 30px 22px; border-radius: 20px; }
+        .hero-title { font-size: 1.9rem; }
+        .grid-accesos { grid-template-columns: 1fr; }
+        .acceso-destacado { grid-column: span 1; }
+        .acceso { min-height: 0; }
+    }
+    @@media (prefers-reduced-motion: reduce) {
+        .acceso, .icon-box, .flecha, .pill { transition: none; }
+        .acceso:hover { transform: none; }
     }
 </style>
 
 <div class="container py-5">
-    
-    <!-- Saludo -->
-    <div class="mb-5">
-        <h1 style="font-family: 'Playfair Display', serif; color: #5a4b41; font-weight: bold;">Bienvenido, Administrador</h1>
-    </div>
 
-    <!-- Accesos Directos -->
-    <h3 class="mb-4" style="font-family: 'Playfair Display', serif; color: #5a4b41;">Accesos Rápidos</h3>
-    <div class="row g-4">
-        <div class="col-md-4">
-            <a href="/Agenda" class="dashboard-card">
-                <div class="icon-box">📅</div>
-                <h5 class="fw-bold" style="color: #5a4b41;">Agenda Global</h5>
-                <p class="text-muted small mb-0">Ver y gestionar las citas de todos los estilistas.</p>
-            </a>
+    <!-- Bienvenida -->
+    <section class="hero">
+        <div class="hero-content">
+            <span class="hero-fecha">@DateTime.Now.ToString("dddd, dd 'de' MMMM", new System.Globalization.CultureInfo("es-PE"))</span>
+            <h1 class="hero-title">Bienvenido, Administrador</h1>
+            <p class="hero-sub">Gestiona las citas, el personal y los ingresos del salón desde un solo lugar.</p>
         </div>
-        
-        <div class="col-md-4">
-            <a href="/admin/estilistas" class="dashboard-card">
-                <div class="icon-box">✂️</div>
-                <h5 class="fw-bold" style="color: #5a4b41;">Personal</h5>
-                <p class="text-muted small mb-0">Administrar estilistas, horarios y cuentas.</p>
-            </a>
-        </div>
+    </section>
 
-        <div class="col-md-4">
-            <a href="/admin/categorias" class="dashboard-card">
-                <div class="icon-box">💅</div>
-                <h5 class="fw-bold" style="color: #5a4b41;">Catálogo</h5>
-                <p class="text-muted small mb-0">Editar servicios, precios y duraciones.</p>
-            </a>
-        </div>
+    <!-- Accesos rápidos -->
+    <h2 class="section-title">Accesos rápidos</h2>
+    <div class="grid-accesos">
 
-        <div class="col-md-4">
-            <a href="/AdminReportes/Ingresos" class="dashboard-card">
-                <div class="icon-box">💰</div>
-                <h5 class="fw-bold" style="color: #5a4b41;">Reportes</h5>
-                <p class="text-muted small mb-0">Consultar ganancias del salón y descargar PDF.</p>
-            </a>
-        </div>
+        <!-- Agenda Global (destacada) -->
+        <a href="/AdminAgenda" class="acceso acceso-destacado">
+            <div class="acceso-top">
+                <div class="icon-box">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="16" rx="2.5"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>
+                </div>
+            </div>
+            <div>
+                <h3 class="acceso-titulo">Agenda global</h3>
+                <p class="acceso-desc">Ver y gestionar las citas de todos los estilistas.</p>
+                <span class="pill">
+                    Abrir agenda
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+                </span>
+            </div>
+        </a>
 
-        <div class="col-md-4">
-            <a href="/admin/clientes" class="dashboard-card">
-                <div class="icon-box">👥</div>
-                <h5 class="fw-bold" style="color: #5a4b41;">Historial Clientes</h5>
-                <p class="text-muted small mb-0">Ver la base de datos de clientes registrados.</p>
-            </a>
-        </div>
-        
-        <!-- Puedes agregar más accesos directos aquí -->
+        <!-- Personal -->
+        <a href="/admin/estilistas" class="acceso">
+            <div class="acceso-top">
+                <div class="icon-box">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="6" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><path d="M20 4L8.12 15.88M14.47 14.48L20 20M8.12 8.12L12 12"/></svg>
+                </div>
+                <span class="flecha"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span>
+            </div>
+            <div>
+                <h3 class="acceso-titulo">Personal</h3>
+                <p class="acceso-desc">Administrar estilistas, horarios y cuentas.</p>
+            </div>
+        </a>
+
+        <!-- Catálogo -->
+        <a href="/admin/categorias" class="acceso">
+            <div class="acceso-top">
+                <div class="icon-box">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><circle cx="7" cy="7" r="1.5"/></svg>
+                </div>
+                <span class="flecha"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span>
+            </div>
+            <div>
+                <h3 class="acceso-titulo">Catálogo</h3>
+                <p class="acceso-desc">Editar servicios, precios y duraciones.</p>
+            </div>
+        </a>
+
+        <!-- Reportes -->
+        <a href="/AdminReportes" class="acceso">
+            <div class="acceso-top">
+                <div class="icon-box">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20V10M10 20V4M16 20v-8M22 20H2"/></svg>
+                </div>
+                <span class="flecha"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span>
+            </div>
+            <div>
+                <h3 class="acceso-titulo">Reportes</h3>
+                <p class="acceso-desc">Consultar ganancias del salón y descargar PDF.</p>
+            </div>
+        </a>
+
+        <!-- Historial Clientes -->
+        <a href="/admin/clientes" class="acceso">
+            <div class="acceso-top">
+                <div class="icon-box">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="4"/><path d="M2 21c0-4 3-6 7-6s7 2 7 6"/><path d="M16 4a4 4 0 0 1 0 8M22 21c0-3-2-5-5-5.7"/></svg>
+                </div>
+                <span class="flecha"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span>
+            </div>
+            <div>
+                <h3 class="acceso-titulo">Historial de clientes</h3>
+                <p class="acceso-desc">Ver la base de datos de clientes registrados.</p>
+            </div>
+        </a>
+
     </div>
 </div>
