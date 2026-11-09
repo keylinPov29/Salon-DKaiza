@@ -2,126 +2,163 @@
 @using DKaiza.Web.Dominio
 
 @{
-    ViewData["Title"] = Model.EsAdmin ? "Agenda Global" : "Mis Citas";
+    ViewData["Title"] = "Agenda";
 }
 
 <style>
     :root {
-        --bg-page: #faf6f4; 
-        --color-terracota: #b88f86; 
-        --color-marron: #5a4b41; 
-        --color-rosa-suave: #e8d5ce; 
-        --color-rosa-palido: #f4e8e4; 
+        --bg-page: #fcf9f2; 
+        --color-terracota: #a37e6a;
+        --color-marron: #5a4b41;
+        --color-crema: #f3ebe1;
     }
 
     body { background-color: var(--bg-page) !important; }
 
-    .page-title {
-        font-family: 'Playfair Display', serif;
-        font-weight: 700;
+    .title-main {
+        font-family: 'Georgia', serif;
+        font-weight: bold;
         color: var(--color-marron);
-        font-size: 2.8rem;
-        margin-top: 20px;
-        margin-bottom: 5px;
+        font-size: 2.5rem;
+        margin-bottom: 20px;
     }
 
-    .page-subtitle {
-        color: #888;
-        font-family: 'Montserrat', sans-serif;
-        font-size: 0.95rem;
-        margin-bottom: 30px;
-        letter-spacing: 1px;
-    }
-
-    .filter-container {
-        background-color: #ffffff;
+    .filter-bar {
+        background-color: white;
         border-radius: 50px;
-        padding: 10px 20px;
+        padding: 10px 25px;
         display: inline-flex;
         align-items: center;
-        box-shadow: 0 10px 25px rgba(184, 143, 134, 0.1);
-        border: 1px solid var(--color-rosa-suave);
+        flex-wrap: wrap;
+        gap: 15px;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.05);
         margin-bottom: 40px;
+        border: 1px solid #f0e6dc;
+    }
+    
+    .filter-bar input, .filter-bar select {
+        border: none;
+        background: transparent;
+        font-weight: 600;
+        color: var(--color-marron);
+        outline: none;
+        cursor: pointer;
     }
 
-    .filter-container form { display: flex; align-items: center; gap: 20px; margin: 0; }
-    .filter-item { display: flex; align-items: center; gap: 10px; padding: 5px 15px; }
-    .filter-item:not(:last-child) { border-right: 1px solid var(--color-rosa-suave); }
-
-    .filter-container input, .filter-container select {
-        border: none; background: transparent; font-family: 'Montserrat', sans-serif;
-        font-weight: 600; font-size: 0.9rem; color: var(--color-marron); outline: none; cursor: pointer;
-    }
-
-    .cita-card-premium {
-        background-color: #ffffff;
+    .btn-clear {
+        background-color: var(--color-crema);
+        color: var(--color-marron);
         border-radius: 20px;
-        padding: 25px;
-        border: 1px solid var(--color-rosa-palido);
-        box-shadow: 0 8px 20px rgba(184, 143, 134, 0.05);
-        transition: all 0.3s ease;
+        padding: 6px 15px;
+        font-size: 0.85rem;
+        font-weight: 600;
+        text-decoration: none;
+        transition: 0.2s;
+    }
+    .btn-clear:hover { background-color: #e6dacb; color: var(--color-marron); }
+
+    .cita-card {
+        background-color: #ffffff;
+        border-radius: 24px;
+        padding: 30px 25px;
+        border: 1px solid #f0e6dc;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.03);
+        transition: transform 0.2s;
+        max-width: 350px;
+        margin: 0 auto; 
+        text-align: center;
+        /* Aseguramos que todas las tarjetas tengan la misma altura */
         height: 100%;
         display: flex;
         flex-direction: column;
         justify-content: space-between;
-        position: relative;
-        overflow: hidden;
-        text-align: center;
+    }
+    .cita-card:hover { transform: translateY(-5px); }
+
+    .client-avatar {
+        width: 65px;
+        height: 65px;
+        border-radius: 50%;
+        background-color: var(--color-crema);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--color-terracota);
+        font-weight: bold;
+        font-size: 1.6rem;
+        margin: 0 auto 15px auto;
     }
 
-    .cita-card-premium::before {
-        content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 4px;
-        background-color: var(--color-terracota);
+    .service-title {
+        font-family: 'Georgia', serif;
+        color: var(--color-marron);
+        font-weight: bold;
+        font-size: 1.4rem;
+        margin-bottom: 5px;
+        
+        /* ESTAS 3 LÍNEAS ALINEAN LAS TARJETAS */
+        height: 3.4rem; 
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    
+    .cita-fecha {
+        font-size: 0.85rem;
+        color: #888;
+        font-weight: 600;
+        margin-bottom: 10px;
     }
 
-    .cita-card-premium:hover { transform: translateY(-5px); box-shadow: 0 15px 35px rgba(184, 143, 134, 0.15); }
-    .cita-card-premium.completada { opacity: 0.65; filter: grayscale(80%); }
-
-    .avatar-circle {
-        width: 65px; height: 65px; border-radius: 50%; background-color: var(--color-rosa-palido);
-        display: flex; align-items: center; justify-content: center; color: var(--color-terracota);
-        font-weight: bold; font-size: 1.6rem; margin: 0 auto 15px auto; border: 2px solid #ffffff;
-        box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+    .btn-detail {
+        background-color: var(--color-marron);
+        color: white;
+        border-radius: 25px;
+        padding: 12px;
+        font-weight: 600;
+        font-size: 0.95rem;
+        border: none;
+        width: 100%;
+        margin-top: 15px;
+        transition: 0.2s;
     }
-
-    .service-title { font-family: 'Playfair Display', serif; color: var(--color-marron); font-weight: bold; font-size: 1.4rem; margin-bottom: 5px; }
-    .cita-fecha { font-family: 'Montserrat', sans-serif; font-size: 0.85rem; color: #999; font-weight: 500; margin-bottom: 15px; }
-    .cliente-text { font-family: 'Montserrat', sans-serif; font-size: 0.9rem; color: #666; margin-bottom: 10px; }
-    .admin-badge { background-color: var(--color-rosa-palido); color: var(--color-terracota); font-size: 0.75rem; padding: 6px 12px; border-radius: 20px; font-weight: 600; display: inline-block; margin-bottom: 15px; }
-
-    .btn-premium {
-        background-color: var(--color-marron); color: white; border-radius: 30px; padding: 12px;
-        font-family: 'Montserrat', sans-serif; font-weight: 600; font-size: 0.9rem; border: none;
-        width: 100%; transition: 0.3s; text-align: center; text-decoration: none; display: inline-block;
+    .btn-detail:hover { background-color: #433630; color: white; }
+    
+    .admin-badge {
+        background-color: #5a4b41;
+        color: white;
+        font-size: 0.75rem;
+        padding: 4px 10px;
+        border-radius: 10px;
+        font-weight: bold;
+        display: inline-block;
+        margin-top: 5px;
     }
-    .btn-premium:hover { background-color: #433630; color: white; }
-    .btn-clear { background-color: transparent; color: #d9534f; border: none; font-size: 0.85rem; font-weight: 600; transition: 0.2s; padding: 0; }
-    .btn-clear:hover { text-decoration: underline; }
 </style>
 
-<div class="container py-4">
-    <div class="text-center">
-        <h1 class="page-title">@(Model.EsAdmin ? "Agenda Global" : "Mis Citas")</h1>
-        <p class="page-subtitle">
-            @(Model.EsAdmin ? "Visualiza y filtra las citas de todos los estilistas" : "Consulta tus citas programadas")
-        </p>
+<div class="container py-5">
+    <div class="text-center mb-4">
+        <h1 class="title-main">@(Model.EsAdmin ? "Agenda Global (Admin)" : "Mis Citas")</h1>
+        @if (Model.EsAdmin)
+        {
+            <p class="text-muted">Visualiza y filtra las citas de todos los estilistas del salón.</p>
+        }
     </div>
 
-    <!-- BARRA DE FILTROS PREMIUM -->
+    <!-- Barra de Filtros -->
     <div class="d-flex justify-content-center">
-        <div class="filter-container">
-            <form method="get">
-                <!-- Filtro por Fecha -->
-                <div class="filter-item">
-                    <span style="font-size: 1.1rem;">📅</span>
+        <div class="filter-bar">
+            <form method="get" class="d-flex align-items-center gap-3 m-0 flex-wrap">
+                
+                <div class="d-flex align-items-center gap-2">
+                    <span style="font-size: 1.2rem;">📅</span>
                     <input type="date" name="fecha" value="@(Model.FechaSeleccionada?.ToString("yyyy-MM-dd"))" onchange="this.form.submit()" />
                 </div>
 
-                <!-- Filtro por Estilista (Solo Admin) -->
                 @if (Model.EsAdmin)
                 {
-                    <div class="filter-item">
-                        <span style="font-size: 1.1rem;">✂️</span>
+                    <div class="d-flex align-items-center gap-2 border-start ps-3">
+                        <span style="font-size: 1.2rem;">✂️</span>
                         <select name="estilistaIdFiltro" onchange="this.form.submit()">
                             <option value="">Todos los estilistas</option>
                             @foreach (var est in Model.ListaEstilistas)
@@ -134,22 +171,18 @@
                     </div>
                 }
 
-                <!-- Botón para limpiar filtros -->
                 @if (Model.FechaSeleccionada.HasValue || (Model.EsAdmin && Model.EstilistaIdFiltro.HasValue))
                 {
-                    <div class="filter-item" style="border: none; padding: 0 10px;">
-                        <a href="/Agenda" class="btn-clear">✕ Limpiar</a>
-                    </div>
+                    <a href="/Agenda" class="btn-clear ms-2">✕ Ver todas</a>
                 }
             </form>
         </div>
     </div>
 
-    <!-- LISTA DE CITAS -->
     @if (!Model.Citas.Any())
     {
         <div class="text-center py-5">
-            <h4 style="font-family: 'Playfair Display', serif; color: #888;">No se encontraron citas con estos filtros.</h4>
+            <h4 class="text-muted" style="font-family: 'Georgia', serif;">No se encontraron citas con estos filtros.</h4>
         </div>
     }
     else
@@ -158,10 +191,9 @@
             @foreach (var cita in Model.Citas)
             {
                 <div class="col-md-6 col-lg-4">
-                    <div class="cita-card-premium @(cita.Estado == EstadoCita.Completada ? "completada" : "")">
-                        
+                    <div class="cita-card" style="@(cita.Estado == EstadoCita.Completada ? "opacity: 0.6; filter: grayscale(100%);" : "")">
                         <div>
-                            <div class="avatar-circle">
+                            <div class="client-avatar">
                                 @if (Model.EsAdmin)
                                 {
                                     <span>@(cita.EstilistaNombre.Length > 0 ? cita.EstilistaNombre.Substring(0, 1).ToUpper() : "E")</span>
@@ -173,19 +205,24 @@
                             </div>
                             
                             <div class="service-title">@cita.ServicioNombre</div>
+                            
                             <div class="cita-fecha">@cita.Inicio.ToString("dd MMM yyyy - HH:mm")</div>
-                            <div class="cliente-text">Cliente: @cita.ClienteNombre</div>
+                            
+                            <p class="text-muted small mb-0">Cliente: @cita.ClienteNombre</p>
                             
                             @if (Model.EsAdmin)
                             {
                                 <div class="admin-badge">Atendido por: @cita.EstilistaNombre</div>
                             }
+                            else 
+                            {
+                                <div style="height: 24px;"></div>
+                            }
                         </div>
 
                         <div>
-                            <button class="btn-premium" onclick="verDetalle(@cita.Id)">Ver detalle</button>
+                            <button class="btn btn-detail" onclick="verDetalle(@cita.Id)">Ver detalle</button>
                         </div>
-
                     </div>
                 </div>
             }

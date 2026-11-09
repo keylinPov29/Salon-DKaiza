@@ -9,7 +9,6 @@ using Microsoft.AspNetCore.Authorization;
 
 namespace DKaiza.Web.Controllers;
 
-[Authorize(Roles = "Estilista")]
 public class AgendaController : Controller
 {
     private readonly ApplicationDbContext _context; 
@@ -19,18 +18,33 @@ public class AgendaController : Controller
         _context = context;
     }
 
-    // H.U. 11: Agenda del Estilista
-    public async Task<IActionResult> Index(DateTime? fecha)
+    // ==========================================
+    // H.U. 11: VISUALIZAR AGENDA Y DETALLE
+    // ==========================================
+    public async Task<IActionResult> Index(DateTime? fecha, int? estilistaIdFiltro)
     {
         var userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (string.IsNullOrEmpty(userIdString)) return RedirectToAction("Login", "Account"); 
+        
         var usuario = await _context.Usuarios.FirstOrDefaultAsync(u => u.Id == int.Parse(userIdString));
-
-        if (usuario == null || usuario.EstilistaId == null) return Unauthorized();
+        if (usuario == null) return Unauthorized();
 
         var query = _context.Citas
             .Include(c => c.Cliente)
             .Include(c => c.Servicio)
-            .Where(c => c.EstilistaId == usuario.EstilistaId && c.Estado != EstadoCita.Cancelada);
+            .Include(c => c.Estilista)
+            .Where(c => c.Estado != EstadoCita.Cancelada);
+
+        bool esAdmin = usuario.Rol == RolUsuario.Administrador || usuario.Rol == RolUsuario.Recepcionista;
+
+        if (usuario.Rol == RolUsuario.Estilista)
+        {
+            query = query.Where(c => c.EstilistaId == usuario.EstilistaId);
+        }
+        else if (esAdmin && estilistaIdFiltro.HasValue && estilistaIdFiltro > 0)
+        {
+            query = query.Where(c => c.EstilistaId == estilistaIdFiltro.Value);
+        }
 
         if (fecha.HasValue)
         {
@@ -40,22 +54,34 @@ public class AgendaController : Controller
         }
         else
         {
-            query = query.Where(c => c.Inicio >= DateTime.UtcNow.Date);
+            var hoyUtc = DateTime.UtcNow.Date;
+            query = query.Where(c => c.Inicio >= hoyUtc);
         }
 
         var citas = await query.OrderBy(c => c.Inicio).ToListAsync();
 
+        var listaEstilistas = new List<Estilista>();
+        if (esAdmin)
+        {
+            listaEstilistas = await _context.Estilistas
+                .Where(e => e.Activo)
+                .OrderBy(e => e.Nombres)
+                .ToListAsync();
+        }
+
         var viewModel = new AgendaEstilistaViewModel
         {
             FechaSeleccionada = fecha,
-            EsAdmin = false,
+            EstilistaIdFiltro = estilistaIdFiltro,
+            EsAdmin = esAdmin,
+            ListaEstilistas = listaEstilistas,
             Citas = citas.Select(c => new CitaDto
             {
                 Id = c.Id,
                 ClienteNombre = $"{c.Cliente?.Nombre} {c.Cliente?.Apellido}",
                 ClienteTelefono = c.Cliente?.Telefono ?? "N/A",
                 ServicioNombre = c.Servicio?.Nombre ?? "N/A",
-                EstilistaNombre = "Tú",
+                EstilistaNombre = c.Estilista?.NombreCompleto ?? "N/A",
                 Inicio = c.Inicio.ToLocalTime(),
                 Fin = c.Fin.ToLocalTime(),
                 PrecioTotal = c.PrecioTotal,
@@ -70,16 +96,13 @@ public class AgendaController : Controller
     [HttpGet]
     public async Task<IActionResult> DetalleCita(int id)
     {
-        var userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
-        var usuario = await _context.Usuarios.FirstOrDefaultAsync(u => u.Id == int.Parse(userIdString));
-
         var cita = await _context.Citas
             .Include(c => c.Cliente)
             .Include(c => c.Servicio)
             .Include(c => c.Estilista)
             .FirstOrDefaultAsync(c => c.Id == id);
 
-        if (cita == null || cita.EstilistaId != usuario.EstilistaId) return NotFound();
+        if (cita == null) return NotFound();
 
         var model = new DetalleCitaDto
         {
@@ -98,7 +121,12 @@ public class AgendaController : Controller
         return PartialView("_DetalleCitaPartial", model);
     }
 
+    // ==========================================
+    // H.U. 12: INICIAR Y FINALIZAR ATENCIÓN
+    // ==========================================
+    
     [HttpPost]
+    [Authorize(Roles = "Estilista")] 
     public async Task<IActionResult> IniciarAtencion(int id)
     {
         try
@@ -113,8 +141,11 @@ public class AgendaController : Controller
 
             if (cita.EstilistaId != usuario.EstilistaId) return Forbid();
 
-            if (cita.Estado != EstadoCita.Pendiente && cita.Estado != EstadoCita.Confirmada)
-                return BadRequest("Solo se pueden iniciar citas Pendientes o Confirmadas.");
+            if (cita.Estado != EstadoCita.Pendiente &&
+                cita.Estado != EstadoCita.PendientePago &&
+                cita.Estado != EstadoCita.Pagada &&
+                cita.Estado != EstadoCita.Confirmada)
+                return BadRequest("Solo se pueden iniciar citas Pendientes o con pago registrado.");
 
             cita.HoraInicioReal = DateTime.UtcNow;
             cita.Estado = EstadoCita.EnProceso; 
@@ -128,6 +159,7 @@ public class AgendaController : Controller
         }
     }
 
+    [Authorize(Roles = "Estilista")] 
     public async Task<IActionResult> EnProceso(int id)
     {
         var userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
@@ -142,6 +174,7 @@ public class AgendaController : Controller
             return RedirectToAction(nameof(Index));
 
         ViewBag.HoraInicioStr = cita.HoraInicioReal.Value.ToLocalTime().ToString("HH:mm:ss");
+        // Enviamos la fecha de inicio en milisegundos para que JS no falle
         ViewBag.HoraInicioMs = new DateTimeOffset(cita.HoraInicioReal.Value).ToUnixTimeMilliseconds();
         ViewBag.DuracionEstimada = (int)(cita.Fin - cita.Inicio).TotalMinutes;
 
@@ -149,6 +182,7 @@ public class AgendaController : Controller
     }
 
     [HttpPost]
+    [Authorize(Roles = "Estilista")] 
     public async Task<IActionResult> FinalizarAtencion(int id)
     {
         try
@@ -159,16 +193,22 @@ public class AgendaController : Controller
             var cita = await _context.Citas.FindAsync(id);
             if (cita == null) return NotFound();
 
-            if (cita.EstilistaId != usuario.EstilistaId) return Forbid();
+            if (cita.EstilistaId != usuario.EstilistaId)
+                return Forbid();
 
-            if (cita.Estado != EstadoCita.EnProceso) return BadRequest("La cita debe estar En Proceso.");
+            if (cita.Estado != EstadoCita.EnProceso)
+                return BadRequest("La cita debe estar En Proceso.");
 
+            // Guardamos la hora de fin y cambiamos el estado
             cita.HoraFinReal = DateTime.UtcNow;
             cita.Estado = EstadoCita.Completada;
             
             await _context.SaveChangesAsync();
 
+            // Guardamos el mensaje en TempData para mostrarlo en la agenda
             TempData["Success"] = "¡Atención finalizada correctamente!";
+            
+            // Redirigimos a la agenda
             return RedirectToAction(nameof(Index));
         }
         catch (Exception ex)

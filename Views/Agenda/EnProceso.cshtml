@@ -1,0 +1,263 @@
+@model DKaiza.Web.Dominio.Cita
+@{
+    ViewData["Title"] = "Atención en curso";
+}
+
+<style>
+    :root { 
+        --bg-page: #fcf9f2; 
+        --color-terracota: #c47d5c; 
+        --color-marron: #5a4b41; 
+        --color-crema: #f3ebe1; 
+    }
+
+    body { background-color: var(--bg-page) !important; }
+
+    .card-panel { 
+        background-color: #ffffff; 
+        border-radius: 24px; 
+        border: 1px solid #f0e6dc; 
+        box-shadow: 0 10px 30px rgba(0,0,0,0.05); 
+        overflow: hidden; 
+    }
+
+    .header-panel { 
+        background-color: #9b7b6d; 
+        color: white; 
+        padding: 20px 30px; 
+    }
+
+    .reloj-contenedor {
+        position: relative;
+        width: 280px;
+        height: 280px;
+        margin: 0 auto;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .reloj-svg {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        transform: rotate(-90deg);
+    }
+
+    .reloj-circulo-fondo {
+        fill: none;
+        stroke: #f3ebe1;
+        stroke-width: 10;
+    }
+
+    .reloj-circulo-progreso {
+        fill: none;
+        stroke: url(#gradienteTiempo);
+        stroke-width: 10;
+        stroke-linecap: round;
+        stroke-dasharray: 785; 
+        stroke-dashoffset: 785; 
+        transition: stroke-dashoffset 1s linear;
+    }
+
+    .reloj-texto {
+        position: absolute;
+        text-align: center;
+        z-index: 10;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .reloj-cliente {
+        font-family: 'Montserrat', sans-serif;
+        font-size: 1rem;
+        color: #888;
+        font-weight: 600;
+        margin-bottom: 5px;
+    }
+
+    .reloj-tiempo {
+        font-family: 'Playfair Display', serif;
+        font-size: 3.5rem;
+        font-weight: bold;
+        color: var(--color-marron);
+        line-height: 1;
+        letter-spacing: 2px;
+    }
+
+    .reloj-servicio {
+        font-family: 'Montserrat', sans-serif;
+        font-size: 0.75rem;
+        color: var(--color-terracota);
+        text-transform: uppercase;
+        letter-spacing: 2px;
+        margin-top: 10px;
+        font-weight: 700;
+    }
+
+    .info-box { 
+        background-color: var(--bg-page); 
+        border-radius: 12px; 
+        padding: 15px; 
+        text-align: center; 
+        border: 1px solid #eae1d8; 
+    }
+    .info-label { font-size: 0.75rem; text-transform: uppercase; color: #888; font-weight: 700; display: block; margin-bottom: 4px; }
+    .info-value { font-size: 1.1rem; color: var(--color-marron); font-weight: 600; }
+
+    .btn-custom { border-radius: 25px; padding: 12px 25px; font-weight: 600; font-size: 1rem; border: none; transition: 0.2s; }
+    .btn-rojo { background-color: #d9534f; color: white; }
+    .btn-rojo:hover { background-color: #c9302c; color: white; }
+</style>
+
+<div class="container py-5">
+    <div class="text-center mb-4">
+        <a href="/Agenda" class="text-decoration-none text-muted" style="font-weight: 500;">← Volver a la agenda</a>
+    </div>
+
+    <div class="row justify-content-center">
+        <div class="col-lg-8 col-md-10">
+            <div class="card-panel text-center">
+                <div class="header-panel d-flex justify-content-between align-items-center">
+                    <h4 class="mb-0" style="font-family: Georgia, serif;">Atención en curso</h4>
+                    <span class="badge bg-light text-dark rounded-pill px-3 py-2">En Proceso</span>
+                </div>
+
+                <div class="p-5">
+                    
+                    <div class="reloj-contenedor">
+                        <svg class="reloj-svg" viewBox="0 0 280 280">
+                            <defs>
+                                <linearGradient id="gradienteTiempo" x1="0%" y1="0%" x2="100%" y2="100%">
+                                    <stop offset="0%" stop-color="#27ae60" />
+                                    <stop offset="50%" stop-color="#f5b041" />
+                                    <stop offset="100%" stop-color="#c47d5c" />
+                                </linearGradient>
+                            </defs>
+                            <circle class="reloj-circulo-fondo" cx="140" cy="140" r="125"></circle>
+                            <circle id="circuloProgreso" class="reloj-circulo-progreso" cx="140" cy="140" r="125"></circle>
+                        </svg>
+
+                        <div class="reloj-texto">
+                            <div class="reloj-cliente">@Model.Cliente?.Nombre @Model.Cliente?.Apellido</div>
+                            <div class="reloj-tiempo" id="cronometro">00:00:00</div>
+                            <div class="reloj-servicio">@Model.Servicio?.Nombre</div>
+                        </div>
+                    </div>
+
+                    <div class="row g-3 mt-4 mb-5">
+                        <div class="col-6">
+                            <div class="info-box">
+                                <span class="info-label">Hora de Inicio</span>
+                                <span class="info-value">@ViewBag.HoraInicioStr</span>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="info-box">
+                                <span class="info-label">Tiempo Estimado</span>
+                                <span class="info-value">@ViewBag.DuracionEstimada min</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <button type="button" class="btn btn-custom btn-rojo w-100" onclick="abrirModalResumen()">
+                        Finalizar atención
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL DE RESUMEN -->
+<div class="modal fade" id="modalResumen" tabindex="-1" aria-hidden="true" data-bs-backdrop="static">
+    <div class="modal-dialog modal-dialog-centered"> 
+        <div class="modal-content" style="border-radius: 20px; border: none; overflow: hidden; box-shadow: 0 15px 30px rgba(0,0,0,0.2);">
+            <div class="modal-header" style="background-color: #9b7b6d; color: white; border-bottom: none; padding: 20px;">
+                <h5 class="modal-title" style="font-family: Georgia, serif;">Resumen de atención</h5>
+            </div>
+            
+            <!-- FORMULARIO PARA ENVIAR AL CONTROLADOR -->
+            <form asp-action="FinalizarAtencion" asp-controller="Agenda" method="post">
+                <input type="hidden" name="id" value="@Model.Id" />
+                
+                <div class="modal-body p-4 text-center" style="background-color: #fcf9f2;">
+                    <p class="mb-4 text-muted">Revisa los datos antes de finalizar la cita.</p>
+                    
+                    <div class="d-flex justify-content-between mb-3 p-3 bg-white rounded" style="border: 1px solid #eae1d8;">
+                        <span class="text-muted">Hora de inicio:</span>
+                        <strong style="color: #5a4b41;">@ViewBag.HoraInicioStr</strong>
+                    </div>
+                    
+                    <div class="d-flex justify-content-between mb-3 p-3 bg-white rounded" style="border: 1px solid #eae1d8;">
+                        <span class="text-muted">Hora de fin:</span>
+                        <strong style="color: #5a4b41;" id="resumenHoraFin">--:--:--</strong>
+                    </div>
+                    
+                    <div class="d-flex justify-content-between p-3 bg-white rounded" style="border: 1px solid #eae1d8; background-color: #f3ebe1 !important;">
+                        <span class="text-muted">Tiempo total:</span>
+                        <strong style="color: #c47d5c; font-size: 1.1rem;" id="resumenTiempoTotal">00:00:00</strong>
+                    </div>
+                </div>
+                <div class="modal-footer" style="background-color: #fcf9f2; border-top: none; padding: 15px 20px; gap: 10px;">
+                    <button type="button" class="btn btn-custom w-50" data-bs-dismiss="modal" style="background-color: #eae1d8; color: #5a4b41;">
+                        Cancelar
+                    </button>
+                    <button type="submit" class="btn btn-custom w-50" style="background-color: #5a4b41; color: white;">
+                        ✓ Aceptar
+                    </button>
+                </div>
+            </form>
+
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        // Recibimos los milisegundos desde el controlador
+        const horaInicioMs = @ViewBag.HoraInicioMs;
+        const duracionEstimadaSegundos = @ViewBag.DuracionEstimada * 60;
+        const circunferencia = 785;
+        
+        function actualizarCronometro() {
+            const ahoraMs = Date.now(); // Hora actual en milisegundos
+            const diferenciaMs = ahoraMs - horaInicioMs;
+            
+            if (diferenciaMs < 0) return;
+
+            const segundosTotales = Math.floor(diferenciaMs / 1000);
+            const h = Math.floor(segundosTotales / 3600).toString().padStart(2, '0');
+            const m = Math.floor((segundosTotales % 3600) / 60).toString().padStart(2, '0');
+            const s = (segundosTotales % 60).toString().padStart(2, '0');
+            
+            document.getElementById('cronometro').innerText = `${h}:${m}:${s}`;
+
+            let progreso = segundosTotales / duracionEstimadaSegundos;
+            if (progreso > 1) progreso = 1;
+            
+            const offset = circunferencia - (progreso * circunferencia);
+            document.getElementById('circuloProgreso').style.strokeDashoffset = offset;
+        }
+        
+        setInterval(actualizarCronometro, 1000);
+        actualizarCronometro(); // Llamada inicial
+
+        function abrirModalResumen() {
+            const ahora = new Date();
+            // Formateamos la hora actual para el modal
+            const horaFin = ahora.toLocaleTimeString('es-PE', { hour12: false });
+            const tiempoTotal = document.getElementById('cronometro').innerText;
+            
+            document.getElementById('resumenHoraFin').innerText = horaFin;
+            document.getElementById('resumenTiempoTotal').innerText = tiempoTotal;
+            
+            var myModal = new bootstrap.Modal(document.getElementById('modalResumen'));
+            myModal.show();
+        }
+    </script>
+}

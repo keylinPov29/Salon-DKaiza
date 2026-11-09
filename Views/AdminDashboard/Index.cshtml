@@ -1,0 +1,150 @@
+@{
+    ViewData["Title"] = "Panel de Administración";
+}
+
+<style>
+    :root {
+        --bg-page: #fcf9f2;
+        --color-terracota: #c47d5c;
+        --color-marron: #5a4b41;
+        --color-crema: #f3ebe1;
+    }
+
+    body { background-color: var(--bg-page) !important;
+
+    /* Tipografía del título */
+    .admin-title {
+        font-family: 'Playfair Display', serif;
+        font-weight: 700;
+        color: var(--color-marron);
+        font-size: 2.8rem;
+        margin-top: 20px;
+        margin-bottom: 5px;
+    }
+
+    .admin-subtitle {
+        color: #888;
+        font-family: 'Montserrat', sans-serif;
+        font-size: 0.95rem;
+        margin-bottom: 40px;
+        letter-spacing: 1px;
+        text-transform: uppercase;
+    }
+
+    /* Tarjetas de Acceso Rápido */
+    .access-card {
+        background-color: #ffffff;
+        border-radius: 20px;
+        border: 1px solid #f0e6dc;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.03);
+        padding: 35px 25px;
+        text-align: center;
+        transition: all 0.3s ease;
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        text-decoration: none; /* Quita el subrayado del enlace */
+    }
+
+    .access-card:hover {
+        transform: translateY(-8px);
+        box-shadow: 0 15px 30px rgba(90, 75, 65, 0.1);
+        border-color: #e6dacb;
+    }
+
+    /* Contenedor del Ícono */
+    .icon-wrapper {
+        width: 70px;
+        height: 70px;
+        border-radius: 50%;
+        background-color: var(--color-crema);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 20px auto;
+        font-size: 2rem;
+        color: var(--color-terracota);
+        transition: all 0.3s ease;
+    }
+
+    .access-card:hover .icon-wrapper {
+        background-color: var(--color-terracota);
+        color: white;
+    }
+
+    /* Textos de la Tarjeta */
+    .card-title {
+        font-family: 'Playfair Display', serif;
+        font-weight: bold;
+        color: var(--color-marron);
+        font-size: 1.4rem;
+        margin-bottom: 10px;
+    }
+
+    .card-desc {
+        font-size: 0.85rem;
+        color: #888;
+        line-height: 1.5;
+        margin: 0;
+    }
+</style>
+
+<div class="container py-4">
+    
+    <!-- Encabezado -->
+    <div class="text-center">
+        <h1 class="admin-title">Bienvenido, Administrador</h1>
+        <p class="admin-subtitle">Panel de Control General</p>
+    </div>
+
+    <!-- Grid de Accesos Rápidos -->
+    <div class="row g-4 justify-content-center">
+        
+        <!-- Tarjeta: Agenda Global -->
+        <div class="col-md-6 col-lg-4">
+            <a href="/Agenda" class="access-card">
+                <div class="icon-wrapper">📅</div>
+                <h4 class="card-title">Agenda Global</h4>
+                <p class="card-desc">Ver y gestionar las citas de todos los estilistas del salón en tiempo real.</p>
+            </a>
+        </div>
+
+        <!-- Tarjeta: Personal -->
+        <div class="col-md-6 col-lg-4">
+            <a href="/admin/estilistas" class="access-card">
+                <div class="icon-wrapper">✂️</div>
+                <h4 class="card-title">Personal</h4>
+                <p class="card-desc">Administrar la ficha de estilistas, horarios, especialidades y cuentas de acceso.</p>
+            </a>
+        </div>
+
+        <!-- Tarjeta: Catálogo -->
+        <div class="col-md-6 col-lg-4">
+            <a href="/admin/categorias" class="access-card">
+                <div class="icon-wrapper">💅</div>
+                <h4 class="card-title">Catálogo</h4>
+                <p class="card-desc">Editar categorías, servicios, precios y duraciones de atención.</p>
+            </a>
+        </div>
+
+        <!-- Tarjeta: Reportes (CORREGIDO) -->
+        <div class="col-md-6 col-lg-4">
+            <a href="/AdminReportes" class="access-card">
+                <div class="icon-wrapper">💰</div>
+                <h4 class="card-title">Reportes</h4>
+                <p class="card-desc">Consultar ganancias, servicios más solicitados y estadísticas del salón.</p>
+            </a>
+        </div>
+
+        <!-- Tarjeta: Historial Clientes -->
+        <div class="col-md-6 col-lg-4">
+            <a href="/admin/clientes" class="access-card">
+                <div class="icon-wrapper">👥</div>
+                <h4 class="card-title">Historial Clientes</h4>
+                <p class="card-desc">Ver la base de datos de clientes registrados, historial de visitas y contacto.</p>
+            </a>
+        </div>
+
+    </div>
+</div>
