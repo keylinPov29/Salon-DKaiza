@@ -2,15 +2,15 @@
 @using DKaiza.Web.Dominio
 
 <style>
-    .modal-header-flotante { background-color: #cfa59c !important; color: white !important; padding: 20px !important; text-align: center !important; border-bottom: none !important; position: relative !important; border-radius: 20px 20px 0 0 !important; }
+    .modal-header-flotante { background-color: #b88f86 !important; color: white !important; padding: 20px !important; text-align: center !important; border-bottom: none !important; position: relative !important; border-radius: 20px 20px 0 0 !important; }
     .modal-header-flotante h4 { margin: 0 !important; font-family: 'Playfair Display', serif !important; font-weight: 600 !important; font-size: 1.3rem !important; }
     .btn-close-custom { position: absolute !important; top: 20px !important; right: 20px !important; background: transparent !important; border: none !important; color: white !important; font-size: 1.2rem !important; cursor: pointer !important; opacity: 0.8 !important; padding: 0 !important; }
     .btn-close-custom:hover { opacity: 1 !important; }
-    .modal-body-flotante { padding: 20px 30px !important; background-color: #f7f4f0 !important; }
+    .modal-body-flotante { padding: 20px 30px !important; background-color: #faf6f4 !important; }
     .data-row { display: flex !important; justify-content: space-between !important; padding: 12px 0 !important; border-bottom: 1px solid #e8d5ce !important; color: #5a4b41 !important; font-size: 1rem !important; font-weight: 500 !important; }
     .data-row:last-child { border-bottom: none !important; }
     .data-row span:first-child { color: #888 !important; font-weight: 400 !important; }
-    .modal-footer-flotante { padding: 15px 30px 25px 30px !important; display: flex !important; justify-content: center !important; gap: 15px !important; background-color: #f7f4f0 !important; border-top: none !important; border-radius: 0 0 20px 20px !important; }
+    .modal-footer-flotante { padding: 15px 30px 25px 30px !important; display: flex !important; justify-content: center !important; gap: 15px !important; background-color: #faf6f4 !important; border-top: none !important; border-radius: 0 0 20px 20px !important; }
     .btn-flotante { border-radius: 25px !important; padding: 12px 20px !important; font-weight: 600 !important; font-size: 0.95rem !important; border: none !important; flex: 1 !important; transition: 0.2s !important; box-shadow: 0 4px 6px rgba(0,0,0,0.05) !important; text-align: center !important; text-decoration: none !important; display: inline-block !important; }
     .btn-flotante-secondary { background-color: #e8d5ce !important; color: #5a4b41 !important; }
     .btn-flotante-secondary:hover { background-color: #dcd0c4 !important; }
@@ -45,7 +45,7 @@
 </div>
 
 <div class="modal-footer-flotante">
-    <!-- SOLO EL ESTILISTA PUEDE VER LOS BOTONES DE ACCIÓN -->
+    <!-- SI EL USUARIO ES ESTILISTA, MUESTRA LOS BOTONES -->
     @if (User.IsInRole("Estilista"))
     {
         @if (Model.Estado == EstadoCita.Pendiente || Model.Estado == EstadoCita.PendientePago || Model.Estado == EstadoCita.Pagada || Model.Estado == EstadoCita.Confirmada)
@@ -65,7 +65,7 @@
         }
     }
 
-    <!-- EL BOTÓN CERRAR SIEMPRE ESTÁ -->
+    <!-- EL BOTÓN CERRAR SIEMPRE ESTÁ (Y SE CENTRA SI ES ADMIN) -->
     <button type="button" class="btn btn-flotante btn-flotante-secondary" data-bs-dismiss="modal" style="flex: 1;">
         Cerrar
     </button>
