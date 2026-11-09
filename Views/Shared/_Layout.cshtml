@@ -1,5 +1,4 @@
-﻿
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="utf-8" />
@@ -54,6 +53,17 @@
             color: #e6dacb;
             text-decoration: underline !important;
         }
+        
+        /* Estilo para que el dropdown se vea bien en el navbar */
+        .dk-nav__links .dropdown-menu {
+            border-radius: 10px;
+            border: 1px solid #f0e6dc;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+        }
+        .dk-nav__links .dropdown-item:hover {
+            background-color: #f3ebe1;
+            color: #5a4b41;
+        }
     </style>
 </head>
 
@@ -65,23 +75,30 @@
 
         <div class="dk-nav__links">
 
-                       @if (User.IsInRole("Administrador"))
+            @if (User.IsInRole("Administrador"))
             {
                 <a class="dk-nav__link" href="/admin/categorias">Catálogo</a>
                 <a class="dk-nav__link" href="/admin/estilistas">Estilistas</a>
                 <a class="dk-nav__link" href="/Agenda">Agenda Diaria</a>
                 <a class="dk-nav__link" href="/admin/clientes">Historial clientes</a>
+                
+                <!-- MENÚ DE REPORTES AGREGADO -->
+                <div class="dropdown d-inline-block">
+                    <a class="dk-nav__link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                        Reportes
+                    </a>
+                </div>
             }
-           else if (User.IsInRole("Estilista"))
-{
-    <a class="dk-nav__link" href="/Agenda">Mi Agenda</a>
-    <a class="dk-nav__link" href="/clientes">Clientes</a>
-}
+            else if (User.IsInRole("Estilista"))
+            {
+                <a class="dk-nav__link" href="/Agenda">Mi Agenda</a>
+                <a class="dk-nav__link" href="/clientes">Clientes</a>
+            }
             else if (User.IsInRole("Recepcionista"))
             {
                 <a class="dk-nav__link" href="/Recepcionista">Pagos y recepción</a>
             }
-                      else if (User.IsInRole("Cliente"))
+            else if (User.IsInRole("Cliente"))
             {
                 <a class="dk-nav__link" href="/">Servicios</a>
                 <a class="dk-nav__link" href="/estilistas">Estilistas</a>

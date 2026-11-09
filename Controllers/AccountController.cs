@@ -60,9 +60,8 @@ public class AccountController : Controller
 
         if (!string.IsNullOrEmpty(returnUrl) && Url.IsLocalUrl(returnUrl))
             return LocalRedirect(returnUrl);
-
-                if (usuario.Rol == RolUsuario.Administrador)
-            return Redirect("/");
+        if (usuario.Rol == RolUsuario.Administrador)
+            return RedirectToAction("Index", "AdminDashboard");
         //si es estilista
         if (usuario.Rol == RolUsuario.Estilista)
             return RedirectToAction("Index", "Agenda");
