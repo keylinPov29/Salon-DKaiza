@@ -8,6 +8,7 @@ using System.Security.Claims;
 
 namespace DKaiza.Web.Controllers;
 
+[Authorize(Roles = "Estilista")]
 public class AgendaController : Controller
 {
     private readonly ApplicationDbContext _context; 
@@ -17,21 +18,18 @@ public class AgendaController : Controller
         _context = context;
     }
 
-    // ==========================================
-    // H.U. 11: VISUALIZAR AGENDA Y DETALLE
-    // ==========================================
-    public async Task<IActionResult> Index(DateTime? fecha, int? estilistaIdFiltro)
+    public async Task<IActionResult> Index(DateTime? fecha)
     {
         var userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
-        if (string.IsNullOrEmpty(userIdString)) return RedirectToAction("Login", "Account"); 
-        
         var usuario = await _context.Usuarios.FirstOrDefaultAsync(u => u.Id == int.Parse(userIdString));
-        if (usuario == null) return Unauthorized();
+
+        if (usuario == null || usuario.EstilistaId == null) return Unauthorized();
 
         // 1. Consulta base
         var query = _context.Citas
             .Include(c => c.Cliente)
             .Include(c => c.Servicio)
+<<<<<<< Updated upstream
             .Include(c => c.Estilista)
             .Where(c => c.Estado != EstadoCita.Cancelada);
 
@@ -46,6 +44,9 @@ public class AgendaController : Controller
         {
             query = query.Where(c => c.EstilistaId == estilistaIdFiltro.Value);
         }
+=======
+            .Where(c => c.EstilistaId == usuario.EstilistaId && c.Estado != EstadoCita.Cancelada);
+>>>>>>> Stashed changes
 
         // 3. Filtro por Fecha
         if (fecha.HasValue)
@@ -56,12 +57,12 @@ public class AgendaController : Controller
         }
         else
         {
-            var hoyUtc = DateTime.UtcNow.Date;
-            query = query.Where(c => c.Inicio >= hoyUtc);
+            query = query.Where(c => c.Inicio >= DateTime.UtcNow.Date);
         }
 
         var citas = await query.OrderBy(c => c.Inicio).ToListAsync();
 
+<<<<<<< Updated upstream
         // 4. Cargar lista de estilistas para el combo
         var listaEstilistas = new List<Estilista>();
         if (esAdmin)
@@ -72,19 +73,19 @@ public class AgendaController : Controller
                 .ToListAsync();
         }
 
+=======
+>>>>>>> Stashed changes
         var viewModel = new AgendaEstilistaViewModel
         {
             FechaSeleccionada = fecha,
-            EstilistaIdFiltro = estilistaIdFiltro,
-            EsAdmin = esAdmin,
-            ListaEstilistas = listaEstilistas,
+            EsAdmin = false,
             Citas = citas.Select(c => new CitaDto
             {
                 Id = c.Id,
                 ClienteNombre = $"{c.Cliente?.Nombre} {c.Cliente?.Apellido}",
                 ClienteTelefono = c.Cliente?.Telefono ?? "N/A",
                 ServicioNombre = c.Servicio?.Nombre ?? "N/A",
-                EstilistaNombre = c.Estilista?.NombreCompleto ?? "N/A",
+                EstilistaNombre = "Tú",
                 Inicio = c.Inicio.ToLocalTime(),
                 Fin = c.Fin.ToLocalTime(),
                 PrecioTotal = c.PrecioTotal,
@@ -102,13 +103,16 @@ public class AgendaController : Controller
     [HttpGet]
     public async Task<IActionResult> DetalleCita(int id)
     {
+        var userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        var usuario = await _context.Usuarios.FirstOrDefaultAsync(u => u.Id == int.Parse(userIdString));
+
         var cita = await _context.Citas
             .Include(c => c.Cliente)
             .Include(c => c.Servicio)
             .Include(c => c.Estilista)
             .FirstOrDefaultAsync(c => c.Id == id);
 
-        if (cita == null) return NotFound();
+        if (cita == null || cita.EstilistaId != usuario.EstilistaId) return NotFound();
 
         var model = new DetalleCitaDto
         {
@@ -127,9 +131,12 @@ public class AgendaController : Controller
         return PartialView("_DetalleCitaPartial", model);
     }
 
+<<<<<<< Updated upstream
     // ==========================================
     // H.U. 12: INICIAR Y FINALIZAR ATENCIÓN
     // ==========================================
+=======
+>>>>>>> Stashed changes
     [HttpPost]
     public async Task<IActionResult> IniciarAtencion(int id)
     {
@@ -139,11 +146,32 @@ public class AgendaController : Controller
         if (cita.Estado != EstadoCita.Pendiente && cita.Estado != EstadoCita.Confirmada)
             return Json(new { success = false, message = "Solo se pueden iniciar citas Pendientes o Confirmadas." });
 
+<<<<<<< Updated upstream
         cita.HoraInicioReal = DateTime.UtcNow;
         cita.Estado = EstadoCita.EnProceso; 
         await _context.SaveChangesAsync();
         
         return Json(new { success = true, message = "Atención iniciada correctamente." });
+=======
+            var cita = await _context.Citas.FindAsync(id);
+            if (cita == null) return NotFound();
+
+            if (cita.EstilistaId != usuario.EstilistaId) return Forbid();
+
+            if (cita.Estado != EstadoCita.Pendiente && cita.Estado != EstadoCita.Confirmada)
+                return BadRequest("Solo se pueden iniciar citas Pendientes o Confirmadas.");
+
+            cita.HoraInicioReal = DateTime.UtcNow;
+            cita.Estado = EstadoCita.EnProceso; 
+            await _context.SaveChangesAsync();
+            
+            return RedirectToAction(nameof(EnProceso), new { id = cita.Id });
+        }
+        catch (Exception ex)
+        {
+            return BadRequest("Error al iniciar: " + ex.Message);
+        }
+>>>>>>> Stashed changes
     }
 
     public async Task<IActionResult> EnProceso(int id)
@@ -156,7 +184,11 @@ public class AgendaController : Controller
             return RedirectToAction(nameof(Index));
 
         ViewBag.HoraInicioStr = cita.HoraInicioReal.Value.ToLocalTime().ToString("HH:mm:ss");
+<<<<<<< Updated upstream
         ViewBag.HoraInicioIso = cita.HoraInicioReal.Value.ToString("yyyy-MM-ddTHH:mm:ssZ");
+=======
+        ViewBag.HoraInicioMs = new DateTimeOffset(cita.HoraInicioReal.Value).ToUnixTimeMilliseconds();
+>>>>>>> Stashed changes
         ViewBag.DuracionEstimada = (int)(cita.Fin - cita.Inicio).TotalMinutes;
 
         return View(cita);
@@ -171,6 +203,7 @@ public class AgendaController : Controller
         if (cita.Estado != EstadoCita.EnProceso)
             return Json(new { success = false, message = "La cita debe estar En Proceso." });
 
+<<<<<<< Updated upstream
         cita.HoraFinReal = DateTime.UtcNow;
         cita.Estado = EstadoCita.Completada;
         await _context.SaveChangesAsync();
@@ -186,5 +219,24 @@ public class AgendaController : Controller
                 tiempoTotal = tiempoTotal.ToString(@"hh\:mm\:ss")
             }
         });
+=======
+            if (cita.EstilistaId != usuario.EstilistaId) return Forbid();
+
+            if (cita.Estado != EstadoCita.EnProceso) return BadRequest("La cita debe estar En Proceso.");
+
+            cita.HoraFinReal = DateTime.UtcNow;
+            cita.Estado = EstadoCita.Completada;
+            
+            await _context.SaveChangesAsync();
+
+            TempData["Success"] = "¡Atención finalizada correctamente!";
+            return RedirectToAction(nameof(Index));
+        }
+        catch (Exception ex)
+        {
+            TempData["Error"] = "Error al finalizar: " + (ex.InnerException?.Message ?? ex.Message);
+            return RedirectToAction(nameof(Index));
+        }
+>>>>>>> Stashed changes
     }
 }
