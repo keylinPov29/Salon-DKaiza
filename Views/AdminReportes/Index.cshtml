@@ -1,0 +1,360 @@
+@model DKaiza.Web.Models.ReporteUnificadoViewModel
+@{
+    ViewData["Title"] = "Reportes Anuales";
+    var metodoActual = Context.Request.Query["metodoPago"].ToString();
+}
+
+<style>
+    /* --- PALETA DE COLORES EXTRAÍDA DE LA IMAGEN --- */
+    :root { 
+        --bg-page: #faf8f6; 
+        --text-dark: #4a4044;
+        --text-muted: #988d91;
+        --rose: #c9a8a1; 
+        --grey: #cfcaca; 
+        --beige: #ebe2d8; 
+        --cream-border: #f3ebe1; 
+        --dark-brown: #3d2b1f; 
+        --white: #ffffff;
+    }
+    body { background-color: var(--bg-page) !important; font-family: 'Montserrat', sans-serif; color: var(--text-dark); }
+
+    .page-title { font-family: 'Playfair Display', serif; font-size: 2.2rem; color: var(--text-dark); }
+    
+    .card-panel { background-color: var(--white); border-radius: 20px; padding: 25px; border: 1px solid #f0eaea; box-shadow: 0 4px 20px rgba(0,0,0,0.02); height: 100%;}
+    .card-title { font-size: 1.1rem; color: var(--text-dark); margin-bottom: 15px; font-weight: 600;}
+
+    .hero-card {
+        border-radius: 20px; padding: 20px 30px; display: flex; justify-content: space-between; align-items: center;
+        height: 100%; border: none; box-shadow: 0 6px 20px rgba(0,0,0,0.04);
+    }
+    .hero-label { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1.5px; font-weight: 700; margin-bottom: 5px; display: block; }
+    .hero-title { font-family: 'Playfair Display', serif; font-size: 1.8rem; font-weight: bold; margin: 0; line-height: 1.1;}
+    
+    .hero-estilista { background: var(--rose); color: white; }
+    .hero-estilista .hero-label { color: rgba(255,255,255,0.9); }
+    
+    .hero-servicio { background: var(--beige); color: var(--text-dark); border: 1px solid #e0d6cd; }
+    .hero-servicio .hero-label { color: #666; }
+    
+    .hero-icon { font-size: 3rem; opacity: 0.3; }
+
+    .filter-card {
+        background-color: var(--white); border-radius: 12px; padding: 10px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.05); border: 1px solid var(--beige); height: 100%;
+    }
+    .filter-card input { border: none; border-bottom: 1px solid var(--grey); border-radius: 0; padding-left: 0; font-size: 0.8rem; background: transparent; }
+    .filter-card input:focus { box-shadow: none; border-bottom: 1px solid var(--rose); }
+    
+    .metric-box {
+        border-radius: 12px; padding: 15px; text-align: center;
+        display: flex; flex-direction: column; justify-content: center;
+        height: 100%; text-decoration: none; transition: transform 0.2s; cursor: pointer;
+    }
+    .metric-box:hover { transform: translateY(-3px); box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
+    .metric-title { font-size: 0.75rem; font-weight: 700; text-transform: uppercase; margin-bottom: 5px; letter-spacing: 0.5px;}
+    .metric-value { font-family: 'Playfair Display', serif; font-size: 1.5rem; font-weight: bold; margin: 0; }
+
+    .box-efectivo { background-color: var(--rose); color: white; }
+    .box-tarjeta { background-color: var(--grey); color: var(--text-dark); }
+    .box-total { background-color: var(--cream-border); color: var(--text-dark); border: 2px solid var(--dark-brown); }
+    .box-servicios { background-color: var(--beige); color: var(--text-dark); }
+
+    .active-box { border: 3px solid var(--dark-brown) !important; transform: scale(1.02); }
+
+    .table-custom { width: 100%; border-collapse: collapse; }
+    .table-custom th { font-size: 0.75rem; text-transform: uppercase; color: var(--text-muted); border-bottom: 1px solid #eee; padding: 12px 8px; font-weight: 600; text-align: left;}
+    .table-custom td { font-size: 0.9rem; vertical-align: middle; border-bottom: 1px solid #f9f9f9; padding: 12px 8px;}
+    
+    .badge-metodo { background-color: var(--rose); color: white; font-size: 0.75rem; padding: 5px 12px; border-radius: 8px; font-weight: 600; display: inline-block;}
+    .badge-tarjeta { background-color: var(--grey); color: var(--text-dark); }
+
+    .avatar-circle { width: 35px; height: 35px; border-radius: 50%; background-color: var(--rose); display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 0.75rem; color: white; }
+    .btn-custom { background-color: var(--rose); color: white; border-radius: 50px; padding: 10px 25px; font-weight: 600; font-size: 0.9rem; border: none; transition: 0.2s; }
+    .btn-custom:hover { background-color: #b59191; color: white; }
+
+    .progress-custom { height: 8px; background-color: var(--beige); border-radius: 10px; overflow: hidden; }
+    .progress-bar-custom { height: 100%; background-color: var(--rose); border-radius: 10px; }
+
+    .table-container { width: 100%; overflow-x: auto; border-radius: 12px; border: 1px solid #f0eaea; background-color: var(--white); }
+    .table-estilistas { width: 100%; border-collapse: collapse; min-width: 800px; }
+    .table-estilistas th { background-color: #fcfcfc; color: #888; font-size: 0.7rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; padding: 12px 10px; text-align: center; border-bottom: 1px solid #eee; white-space: nowrap; }
+    .table-estilistas td { padding: 10px 10px; text-align: center; border-bottom: 1px solid #f5f5f5; color: #555; font-size: 0.85rem; }
+    .table-estilistas th.sticky, .table-estilistas td.sticky { position: sticky; left: 0; background-color: var(--white); text-align: left; z-index: 2; border-right: 1px solid #eee; white-space: nowrap; }
+    .table-estilistas th.sticky { background-color: #fcfcfc; z-index: 3; }
+    .table-estilistas tbody tr:hover td { background-color: #faf8f6; }
+    .table-estilistas tbody tr:hover td.sticky { background-color: #faf8f6; }
+    .table-estilistas .avatar-circle { width: 28px; height: 28px; font-size: 0.65rem; }
+    .num-servicio { color: #999; }
+    .num-total { font-weight: bold; color: var(--rose); }
+    .num-dinero { font-weight: 600; color: var(--dark-brown); }
+    .table-container::-webkit-scrollbar { height: 6px; }
+    .table-container::-webkit-scrollbar-track { background: transparent; }
+    .table-container::-webkit-scrollbar-thumb { background: #ddd; border-radius: 10px; }
+</style>
+
+<div class="container-fluid py-4 px-4">
+    
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="page-title">Reportes Anuales</h1>
+            <p class="text-muted mb-0">Visión general del rendimiento del salón y del equipo.</p>
+        </div>
+        <div>
+            <button class="btn btn-custom" onclick="abrirVistaPrevia()">
+                <i class="bi bi-file-earmark-pdf me-2"></i> Generar Reporte
+            </button>
+        </div>
+    </div>
+
+    <div class="d-flex gap-3 mb-4">
+        <form method="get" class="d-flex gap-2 align-items-center">
+            <input type="hidden" name="fechaInicio" value="@(Model.FechaInicio?.ToString("yyyy-MM-dd"))" />
+            <input type="hidden" name="fechaFin" value="@(Model.FechaFin?.ToString("yyyy-MM-dd"))" />
+            <select name="anio" class="form-select border-0 shadow-sm" style="width: 150px; border-radius: 20px; font-weight: 600; color: var(--text-dark); padding-left: 20px; background-color: var(--white);" onchange="this.form.submit()">
+                @foreach(var a in Model.AniosDisponibles) {
+                    <option value="@a" selected="@(Model.AnioSeleccionado == a)">Año: @a</option>
+                }
+            </select>
+        </form>
+    </div>
+
+    <div class="row g-4 mb-4">
+        <div class="col-md-6">
+            <div class="hero-card hero-estilista">
+                <div>
+                    <span class="hero-label">ESTILISTA DESTACADA DEL AÑO</span>
+                    <h2 class="hero-title">@Model.EstilistaTop</h2>
+                </div>
+                <i class="bi bi-person-circle hero-icon"></i>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="hero-card hero-servicio">
+                <div>
+                    <span class="hero-label">SERVICIO MÁS SOLICITADO</span>
+                    <h2 class="hero-title">@Model.ServicioTop</h2>
+                </div>
+                <i class="bi bi-scissors hero-icon" style="color: var(--rose);"></i>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-4 mb-4">
+        <div class="col-lg-8">
+            <div class="card-panel">
+                <h5 class="card-title">Citas mensuales (@Model.AnioSeleccionado)</h5>
+                <div style="height: 250px; width: 100%;">
+                    <canvas id="graficoBarrasAnual"></canvas>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-4">
+            <div class="card-panel">
+                <h5 class="card-title">Servicios Top</h5>
+                @foreach(var serv in Model.ServiciosDelMes.Take(4)) {
+                    <div class="mb-4">
+                        <div class="d-flex justify-content-between small mb-2 fw-bold">
+                            <span>@serv.Nombre</span>
+                            <span class="text-muted">@serv.Cantidad (@serv.Porcentaje%)</span>
+                        </div>
+                        <div class="progress-custom">
+                            <div class="progress-bar-custom" style="width: @serv.Porcentaje%;"></div>
+                        </div>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+
+    <div class="card-panel mb-4">
+        <h5 class="card-title mb-3">Historial General de Citas y Ingresos</h5>
+        
+        <div class="row g-3 mb-4 align-items-stretch">
+            <div class="col-md-2">
+                <div class="filter-card d-flex flex-column justify-content-center">
+                    <form method="get" class="d-flex flex-column">
+                        <input type="hidden" name="anio" value="@Model.AnioSeleccionado" />
+                        <input type="hidden" name="metodoPago" value="@metodoActual" />
+                        <input type="date" name="fechaInicio" value="@(Model.FechaInicio?.ToString("yyyy-MM-dd"))" class="form-control mb-1" />
+                        <input type="date" name="fechaFin" value="@(Model.FechaFin?.ToString("yyyy-MM-dd"))" class="form-control mb-2" />
+                        <button type="submit" class="btn btn-sm rounded-pill text-white" style="background-color: var(--rose); font-size: 0.75rem;">Filtrar</button>
+                    </form>
+                </div>
+            </div>
+            
+            <div class="col-md-2">
+                <a href="/AdminReportes/Index?anio=@Model.AnioSeleccionado&fechaInicio=@(Model.FechaInicio?.ToString("yyyy-MM-dd"))&fechaFin=@(Model.FechaFin?.ToString("yyyy-MM-dd"))&metodoPago=Efectivo" 
+                   class="metric-box box-efectivo @(metodoActual == "Efectivo" ? "active-box" : "")">
+                    <div class="metric-title">Efectivo</div>
+                    <div class="metric-value">S/ @Model.TotalEfectivo.ToString("F2")</div>
+                </a>
+            </div>
+            
+            <div class="col-md-2">
+                <a href="/AdminReportes/Index?anio=@Model.AnioSeleccionado&fechaInicio=@(Model.FechaInicio?.ToString("yyyy-MM-dd"))&fechaFin=@(Model.FechaFin?.ToString("yyyy-MM-dd"))&metodoPago=Tarjeta" 
+                   class="metric-box box-tarjeta @(metodoActual == "Tarjeta" ? "active-box" : "")">
+                    <div class="metric-title">Tarjeta</div>
+                    <div class="metric-value">S/ @Model.TotalTarjeta.ToString("F2")</div>
+                </a>
+            </div>
+
+            <div class="col-md-3">
+                <a href="/AdminReportes/Index?anio=@Model.AnioSeleccionado&fechaInicio=@(Model.FechaInicio?.ToString("yyyy-MM-dd"))&fechaFin=@(Model.FechaFin?.ToString("yyyy-MM-dd"))" 
+                   class="metric-box box-total">
+                    <div class="metric-title">Calcular Total</div>
+                    <div class="metric-value">S/ @Model.GranTotal.ToString("F2")</div>
+                </a>
+            </div>
+            <div class="col-md-3">
+                <div class="metric-box box-servicios">
+                    <div class="metric-title">Servicios</div>
+                    <div class="metric-value">@Model.CantidadServicios</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row g-4">
+            <div class="col-lg-8">
+                <table class="table-custom">
+                    <thead>
+                        <tr>
+                            <th>Fecha</th>
+                            <th>Hora</th>
+                            <th>Cliente</th>
+                            <th>Servicio</th>
+                            <th>Método</th>
+                            <th class="text-end">Monto</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if(!Model.Transacciones.Any()) {
+                            <tr><td colspan="6" class="text-center py-4 text-muted">No hay ingresos para este filtro.</td></tr>
+                        } else {
+                            @foreach(var t in Model.Transacciones.Take(5)) {
+                                <tr>
+                                    <td>@t.FechaTransaccion.ToString("dd/MM/yyyy")</td>
+                                    <td>@t.FechaTransaccion.ToString("HH:mm")</td>
+                                    <td>@t.Cliente</td>
+                                    <td>@t.Servicio</td>
+                                    <td><span class="badge-metodo @(t.MetodoPago == "Tarjeta" ? "badge-tarjeta" : "")">@t.MetodoPago</span></td>
+                                    <td class="text-end fw-bold">S/ @t.Monto.ToString("F2")</td>
+                                </tr>
+                            }
+                        }
+                    </tbody>
+                </table>
+            </div>
+            <div class="col-lg-4 d-flex flex-column justify-content-center align-items-center">
+                <h6 class="fw-bold mb-3 text-muted" style="font-family: 'Playfair Display', serif;">Distribución de Pagos</h6>
+                <div style="height: 150px; width: 100%; position: relative;" class="mb-3">
+                    <canvas id="graficoDonaPagos"></canvas>
+                </div>
+                <div class="d-flex gap-4 small fw-bold text-muted">
+                    <span><span style="display:inline-block; width:10px; height:10px; background:var(--rose); border-radius:50%;"></span> Efectivo</span>
+                    <span><span style="display:inline-block; width:10px; height:10px; background:var(--grey); border-radius:50%;"></span> Tarjeta</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card-panel mt-4">
+        <h5 class="card-title mb-4">Desempeño del Equipo (@Model.AnioSeleccionado)</h5>
+        
+        <div class="table-container">
+            <table class="table-estilistas">
+                <thead>
+                    <tr>
+                        <th class="sticky">ESTILISTA</th>
+                        @foreach(var col in Model.NombresServiciosColumnas) {
+                            <th>@col</th>
+                        }
+                        <th style="color: var(--rose);">TOTAL</th>
+                        <th>INGRESOS</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach(var est in Model.TablaEstilistas) {
+                        <tr>
+                            <td class="sticky">
+                                <div class="d-flex align-items-center gap-3">
+                                    <div class="avatar-circle">@est.Iniciales</div>
+                                    <span class="fw-bold" style="color: #333;">@est.Nombre</span>
+                                </div>
+                            </td>
+                            @foreach(var col in Model.NombresServiciosColumnas) {
+                                <td class="num-servicio">
+                                    @(est.ServiciosRealizados.ContainsKey(col) && est.ServiciosRealizados[col] > 0 ? est.ServiciosRealizados[col] : "0")
+                                </td>
+                            }
+                            <td class="num-total">@est.Total</td>
+                            <td class="num-dinero">S/ @est.Ingresos.ToString("N2")</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+</div>
+
+<!-- MODAL PARA LA VISTA PREVIA DEL PDF -->
+<div class="modal fade" id="modalVistaPrevia" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-centered" style="max-width: 90%;">
+        <div class="modal-content" style="border-radius: 10px; border: none; overflow: hidden; background-color: #525659; height: 90vh;">
+            <div class="modal-body p-0" id="contenidoVistaPrevia" style="overflow-y: auto; width: 100%; height: 100%;">
+                <!-- Aquí se cargará el archivo _VistaPreviaReporte.cshtml -->
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            const ctx = document.getElementById('graficoBarrasAnual').getContext('2d');
+            const datosMeses = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.ServiciosPorMes));
+
+            new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'],
+                    datasets: [{
+                        data: datosMeses, backgroundColor: '#c9a8a1', borderRadius: 6, barPercentage: 0.6
+                    }]
+                },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, grid: { display: false }, ticks:{font:{size:10}} }, x: { grid: { display: false }, ticks:{font:{size:10}} } } }
+            });
+        });
+
+        document.addEventListener("DOMContentLoaded", function () {
+            const ctx = document.getElementById('graficoDonaPagos').getContext('2d');
+            new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    datasets: [{
+                        data: [@Model.TotalEfectivo, @Model.TotalTarjeta], 
+                        backgroundColor: ['#c9a8a1', '#cfcaca'], 
+                        borderWidth: 0, hoverOffset: 4
+                    }]
+                },
+                options: { responsive: true, maintainAspectRatio: false, cutout: '80%', plugins: { legend: { display: false } } }
+            });
+        });
+
+        // FUNCIÓN CORREGIDA: Solo envía el AÑO, no las fechas
+        function abrirVistaPrevia() {
+            const anio = @Model.AnioSeleccionado;
+            
+            fetch(`/AdminReportes/VistaPreviaReporte?anio=${anio}`)
+                .then(response => response.text())
+                .then(html => {
+                    document.getElementById('contenidoVistaPrevia').innerHTML = html;
+                    var myModal = new bootstrap.Modal(document.getElementById('modalVistaPrevia'));
+                    myModal.show();
+                })
+                .catch(err => alert("Error al cargar la vista previa."));
+        }
+    </script>
+}

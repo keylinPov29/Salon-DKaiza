@@ -1,0 +1,116 @@
+@{
+    ViewData["Title"] = "Panel de Administración";
+}
+
+<style>
+    .dashboard-card {
+        background-color: #fff;
+        border-radius: 20px;
+        padding: 30px;
+        border: 1px solid #f0e6dc;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.03);
+        transition: transform 0.2s, box-shadow 0.2s;
+        text-decoration: none;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+        height: 100%;
+        color: inherit;
+    }
+    .dashboard-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 25px rgba(0,0,0,0.08);
+        border-color: #c47d5c;
+    }
+    
+    .stat-card {
+        background: linear-gradient(135deg, #9b7b6d 0%, #c47d5c 100%);
+        color: white;
+        border-radius: 20px;
+        padding: 25px;
+        text-align: center;
+        box-shadow: 0 10px 20px rgba(196, 125, 92, 0.3);
+        height: 100%;
+    }
+    .stat-card h2 {
+        font-size: 2.5rem;
+        font-weight: bold;
+        margin: 10px 0 0 0;
+        font-family: 'Playfair Display', serif;
+    }
+    .stat-card p {
+        margin: 0;
+        font-size: 0.85rem;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        opacity: 0.9;
+    }
+    
+    .icon-box {
+        width: 70px;
+        height: 70px;
+        background-color: #f3ebe1;
+        border-radius: 50%;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        font-size: 2rem;
+        color: #c47d5c;
+        margin-bottom: 20px;
+    }
+</style>
+
+<div class="container py-5">
+    
+    <!-- Saludo -->
+    <div class="mb-5">
+        <h1 style="font-family: 'Playfair Display', serif; color: #5a4b41; font-weight: bold;">Bienvenido, Administrador</h1>
+    </div>
+
+    <!-- Accesos Directos -->
+    <h3 class="mb-4" style="font-family: 'Playfair Display', serif; color: #5a4b41;">Accesos Rápidos</h3>
+    <div class="row g-4">
+        <div class="col-md-4">
+            <a href="/Agenda" class="dashboard-card">
+                <div class="icon-box">📅</div>
+                <h5 class="fw-bold" style="color: #5a4b41;">Agenda Global</h5>
+                <p class="text-muted small mb-0">Ver y gestionar las citas de todos los estilistas.</p>
+            </a>
+        </div>
+        
+        <div class="col-md-4">
+            <a href="/admin/estilistas" class="dashboard-card">
+                <div class="icon-box">✂️</div>
+                <h5 class="fw-bold" style="color: #5a4b41;">Personal</h5>
+                <p class="text-muted small mb-0">Administrar estilistas, horarios y cuentas.</p>
+            </a>
+        </div>
+
+        <div class="col-md-4">
+            <a href="/admin/categorias" class="dashboard-card">
+                <div class="icon-box">💅</div>
+                <h5 class="fw-bold" style="color: #5a4b41;">Catálogo</h5>
+                <p class="text-muted small mb-0">Editar servicios, precios y duraciones.</p>
+            </a>
+        </div>
+
+        <div class="col-md-4">
+            <a href="/AdminReportes/Ingresos" class="dashboard-card">
+                <div class="icon-box">💰</div>
+                <h5 class="fw-bold" style="color: #5a4b41;">Reportes</h5>
+                <p class="text-muted small mb-0">Consultar ganancias del salón y descargar PDF.</p>
+            </a>
+        </div>
+
+        <div class="col-md-4">
+            <a href="/admin/clientes" class="dashboard-card">
+                <div class="icon-box">👥</div>
+                <h5 class="fw-bold" style="color: #5a4b41;">Historial Clientes</h5>
+                <p class="text-muted small mb-0">Ver la base de datos de clientes registrados.</p>
+            </a>
+        </div>
+        
+        <!-- Puedes agregar más accesos directos aquí -->
+    </div>
+</div>
