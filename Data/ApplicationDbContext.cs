@@ -1,40 +1,43 @@
 using DKaiza.Web.Dominio;
 using Microsoft.EntityFrameworkCore;
 using Usuario = DKaiza.Web.Models.Usuario;
-
+ 
 namespace DKaiza.Data;
-
+ 
 public class ApplicationDbContext : DbContext
 {
     public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options) : base(options) { }
-
+ 
     public DbSet<Usuario> Usuarios => Set<Usuario>();
     public DbSet<CategoriaServicio> CategoriasServicio => Set<CategoriaServicio>();
     public DbSet<Servicio> Servicios => Set<Servicio>();
     public DbSet<Estilista> Estilistas => Set<Estilista>();
     public DbSet<Cita> Citas => Set<Cita>();
-
+    public DbSet<NotificacionCita> NotificacionesCita => Set<NotificacionCita>();
+    public DbSet<Calificacion> Calificaciones => Set<Calificacion>();
+    public DbSet<NotaCliente> NotasCliente => Set<NotaCliente>();
+ 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
-
+ 
         modelBuilder.Entity<Usuario>(e =>
         {
             e.ToTable("Usuarios");
             e.Property(x => x.Rol).HasConversion<int>();
-
+ 
             // Cuenta de acceso vinculada a la ficha de estilista (si se borra la ficha, queda en NULL)
             e.HasOne<Estilista>()
              .WithMany()
              .HasForeignKey(u => u.EstilistaId)
              .OnDelete(DeleteBehavior.SetNull);
         });
-
+ 
         modelBuilder.Entity<CategoriaServicio>(e =>
         {
             e.ToTable("CategoriasServicio");
         });
-
+ 
         modelBuilder.Entity<Servicio>(e =>
         {
             e.ToTable("Servicios", t =>
@@ -48,14 +51,14 @@ public class ApplicationDbContext : DbContext
              .HasForeignKey(s => s.CategoriaId)
              .OnDelete(DeleteBehavior.Restrict);
         });
-
+ 
         modelBuilder.Entity<Estilista>(e =>
         {
             e.ToTable("Estilistas");
             e.HasIndex(x => x.Dni).IsUnique();
-
+ 
             var fecha = new DateTime(2026, 10, 4, 0, 0, 0, DateTimeKind.Utc);
-
+ 
             // Horario real del salón: 9:30–21:00, con cierre al mediodía de 13:00 a 15:00
             e.HasData(
                 new Estilista
@@ -83,30 +86,101 @@ public class ApplicationDbContext : DbContext
                     Activo = true, FechaRegistro = fecha
                 });
         });
-
+ 
         modelBuilder.Entity<Cita>(e =>
         {
             e.ToTable("Citas");
             e.Property(x => x.Estado).HasConversion<int>();
+            e.Property(x => x.AsistenciaConfirmada).HasDefaultValue(false);
             e.Property(x => x.PrecioTotal).HasColumnType("numeric(10,2)");
-
+            e.Property(x => x.PrecioBase).HasColumnType("numeric(10,2)");
+            e.Property(x => x.Descuento).HasColumnType("numeric(10,2)");
+            e.Property(x => x.MetodoPago).HasConversion<int?>();
+ 
             e.HasOne(c => c.Cliente)
              .WithMany()
              .HasForeignKey(c => c.ClienteId)
              .OnDelete(DeleteBehavior.Restrict);
-
+ 
             e.HasOne(c => c.Servicio)
              .WithMany()
              .HasForeignKey(c => c.ServicioId)
              .OnDelete(DeleteBehavior.Restrict);
-
+ 
             e.HasOne(c => c.Estilista)
              .WithMany()
              .HasForeignKey(c => c.EstilistaId)
              .OnDelete(DeleteBehavior.Restrict);
-
+ 
             // Índice para consultas rápidas por estilista + fecha
             e.HasIndex(c => new { c.EstilistaId, c.Inicio });
+        });
+ 
+        modelBuilder.Entity<NotificacionCita>(e =>
+        {
+            e.ToTable("NotificacionesCita");
+            e.HasIndex(n => n.CitaId).IsUnique();
+            e.HasIndex(n => new { n.ClienteId, n.ResueltaEn });
+ 
+            e.HasOne(n => n.Cita)
+             .WithMany()
+             .HasForeignKey(n => n.CitaId)
+             .OnDelete(DeleteBehavior.Cascade);
+ 
+            e.HasOne(n => n.Cliente)
+             .WithMany()
+             .HasForeignKey(n => n.ClienteId)
+             .OnDelete(DeleteBehavior.Restrict);
+        });
+ 
+        // HU-14: calificaciones de servicios y estilistas
+        modelBuilder.Entity<Calificacion>(e =>
+        {
+            e.ToTable("Calificaciones", t =>
+            {
+                t.HasCheckConstraint("CK_Calificaciones_Estrellas", "\"Estrellas\" BETWEEN 1 AND 5");
+            });
+ 
+            // Una cita solo se puede calificar una vez
+            e.HasIndex(c => c.CitaId).IsUnique();
+ 
+            // Para el promedio y la lista paginada de comentarios por estilista
+            e.HasIndex(c => new { c.EstilistaId, c.FechaCreacion });
+ 
+            e.HasOne(c => c.Cita)
+             .WithMany()
+             .HasForeignKey(c => c.CitaId)
+             .OnDelete(DeleteBehavior.Cascade);
+ 
+            e.HasOne(c => c.Estilista)
+             .WithMany()
+             .HasForeignKey(c => c.EstilistaId)
+             .OnDelete(DeleteBehavior.Restrict);
+ 
+            e.HasOne(c => c.Cliente)
+             .WithMany()
+             .HasForeignKey(c => c.ClienteId)
+             .OnDelete(DeleteBehavior.Restrict);
+        });
+ 
+        // HU-08: notas del estilista sobre el cliente
+        modelBuilder.Entity<NotaCliente>(e =>
+        {
+            e.ToTable("NotasCliente");
+            e.Property(x => x.Texto).HasMaxLength(500);
+ 
+            e.HasOne(n => n.Cliente)
+             .WithMany()
+             .HasForeignKey(n => n.ClienteId)
+             .OnDelete(DeleteBehavior.Cascade);
+ 
+            e.HasOne(n => n.Autor)
+             .WithMany()
+             .HasForeignKey(n => n.AutorId)
+             .OnDelete(DeleteBehavior.Restrict);
+ 
+            // Para listar rápido las notas de un cliente, de la más reciente a la más antigua
+            e.HasIndex(n => new { n.ClienteId, n.FechaCreacion });
         });
     }
 }

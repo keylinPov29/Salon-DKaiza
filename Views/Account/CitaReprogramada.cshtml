@@ -1,0 +1,53 @@
+@model CitaItemViewModel
+@using System.Globalization
+@{
+    ViewData["Title"] = "Cita reprogramada";
+    var es = new CultureInfo("es-PE");
+    var antes = ViewBag.Antes as string;
+
+    string Fecha(DateTime d)
+    {
+        var t = d.ToString("dddd d 'de' MMMM", es);
+        return char.ToUpper(t[0]) + t.Substring(1);
+    }
+}
+
+<section class="dk-mc">
+    <div class="dk-mc__okbox">
+        <div class="dk-mc__okico">
+            <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+        </div>
+
+        <h1 class="dk-mc__oktit">Tu cita fue reprogramada</h1>
+        <p class="dk-mc__oksub">Estos son los datos actualizados de tu reserva.</p>
+
+        <div class="dk-mc__cmp">
+            @if (!string.IsNullOrWhiteSpace(antes))
+            {
+                <div class="dk-mc__cmp-col dk-mc__cmp-col--antes">
+                    <span class="dk-mc__cmp-lbl">Antes</span>
+                    <span class="dk-mc__cmp-val">@antes</span>
+                </div>
+                <div class="dk-mc__cmp-flecha" aria-hidden="true">→</div>
+            }
+            <div class="dk-mc__cmp-col dk-mc__cmp-col--ahora">
+                <span class="dk-mc__cmp-lbl">Ahora</span>
+                <span class="dk-mc__cmp-val">@Fecha(Model.Inicio)</span>
+                <span class="dk-mc__cmp-hora">@Model.Inicio.ToString("HH:mm") – @Model.Fin.ToString("HH:mm")</span>
+            </div>
+        </div>
+
+        <div class="dk-mc__okdet">
+            <div><span>Servicio</span><strong>@Model.Servicio</strong></div>
+            <div><span>Estilista</span><strong>@Model.Estilista</strong></div>
+            <div><span>Duración</span><strong>@Model.Duracion min</strong></div>
+            <div><span>Precio</span><strong>S/ @Model.Precio.ToString("0.00", CultureInfo.InvariantCulture)</strong></div>
+        </div>
+
+        <p class="dk-mc__oknota">Tu horario anterior ya quedó libre para otras clientas.</p>
+
+        <div class="dk-mc__okacc">
+            <a class="dk-mc__btn dk-mc__btn--main" href="/cuenta/mis-citas">Ver mis citas</a>
+        </div>
+    </div>
+</section>

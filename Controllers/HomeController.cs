@@ -14,6 +14,13 @@ namespace DKaiza.Web.Controllers
         // Página pública: no requiere iniciar sesión.
         public async Task<IActionResult> Index()
         {
+            // 👇 VALIDACIÓN NUEVA: Si es Admin, lo mandamos a su panel de control
+            if (User.IsInRole("Administrador"))
+            {
+                return RedirectToAction("Index", "AdminDashboard");
+            }
+            // 👆 FIN DE LA VALIDACIÓN
+
             // Solo categorías con al menos un servicio activo, y solo sus servicios activos.
             var datos = await _db.CategoriasServicio.AsNoTracking()
                 .Where(c => c.Servicios.Any(s => s.Activo))

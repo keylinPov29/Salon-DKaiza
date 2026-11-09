@@ -1,0 +1,86 @@
+@model DKaiza.Web.Models.NotificacionesClienteViewModel
+@{
+    ViewData["Title"] = "Mis notificaciones";
+    var zonaSalon = TimeZoneInfo.FindSystemTimeZoneById("SA Pacific Standard Time");
+}
+
+<section class="dk-notificaciones">
+    <div class="dk-notificaciones__container">
+        <header class="dk-notificaciones__header">
+            <span class="dk-notificaciones__eyebrow">Tu cuenta</span>
+            <h1>Recordatorios de cita</h1>
+            <p>Te avisamos 24 horas antes para que puedas confirmar tu asistencia o cancelar la cita.</p>
+        </header>
+
+        @if (!Model.Recordatorios.Any())
+        {
+            <div class="dk-notificaciones__vacio">
+                <span class="dk-notificaciones__campana" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" width="27" height="27" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M10 21h4" />
+                    </svg>
+                </span>
+                <h2>No tienes recordatorios pendientes</h2>
+                <p>Cuando falten 24 horas para una cita próxima, aparecerá aquí.</p>
+                <a href="/" class="dk-btn dk-btn--primary">Ver servicios</a>
+            </div>
+        }
+        else
+        {
+            <div class="dk-notificaciones__lista">
+                @foreach (var recordatorio in Model.Recordatorios)
+                {
+                    var inicioLocal = TimeZoneInfo.ConvertTimeFromUtc(recordatorio.Inicio, zonaSalon);
+                    var finLocal = TimeZoneInfo.ConvertTimeFromUtc(recordatorio.Fin, zonaSalon);
+                    <article class="dk-recordatorio">
+                        <div class="dk-recordatorio__icono" aria-hidden="true">
+                            <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+                                <rect x="3" y="5" width="18" height="16" rx="2" />
+                                <path d="M16 3v4M8 3v4M3 10h18" />
+                            </svg>
+                        </div>
+                        <div class="dk-recordatorio__contenido">
+                            <div class="dk-recordatorio__cabecera">
+                                <span class="dk-notificaciones__eyebrow">Recordatorio · cita próxima</span>
+                                <span class="dk-recordatorio__anticipacion">En las próximas 24 horas</span>
+                            </div>
+                            <h2>@recordatorio.Servicio</h2>
+                            <dl class="dk-recordatorio__datos">
+                                <div><dt>Estilista</dt><dd>@recordatorio.Estilista</dd></div>
+                                <div><dt>Fecha</dt><dd>@inicioLocal.ToString("dddd d 'de' MMMM 'de' yyyy", new System.Globalization.CultureInfo("es-PE"))</dd></div>
+                                <div><dt>Hora</dt><dd>@inicioLocal.ToString("h:mm tt", new System.Globalization.CultureInfo("es-PE")) – @finLocal.ToString("h:mm tt", new System.Globalization.CultureInfo("es-PE"))</dd></div>
+                                <div><dt>Estado del pago</dt><dd>@recordatorio.EstadoPago</dd></div>
+                            </dl>
+
+                            @if (recordatorio.AsistenciaConfirmada)
+                            {
+                                <p class="dk-recordatorio__confirmado">Ya confirmaste tu asistencia.</p>
+                            }
+                            else
+                            {
+                                <p class="dk-recordatorio__pregunta">¿Nos acompañarás? Confirma tu asistencia o cancela si ya no puedes asistir.</p>
+                                <div class="dk-recordatorio__acciones">
+                                    <form asp-controller="Notificaciones" asp-action="ConfirmarAsistencia"
+                                          asp-route-id="@recordatorio.NotificacionId" method="post">
+                                        @Html.AntiForgeryToken()
+                                        <button type="submit" class="dk-recordatorio__confirmar">Confirmar asistencia</button>
+                                    </form>
+                                    <form asp-controller="Notificaciones" asp-action="CancelarCita"
+                                          asp-route-id="@recordatorio.NotificacionId" method="post"
+                                          onsubmit="return confirm('¿Deseas cancelar esta cita? El horario quedará disponible para otros clientes.');">
+                                        @Html.AntiForgeryToken()
+                                        <button type="submit" class="dk-recordatorio__cancelar">Cancelar cita</button>
+                                    </form>
+                                </div>
+                                @if (recordatorio.EstadoPago == "Pagada")
+                                {
+                                    <p class="dk-recordatorio__aviso">La cancelación de una cita pagada no procesa un reembolso automático; contacta al salón para gestionar el pago.</p>
+                                }
+                            }
+                        </div>
+                    </article>
+                }
+            </div>
+        }
+    </div>
+</section>

@@ -40,5 +40,19 @@ namespace DKaiza.Web.Controllers
             if (s?.Imagen == null) return NotFound();
             return File(s.Imagen, s.ImagenTipo ?? "image/jpeg");
         }
+
+        // GET /media/estilistas/{id}
+        [HttpGet("estilistas/{id:int}")]
+        [ResponseCache(Duration = 300)]
+        public async Task<IActionResult> Estilista(int id)
+        {
+            var e = await _db.Estilistas.AsNoTracking()
+                .Where(x => x.Id == id)
+                .Select(x => new { x.Foto, x.FotoTipo })
+                .FirstOrDefaultAsync();
+
+            if (e?.Foto == null) return NotFound();
+            return File(e.Foto, e.FotoTipo ?? "image/jpeg");
+        }
     }
 }

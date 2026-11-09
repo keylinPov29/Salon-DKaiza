@@ -149,6 +149,8 @@ img { max-width: 100%; display: block; }
 
 .dk-nav__link:hover { color: #FFFFFF; }
 .dk-nav__link:hover::after { width: 100%; }
+.dk-nav__notification { position: relative; display: inline-flex; align-items: center; gap: .4rem; }
+.dk-nav__notification-count { display: inline-grid; min-width: 1.15rem; height: 1.15rem; place-items: center; padding: 0 .22rem; border-radius: 30px; background: #C47D5C; color: #FFFFFF; font-size: .62rem; font-weight: 700; line-height: 1; }
 /* =========================================
    5. BOTONES
    ========================================= */
