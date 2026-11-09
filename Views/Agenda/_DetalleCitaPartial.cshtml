@@ -2,17 +2,17 @@
 @using DKaiza.Web.Dominio
 
 <style>
-    .modal-header-flotante { background-color: #a37e6a !important; color: white !important; padding: 20px !important; text-align: center !important; border-bottom: none !important; position: relative !important; border-radius: 20px 20px 0 0 !important; }
+    .modal-header-flotante { background-color: #cfa59c !important; color: white !important; padding: 20px !important; text-align: center !important; border-bottom: none !important; position: relative !important; border-radius: 20px 20px 0 0 !important; }
     .modal-header-flotante h4 { margin: 0 !important; font-family: 'Playfair Display', serif !important; font-weight: 600 !important; font-size: 1.3rem !important; }
     .btn-close-custom { position: absolute !important; top: 20px !important; right: 20px !important; background: transparent !important; border: none !important; color: white !important; font-size: 1.2rem !important; cursor: pointer !important; opacity: 0.8 !important; padding: 0 !important; }
     .btn-close-custom:hover { opacity: 1 !important; }
-    .modal-body-flotante { padding: 20px 30px !important; background-color: #fcf9f2 !important; }
-    .data-row { display: flex !important; justify-content: space-between !important; padding: 12px 0 !important; border-bottom: 1px solid #eae1d8 !important; color: #5a4b41 !important; font-size: 1rem !important; font-weight: 500 !important; }
+    .modal-body-flotante { padding: 20px 30px !important; background-color: #f7f4f0 !important; }
+    .data-row { display: flex !important; justify-content: space-between !important; padding: 12px 0 !important; border-bottom: 1px solid #e8d5ce !important; color: #5a4b41 !important; font-size: 1rem !important; font-weight: 500 !important; }
     .data-row:last-child { border-bottom: none !important; }
     .data-row span:first-child { color: #888 !important; font-weight: 400 !important; }
-    .modal-footer-flotante { padding: 15px 30px 25px 30px !important; display: flex !important; justify-content: space-between !important; gap: 15px !important; background-color: #fcf9f2 !important; border-top: none !important; border-radius: 0 0 20px 20px !important; }
+    .modal-footer-flotante { padding: 15px 30px 25px 30px !important; display: flex !important; justify-content: center !important; gap: 15px !important; background-color: #f7f4f0 !important; border-top: none !important; border-radius: 0 0 20px 20px !important; }
     .btn-flotante { border-radius: 25px !important; padding: 12px 20px !important; font-weight: 600 !important; font-size: 0.95rem !important; border: none !important; flex: 1 !important; transition: 0.2s !important; box-shadow: 0 4px 6px rgba(0,0,0,0.05) !important; text-align: center !important; text-decoration: none !important; display: inline-block !important; }
-    .btn-flotante-secondary { background-color: #eae1d8 !important; color: #5a4b41 !important; }
+    .btn-flotante-secondary { background-color: #e8d5ce !important; color: #5a4b41 !important; }
     .btn-flotante-secondary:hover { background-color: #dcd0c4 !important; }
     .btn-flotante-primary { background-color: #5a4b41 !important; color: white !important; }
     .btn-flotante-primary:hover { background-color: #433630 !important; }
@@ -31,7 +31,7 @@
     <div class="data-row">
         <span>Estado:</span>
         <span style="font-weight: bold;">
-            @if (Model.Estado == EstadoCita.PendientePago) { <span>Pendiente de pago</span> }
+            @if (Model.Estado == EstadoCita.PendientePago) { <span style="color: #d9534f;">Pendiente de pago</span> }
             else if (Model.Estado == EstadoCita.Pagada) { <span style="color: #27ae60;">Pagada</span> }
             else if (Model.Estado == EstadoCita.Pendiente || Model.Estado == EstadoCita.Confirmada) { <span>Pendiente</span> }
             else if (Model.Estado == EstadoCita.EnProceso) { <span style="color: #f5b041;">En Proceso</span> }
@@ -45,23 +45,27 @@
 </div>
 
 <div class="modal-footer-flotante">
-    @if (User.IsInRole("Estilista") && (Model.Estado == EstadoCita.Pendiente || Model.Estado == EstadoCita.PendientePago || Model.Estado == EstadoCita.Pagada || Model.Estado == EstadoCita.Confirmada))
+    <!-- SOLO EL ESTILISTA PUEDE VER LOS BOTONES DE ACCIÓN -->
+    @if (User.IsInRole("Estilista"))
     {
-        <form asp-action="IniciarAtencion" asp-controller="Agenda" method="post" style="flex: 1; margin: 0;">
-            <input type="hidden" name="id" value="@Model.Id" />
-            <button type="submit" class="btn btn-flotante btn-flotante-primary w-100" 
-                    onclick="return confirm('¿Estás seguro de iniciar la atención de esta cita?');">
-                Iniciar atención
-            </button>
-        </form>
+        @if (Model.Estado == EstadoCita.Pendiente || Model.Estado == EstadoCita.PendientePago || Model.Estado == EstadoCita.Pagada || Model.Estado == EstadoCita.Confirmada)
+        {
+            <form asp-action="IniciarAtencion" asp-controller="Agenda" method="post" style="flex: 1; margin: 0;">
+                <input type="hidden" name="id" value="@Model.Id" />
+                <button type="submit" class="btn btn-flotante btn-flotante-primary w-100" onclick="return confirm('¿Estás seguro de iniciar la atención?');">
+                    Iniciar atención
+                </button>
+            </form>
+        }
+        else if (Model.Estado == EstadoCita.EnProceso)
+        {
+            <a href="/Agenda/EnProceso/@Model.Id" class="btn btn-flotante btn-flotante-primary">
+                Ir al cronómetro
+            </a>
+        }
     }
-    else if (User.IsInRole("Estilista") && Model.Estado == EstadoCita.EnProceso)
-    {
-        <a href="/Agenda/EnProceso/@Model.Id" class="btn btn-flotante btn-flotante-primary">
-            Ir al cronómetro
-        </a>
-    }
-    
+
+    <!-- EL BOTÓN CERRAR SIEMPRE ESTÁ -->
     <button type="button" class="btn btn-flotante btn-flotante-secondary" data-bs-dismiss="modal" style="flex: 1;">
         Cerrar
     </button>
