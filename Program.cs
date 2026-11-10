@@ -13,6 +13,7 @@ builder.Services.AddControllersWithViews(o =>
 builder.Services.AddDbContext<ApplicationDbContext>(o =>
     o.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
 builder.Services.AddHttpClient();
+builder.Services.AddScoped<IComprobanteService, ComprobanteService>();
 builder.Services.AddHostedService<NotificacionCitasWorker>();
 
 builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)

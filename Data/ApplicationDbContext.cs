@@ -16,6 +16,7 @@ public class ApplicationDbContext : DbContext
     public DbSet<NotificacionCita> NotificacionesCita => Set<NotificacionCita>();
     public DbSet<Calificacion> Calificaciones => Set<Calificacion>();
     public DbSet<NotaCliente> NotasCliente => Set<NotaCliente>();
+    public DbSet<ComprobantePago> ComprobantesPago => Set<ComprobantePago>();
  
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -181,6 +182,27 @@ public class ApplicationDbContext : DbContext
  
             // Para listar rápido las notas de un cliente, de la más reciente a la más antigua
             e.HasIndex(n => new { n.ClienteId, n.FechaCreacion });
+        });
+
+        // Comprobantes de pago digitales
+        modelBuilder.Entity<ComprobantePago>(e =>
+        {
+            e.ToTable("ComprobantesPago");
+            e.HasIndex(x => x.NumeroComprobante).IsUnique();
+            e.HasIndex(x => x.CitaId).IsUnique();
+            e.Property(x => x.MontoBase).HasColumnType("numeric(10,2)");
+            e.Property(x => x.Descuento).HasColumnType("numeric(10,2)");
+            e.Property(x => x.MontoTotal).HasColumnType("numeric(10,2)");
+
+            e.HasOne(c => c.Cita)
+             .WithMany()
+             .HasForeignKey(c => c.CitaId)
+             .OnDelete(DeleteBehavior.Cascade);
+
+            e.HasOne(c => c.Cliente)
+             .WithMany()
+             .HasForeignKey(c => c.ClienteId)
+             .OnDelete(DeleteBehavior.Restrict);
         });
     }
 }

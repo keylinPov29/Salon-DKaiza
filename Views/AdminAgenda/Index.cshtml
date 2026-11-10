@@ -1,0 +1,532 @@
+@model DKaiza.Web.Estilistas.AgendaEstilistaViewModel
+@using DKaiza.Web.Dominio
+
+@{
+    ViewData["Title"] = "Agenda Global";
+    var estadoActual = ViewBag.EstadoFiltroActual as string ?? "todas";
+    var fechaIso = Model.FechaSeleccionada?.ToString("yyyy-MM-dd");
+    var totalCitas = Model.Citas.Count();
+
+    string ClaseEstado(EstadoCita e) => e switch
+    {
+        EstadoCita.Pendiente     => "st-pendiente",
+        EstadoCita.Confirmada    => "st-confirmada",
+        EstadoCita.PendientePago => "st-pago",
+        EstadoCita.Pagada        => "st-pagada",
+        EstadoCita.EnProceso     => "st-proceso",
+        EstadoCita.Completada    => "st-completada",
+        EstadoCita.Cancelada     => "st-cancelada",
+        _ => "st-pendiente"
+    };
+
+    string TextoEstado(EstadoCita e) => e switch
+    {
+        EstadoCita.Pendiente     => "Pendiente",
+        EstadoCita.Confirmada    => "Confirmada",
+        EstadoCita.PendientePago => "Pendiente de pago",
+        EstadoCita.Pagada        => "Pagada",
+        EstadoCita.EnProceso     => "En proceso",
+        EstadoCita.Completada    => "Completada",
+        EstadoCita.Cancelada     => "Cancelada",
+        _ => e.ToString()
+    };
+}
+
+<style>
+    /* ===== PALETA NUDE / CACAO (inspirada en Arroz-Doce, Rosa Giz, Matinê, Café Romano) ===== */
+    :root {
+        --arroz-doce:   #f3ebe7;
+        --almas:        #e9ddd8;
+        --camelia:      #ead2cf;
+        --mosquitinho:  #d9bfbb;
+        --pedreira:     #cbbfbc;
+        --rosa-giz:     #bfa19d;
+        --nude:         #c8b4ae;
+        --matine:       #a98e86;
+        --cafe-romano:  #8f7478;
+        --ameixa:       #7a6360;
+        --cafe-po:      #655551;
+
+        --bg-main:     #faf6f3;
+        --bg-card:     #ffffff;
+        --texto:       #3f3235;
+        --texto-suave: #8b7b78;
+        --acento:      #8a6670;
+        --acento-hover:#6f4f59;
+        --borde:       #efe5e0;
+        --sombra:      0 1px 2px rgba(101,85,81,.05), 0 8px 24px rgba(101,85,81,.07);
+        --sombra-hover:0 4px 8px rgba(101,85,81,.08), 0 20px 40px rgba(101,85,81,.16);
+        --ease:        cubic-bezier(.22,.8,.3,1);
+    }
+
+    body {
+        background-color: var(--bg-main) !important;
+        background-image:
+            radial-gradient(900px 400px at 10% -5%, rgba(234,210,207,.55), transparent 60%),
+            radial-gradient(700px 400px at 100% 0%, rgba(201,191,188,.35), transparent 60%);
+        background-repeat: no-repeat;
+        font-family: 'Montserrat', sans-serif;
+        color: var(--texto);
+    }
+
+    /* ===== ANIMACIONES ===== */
+    @@keyframes subirSuave {
+        from { opacity: 0; transform: translateY(18px) scale(.98); }
+        to   { opacity: 1; transform: translateY(0) scale(1); }
+    }
+    @@keyframes bajarSuave {
+        from { opacity: 0; transform: translateY(-10px); }
+        to   { opacity: 1; transform: translateY(0); }
+    }
+    @@keyframes pulso {
+        0%   { box-shadow: 0 0 0 0 rgba(143,116,120,.45); }
+        70%  { box-shadow: 0 0 0 7px rgba(143,116,120,0); }
+        100% { box-shadow: 0 0 0 0 rgba(143,116,120,0); }
+    }
+
+    /* ===== ENCABEZADO ===== */
+    .page-header {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: flex-end;
+        justify-content: space-between;
+        gap: 12px;
+        padding: 12px 0 22px;
+        animation: bajarSuave .6s var(--ease) both;
+    }
+    .page-title {
+        font-family: 'Playfair Display', serif;
+        font-weight: 700;
+        font-size: 2.3rem;
+        margin: 0 0 4px;
+        background: linear-gradient(90deg, var(--cafe-po), var(--cafe-romano));
+        -webkit-background-clip: text;
+        background-clip: text;
+        color: transparent;
+    }
+    .page-subtitle { color: var(--texto-suave); font-size: .92rem; margin: 0; }
+    .contador {
+        font-size: .85rem;
+        font-weight: 600;
+        color: var(--ameixa);
+        background: var(--arroz-doce);
+        border: 1px solid var(--almas);
+        padding: 6px 16px;
+        border-radius: 999px;
+        transition: transform .25s var(--ease), box-shadow .25s;
+    }
+    .contador:hover { transform: translateY(-2px); box-shadow: var(--sombra); }
+
+    /* ===== BARRA DE HERRAMIENTAS ===== */
+    .toolbar {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        justify-content: space-between;
+        gap: 14px;
+        background: rgba(255,255,255,.85);
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+        border: 1px solid var(--borde);
+        border-radius: 16px;
+        padding: 10px 12px;
+        box-shadow: var(--sombra);
+        margin-bottom: 26px;
+        animation: bajarSuave .6s .1s var(--ease) both;
+    }
+
+    .tabs-estado {
+        display: inline-flex;
+        gap: 4px;
+        padding: 4px;
+        background: var(--arroz-doce);
+        border-radius: 12px;
+    }
+    .tab-estado {
+        display: inline-flex;
+        align-items: center;
+        gap: 7px;
+        padding: 8px 16px;
+        border-radius: 9px;
+        font-size: .85rem;
+        font-weight: 600;
+        color: var(--texto-suave);
+        text-decoration: none;
+        transition: background-color .25s var(--ease), color .25s, transform .25s var(--ease), box-shadow .25s;
+    }
+    .tab-estado svg { width: 16px; height: 16px; flex-shrink: 0; transition: transform .3s var(--ease); }
+    .tab-estado:hover { color: var(--texto); background: rgba(255,255,255,.8); transform: translateY(-1px); }
+    .tab-estado:hover svg { transform: scale(1.15) rotate(-6deg); }
+    .tab-estado.active {
+        background: linear-gradient(135deg, var(--cafe-romano), var(--ameixa));
+        color: #fff;
+        box-shadow: 0 4px 12px rgba(122,99,96,.35);
+    }
+    .tab-estado:focus-visible,
+    .btn-premium:focus-visible,
+    .btn-clear:focus-visible {
+        outline: 2px solid var(--acento);
+        outline-offset: 2px;
+    }
+
+    .filtros form { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin: 0; }
+    .campo {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 7px 12px;
+        border: 1px solid var(--borde);
+        border-radius: 12px;
+        background: var(--bg-main);
+        margin: 0;
+        transition: border-color .25s, box-shadow .25s, transform .25s var(--ease);
+    }
+    .campo:hover { transform: translateY(-1px); border-color: var(--nude); }
+    .campo svg { width: 16px; height: 16px; color: var(--matine); flex-shrink: 0; }
+    .campo input, .campo select {
+        border: none;
+        background: transparent;
+        font-family: inherit;
+        font-weight: 500;
+        font-size: .85rem;
+        color: var(--texto);
+        outline: none;
+        cursor: pointer;
+    }
+    .campo:focus-within {
+        border-color: var(--rosa-giz);
+        box-shadow: 0 0 0 4px rgba(191,161,157,.22);
+    }
+
+    .btn-clear {
+        background: transparent;
+        color: var(--acento);
+        border: 1px solid var(--nude);
+        font-size: .8rem;
+        font-weight: 600;
+        padding: 7px 14px;
+        border-radius: 12px;
+        text-decoration: none;
+        transition: background-color .25s, color .25s, transform .25s var(--ease);
+    }
+    .btn-clear:hover { background: var(--arroz-doce); color: var(--acento-hover); transform: translateY(-1px); }
+
+    /* ===== TARJETAS DE CITAS ===== */
+    .row > div { animation: subirSuave .65s var(--ease) both; }
+    .row > div:nth-child(1) { animation-delay: .05s; }
+    .row > div:nth-child(2) { animation-delay: .12s; }
+    .row > div:nth-child(3) { animation-delay: .19s; }
+    .row > div:nth-child(4) { animation-delay: .26s; }
+    .row > div:nth-child(5) { animation-delay: .33s; }
+    .row > div:nth-child(6) { animation-delay: .40s; }
+    .row > div:nth-child(7) { animation-delay: .47s; }
+    .row > div:nth-child(n+8) { animation-delay: .54s; }
+
+    .cita-card {
+        --estado: var(--nude);
+        position: relative;
+        overflow: hidden;
+        background: linear-gradient(180deg, #ffffff 0%, #fdfaf8 100%);
+        border: 1px solid var(--borde);
+        border-top: 4px solid var(--estado);
+        border-radius: 16px;
+        padding: 18px;
+        box-shadow: var(--sombra);
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        gap: 16px;
+        transition: transform .35s var(--ease), box-shadow .35s var(--ease);
+    }
+    /* Halo suave del color del estado */
+    .cita-card::before {
+        content: '';
+        position: absolute;
+        top: -60px; right: -60px;
+        width: 160px; height: 160px;
+        background: radial-gradient(circle, var(--estado) 0%, transparent 70%);
+        opacity: .18;
+        transition: opacity .35s, transform .5s var(--ease);
+        pointer-events: none;
+    }
+    .cita-card:hover { transform: translateY(-6px); box-shadow: var(--sombra-hover); }
+    .cita-card:hover::before { opacity: .38; transform: scale(1.25); }
+    .cita-card > * { position: relative; }
+
+    .cita-card.st-pendiente  { --estado: #dcb99a; }
+    .cita-card.st-confirmada { --estado: #a9b6c4; }
+    .cita-card.st-pago       { --estado: #d4a39b; }
+    .cita-card.st-pagada     { --estado: #a9c2ae; }
+    .cita-card.st-proceso    { --estado: var(--matine); }
+    .cita-card.st-completada { --estado: #a9c2ae; }
+    .cita-card.st-cancelada  { --estado: var(--pedreira); }
+    .cita-card.st-completada,
+    .cita-card.st-cancelada  { opacity: .88; }
+
+    .cita-head {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 10px;
+        margin-bottom: 12px;
+    }
+    .hora { font-size: 1.55rem; font-weight: 700; line-height: 1; color: var(--texto); letter-spacing: -.5px; }
+    .fecha { font-size: .78rem; color: var(--texto-suave); margin-top: 4px; }
+
+    .servicio {
+        font-family: 'Playfair Display', serif;
+        font-weight: 700;
+        font-size: 1.1rem;
+        line-height: 1.3;
+        color: var(--texto);
+        margin: 0 0 14px;
+        padding-bottom: 14px;
+        border-bottom: 1px dashed var(--almas);
+    }
+
+    .fila { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+    .fila:last-child { margin-bottom: 0; }
+    .avatar {
+        width: 36px; height: 36px;
+        border-radius: 50%;
+        font-weight: 700;
+        font-size: .85rem;
+        display: flex; align-items: center; justify-content: center;
+        flex-shrink: 0;
+        transition: transform .35s var(--ease);
+    }
+    .cita-card:hover .avatar { transform: scale(1.08) rotate(-4deg); }
+    .avatar.tono-0 { background: var(--camelia);  color: #8a5a60; }
+    .avatar.tono-1 { background: #dbe7de;         color: #44715a; }
+    .avatar.tono-2 { background: #dde4ee;         color: #4f6788; }
+    .avatar.tono-3 { background: #efdfd0;         color: #8f6544; }
+    .avatar.cliente { background: var(--arroz-doce); color: var(--texto-suave); }
+    .avatar svg { width: 16px; height: 16px; }
+    .fila-etiqueta { font-size: .72rem; color: var(--texto-suave); line-height: 1.2; }
+    .fila-valor { font-size: .87rem; font-weight: 600; color: var(--texto); line-height: 1.3; }
+
+    /* ===== BADGES DE ESTADO ===== */
+    .estado-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        font-size: .72rem;
+        font-weight: 600;
+        padding: 4px 10px;
+        border-radius: 999px;
+        white-space: nowrap;
+    }
+    .estado-badge::before { content: ''; width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+    .estado-badge.st-pendiente  { background: #f6e8da; color: #8f5f36; }
+    .estado-badge.st-confirmada { background: #e5eaf1; color: #476080; }
+    .estado-badge.st-pago       { background: #f4e1de; color: #9a5048; }
+    .estado-badge.st-pagada     { background: #e1eee4; color: #36684b; }
+    .estado-badge.st-proceso    { background: var(--almas); color: var(--cafe-po); }
+    .estado-badge.st-proceso::before { animation: pulso 1.8s infinite; }
+    .estado-badge.st-completada { background: #e1eee4; color: #36684b; }
+    .estado-badge.st-cancelada  { background: #ece6e4; color: #7a6a68; }
+
+    /* ===== BOTÓN CON BRILLO ===== */
+    .btn-premium {
+        position: relative;
+        overflow: hidden;
+        background: linear-gradient(135deg, var(--cafe-romano), var(--ameixa));
+        color: #fff;
+        border: none;
+        border-radius: 12px;
+        padding: 11px;
+        font-family: inherit;
+        font-weight: 600;
+        font-size: .85rem;
+        width: 100%;
+        letter-spacing: .3px;
+        box-shadow: 0 6px 14px rgba(122,99,96,.25);
+        transition: transform .3s var(--ease), box-shadow .3s var(--ease), filter .3s;
+    }
+    .btn-premium::after {
+        content: '';
+        position: absolute;
+        top: 0; left: -80%;
+        width: 50%; height: 100%;
+        background: linear-gradient(120deg, transparent, rgba(255,255,255,.35), transparent);
+        transform: skewX(-20deg);
+        transition: left .7s var(--ease);
+    }
+    .btn-premium:hover {
+        color: #fff;
+        transform: translateY(-2px);
+        box-shadow: 0 10px 22px rgba(122,99,96,.35);
+        filter: brightness(1.05);
+    }
+    .btn-premium:hover::after { left: 130%; }
+    .btn-premium:active { transform: translateY(0) scale(.98); }
+
+    /* ===== ESTADO VACÍO ===== */
+    .vacio {
+        text-align: center;
+        padding: 56px 20px;
+        background: var(--bg-card);
+        border: 1px dashed var(--nude);
+        border-radius: 16px;
+        animation: subirSuave .6s var(--ease) both;
+    }
+    .vacio h5 { font-family: 'Playfair Display', serif; color: var(--texto); margin-bottom: 6px; }
+    .vacio p { color: var(--texto-suave); font-size: .9rem; margin: 0; }
+
+    /* ===== ACCESIBILIDAD: sin animaciones si el usuario lo pide ===== */
+    @@media (prefers-reduced-motion: reduce) {
+        *, *::before, *::after { animation: none !important; transition: none !important; }
+    }
+
+    @@media (max-width: 767px) {
+        .page-header { padding-bottom: 16px; }
+        .page-title { font-size: 1.8rem; }
+        .toolbar { padding: 10px; }
+        .tabs-estado { width: 100%; overflow-x: auto; }
+        .tab-estado { padding: 8px 12px; white-space: nowrap; }
+        .filtros, .filtros form { width: 100%; }
+        .campo { flex: 1 1 100%; }
+    }
+</style>
+
+<div class="container py-4">
+    <div class="page-header">
+        <div>
+            <h1 class="page-title">Agenda global</h1>
+            <p class="page-subtitle">Revisa y gestiona las citas de todos los estilistas.</p>
+        </div>
+        <span class="contador">@totalCitas @(totalCitas == 1 ? "cita" : "citas")</span>
+    </div>
+
+    <div class="toolbar">
+        <!-- Pestañas por estado -->
+        <nav class="tabs-estado" aria-label="Filtrar por estado">
+            <a class="tab-estado @(estadoActual == "pendientes" ? "active" : "")"
+               href="@Url.Action("Index", new { fecha = fechaIso, estilistaIdFiltro = Model.EstilistaIdFiltro, estadoFiltro = "pendientes" })">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>
+                Pendientes
+            </a>
+            <a class="tab-estado @(estadoActual == "completadas" ? "active" : "")"
+               href="@Url.Action("Index", new { fecha = fechaIso, estilistaIdFiltro = Model.EstilistaIdFiltro, estadoFiltro = "completadas" })">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M8 12.5l3 3 5-6"/></svg>
+                Completadas
+            </a>
+            <a class="tab-estado @(estadoActual == "canceladas" ? "active" : "")"
+               href="@Url.Action("Index", new { fecha = fechaIso, estilistaIdFiltro = Model.EstilistaIdFiltro, estadoFiltro = "canceladas" })">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M9 9l6 6M15 9l-6 6"/></svg>
+                Canceladas
+            </a>
+            <a class="tab-estado @(estadoActual == "todas" ? "active" : "")"
+               href="@Url.Action("Index", new { fecha = fechaIso, estilistaIdFiltro = Model.EstilistaIdFiltro, estadoFiltro = "todas" })">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 6h12M8 12h12M8 18h12M4 6h.01M4 12h.01M4 18h.01"/></svg>
+                Todas
+            </a>
+        </nav>
+
+        <!-- Fecha y estilista -->
+        <div class="filtros">
+            <form method="get">
+                <input type="hidden" name="estadoFiltro" value="@estadoActual" />
+
+                <label class="campo">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>
+                    <input type="date" name="fecha" value="@fechaIso" onchange="this.form.submit()" aria-label="Fecha" />
+                </label>
+
+                <label class="campo">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/></svg>
+                    <select name="estilistaIdFiltro" onchange="this.form.submit()" aria-label="Estilista">
+                        <option value="">Todos los estilistas</option>
+                        @foreach (var est in Model.ListaEstilistas)
+                        {
+                            <option value="@est.Id" selected="@(Model.EstilistaIdFiltro == est.Id)">@est.NombreCompleto</option>
+                        }
+                    </select>
+                </label>
+
+                @if (Model.FechaSeleccionada.HasValue || Model.EstilistaIdFiltro.HasValue)
+                {
+                    <a href="@Url.Action("Index", new { estadoFiltro = estadoActual })" class="btn-clear">Limpiar filtros</a>
+                }
+            </form>
+        </div>
+    </div>
+
+    <!-- Lista de citas -->
+    @if (!Model.Citas.Any())
+    {
+        <div class="vacio">
+            <h5>No hay citas para mostrar</h5>
+            <p>Prueba cambiando la fecha, el estilista o el estado.</p>
+        </div>
+    }
+    else
+    {
+        <div class="row g-3">
+            @foreach (var cita in Model.Citas)
+            {
+                var clase = ClaseEstado(cita.Estado);
+                var inicial = cita.EstilistaNombre.Length > 0 ? cita.EstilistaNombre.Substring(0, 1).ToUpper() : "E";
+                var tono = cita.EstilistaNombre.Length > 0 ? cita.EstilistaNombre.ToUpper()[0] % 4 : 0;
+                <div class="col-sm-6 col-lg-4 col-xl-3">
+                    <article class="cita-card @clase">
+                        <div>
+                            <div class="cita-head">
+                                <div>
+                                    <div class="hora">@cita.Inicio.ToString("HH:mm")</div>
+                                    <div class="fecha">@cita.Inicio.ToString("dd MMM yyyy")</div>
+                                </div>
+                                <span class="estado-badge @clase">@TextoEstado(cita.Estado)</span>
+                            </div>
+
+                            <h3 class="servicio">@cita.ServicioNombre</h3>
+
+                            <div class="fila">
+                                <div class="avatar tono-@tono" aria-hidden="true">@inicial</div>
+                                <div>
+                                    <div class="fila-etiqueta">Estilista</div>
+                                    <div class="fila-valor">@cita.EstilistaNombre</div>
+                                </div>
+                            </div>
+                            <div class="fila">
+                                <div class="avatar cliente" aria-hidden="true">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/></svg>
+                                </div>
+                                <div>
+                                    <div class="fila-etiqueta">Cliente</div>
+                                    <div class="fila-valor">@cita.ClienteNombre</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <button type="button" class="btn-premium" onclick="verDetalle(@cita.Id)">Ver detalle</button>
+                    </article>
+                </div>
+            }
+        </div>
+    }
+</div>
+
+<!-- MODAL -->
+<div class="modal fade" id="modalDetalle" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content" id="contenidoModal" style="border-radius: 16px; border: none; overflow: hidden; box-shadow: 0 15px 40px rgba(181, 101, 118, 0.2);">
+            <!-- AJAX -->
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        function verDetalle(id) {
+            fetch(`/AdminAgenda/DetalleCita?id=${id}`)
+                .then(response => response.text())
+                .then(html => {
+                    document.getElementById('contenidoModal').innerHTML = html;
+                    var myModal = new bootstrap.Modal(document.getElementById('modalDetalle'));
+                    myModal.show();
+                });
+        }
+    </script>
+}
