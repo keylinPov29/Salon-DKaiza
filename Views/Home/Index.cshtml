@@ -1,4 +1,4 @@
-﻿@model DKaiza.Web.Models.Servicio
+@model DKaiza.Web.Models.Servicio
 @{
     Layout = null;
 }
@@ -18,6 +18,10 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" />
     
     <link rel="stylesheet" href="~/css/dkaiza.css" asp-append-version="true" />
+    @if (User.Identity?.IsAuthenticated != true || User.IsInRole("Cliente"))
+    {
+        <link rel="stylesheet" href="~/css/chatbot.css" asp-append-version="true" />
+    }
     
     <style>
         .dk-cat__img { width: 72px; height: 72px; object-fit: cover; border-radius: 14px; display: block; }
@@ -573,5 +577,12 @@
             if(btnAtras) btnAtras.addEventListener('click', mostrarInicio);
         });
     </script>
+
+    @* ── Chatbot de atención al cliente (solo para clientes y visitantes) ── *@
+    @if (User.Identity?.IsAuthenticated != true || User.IsInRole("Cliente"))
+    {
+        @await Html.PartialAsync("_Chatbot")
+        <script src="~/js/chatbot.js" asp-append-version="true"></script>
+    }
 </body>
 </html>
