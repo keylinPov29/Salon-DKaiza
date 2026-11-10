@@ -1,0 +1,33 @@
+@{
+    ViewData["Title"] = "Comprobante no disponible";
+    int citaId = ViewBag.CitaId ?? 0;
+    string mensaje = ViewBag.Mensaje ?? "El comprobante no está disponible.";
+}
+
+<section class="dk-reserva" style="min-height: 70vh; display: flex; align-items: center; justify-content: center; padding: 3rem 1rem;">
+    <div class="dk-ticket" style="max-width: 500px; text-align: center; padding: 2.5rem 2rem; border-radius: 16px;">
+        <div style="width: 60px; height: 60px; border-radius: 50%; background: #FAF0E6; color: #C47D5C; display: inline-flex; align-items: center; justify-content: center; font-size: 1.8rem; margin-bottom: 1rem;">
+            <i class="bi bi-clock-history"></i>
+        </div>
+        
+        <h1 style="font-family: 'Playfair Display', serif; font-size: 1.6rem; color: #4A3730; margin-bottom: 0.75rem;">
+            Comprobante no disponible
+        </h1>
+        
+        <p style="font-size: 0.9rem; color: #8A7568; line-height: 1.6; margin-bottom: 1.75rem;">
+            @mensaje
+        </p>
+
+        <div style="display: flex; flex-direction: column; gap: 0.75rem;">
+            @if (citaId > 0)
+            {
+                <a href="/reservas/resumen/@citaId" class="dk-btn dk-btn--primary">
+                    Ir a pagar o ver estado de la cita
+                </a>
+            }
+            <a href="/cuenta/mis-citas" class="dk-btn dk-btn--outline">
+                Volver a mis citas
+            </a>
+        </div>
+    </div>
+</section>

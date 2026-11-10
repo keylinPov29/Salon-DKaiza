@@ -174,7 +174,14 @@
                                         </span>
                                     </td>
                                     <td data-label="Importe"><strong class="dk-recepcion__monto">S/ @pago.Monto.ToString("N2")</strong></td>
-                                    <td data-label="Estado"><span class="dk-recepcion__estado">Pagado</span></td>
+                                    <td data-label="Estado">
+                                        <span class="dk-recepcion__estado">Pagado</span>
+                                        <div>
+                                            <a href="/comprobante/@pago.CitaId" target="_blank" style="display:inline-flex; align-items:center; gap:4px; margin-top:5px; font-size:0.75rem; color:#557A58; font-weight:600; text-decoration:none;">
+                                                <i class="bi bi-receipt"></i> Comprobante
+                                            </a>
+                                        </div>
+                                    </td>
                                 </tr>
                             }
                         </tbody>
