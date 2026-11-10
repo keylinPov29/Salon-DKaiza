@@ -2,6 +2,7 @@ using System.Security.Claims;
 using DKaiza.Data;
 using DKaiza.Web.Dominio;
 using DKaiza.Web.Models;
+using DKaiza.Web.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -16,8 +17,13 @@ public class RecepcionistaController : Controller
         TimeZoneInfo.FindSystemTimeZoneById("SA Pacific Standard Time");
 
     private readonly ApplicationDbContext _db;
+    private readonly IComprobanteService _comprobanteService;
 
-    public RecepcionistaController(ApplicationDbContext db) => _db = db;
+    public RecepcionistaController(ApplicationDbContext db, IComprobanteService comprobanteService)
+    {
+        _db = db;
+        _comprobanteService = comprobanteService;
+    }
 
     [HttpGet("")]
     public async Task<IActionResult> Index(DateOnly? desde, DateOnly? hasta, string? buscar)
@@ -150,6 +156,9 @@ public class RecepcionistaController : Controller
             TempData["Error"] = "El pago ya fue registrado o la reserva no está pendiente de pago en efectivo.";
             return RedirectToAction(nameof(Index));
         }
+
+        // Generar comprobante de venta digital automáticamente
+        await _comprobanteService.GenerarComprobanteAsync(id);
 
         TempData["Success"] = $"Pago en efectivo confirmado. Operación {operacion}.";
         return RedirectToAction(nameof(Index));

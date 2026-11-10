@@ -3,6 +3,7 @@ using System.Text.Json;
 using DKaiza.Data;
 using DKaiza.Web.Dominio;
 using DKaiza.Web.Models;
+using DKaiza.Web.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -29,6 +30,7 @@ public class ReservasController : Controller
     private readonly IHttpClientFactory _httpClientFactory;
     private readonly IConfiguration _configuration;
     private readonly ILogger<ReservasController> _logger;
+    private readonly IComprobanteService _comprobanteService;
 
     // Zona horaria del salón (Perú = UTC-5, sin cambio de horario)
     private static readonly TimeZoneInfo ZonaSalon =
@@ -38,12 +40,14 @@ public class ReservasController : Controller
         ApplicationDbContext db,
         IHttpClientFactory httpClientFactory,
         IConfiguration configuration,
-        ILogger<ReservasController> logger)
+        ILogger<ReservasController> logger,
+        IComprobanteService comprobanteService)
     {
         _db = db;
         _httpClientFactory = httpClientFactory;
         _configuration = configuration;
         _logger = logger;
+        _comprobanteService = comprobanteService;
     }
 
     // ────────────────────────────────────────────────────────────────
@@ -574,6 +578,11 @@ public class ReservasController : Controller
 
         if (cita == null) return NotFound();
 
+        if (cita.Estado == EstadoCita.Pagada)
+        {
+            await _comprobanteService.GenerarComprobanteAsync(cita.Id);
+        }
+
         var inicioLocal = TimeZoneInfo.ConvertTimeFromUtc(cita.Inicio, ZonaSalon);
         var finLocal    = TimeZoneInfo.ConvertTimeFromUtc(cita.Fin,    ZonaSalon);
 
@@ -833,6 +842,8 @@ public class ReservasController : Controller
                     cita.NumeroOperacion = operationElement.ToString();
                     cita.FechaPago = DateTime.UtcNow;
                     await _db.SaveChangesAsync();
+
+                    await _comprobanteService.GenerarComprobanteAsync(cita.Id);
 
                     return Json(new
                     {
