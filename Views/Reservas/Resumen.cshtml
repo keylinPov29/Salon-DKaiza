@@ -188,6 +188,12 @@
                 else if (pagoCompletado)
                 {
                     <p class="dk-pago__confirmacion">Pago exitoso</p>
+                    <p style="font-size: 0.85rem; color: #557A58; margin-top: 0.35rem; font-weight: 500;">
+                        <i class="bi bi-check-circle-fill"></i> Comprobante digital generado automáticamente.
+                    </p>
+                    <a href="/comprobante/@Model.CitaId" class="dk-btn dk-btn--primary" style="margin-top: 1rem; display: inline-flex; align-items: center; gap: 8px;">
+                        <i class="bi bi-receipt"></i> Ver Comprobante
+                    </a>
                 }
                 else if (Model.PagoEnProceso)
                 {

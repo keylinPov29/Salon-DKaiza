@@ -17,7 +17,7 @@ namespace DKaiza.Migrations
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "9.0.20")
+                .HasAnnotation("ProductVersion", "9.0.22")
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
@@ -187,6 +187,91 @@ namespace DKaiza.Migrations
                     b.HasIndex("EstilistaId", "Inicio");
 
                     b.ToTable("Citas", (string)null);
+                });
+
+            modelBuilder.Entity("DKaiza.Web.Dominio.ComprobantePago", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("CitaId")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("ClienteEmail")
+                        .HasMaxLength(150)
+                        .HasColumnType("character varying(150)");
+
+                    b.Property<int>("ClienteId")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("ClienteNombre")
+                        .IsRequired()
+                        .HasMaxLength(150)
+                        .HasColumnType("character varying(150)");
+
+                    b.Property<string>("ClienteTelefono")
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)");
+
+                    b.Property<string>("CuponCodigo")
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)");
+
+                    b.Property<decimal>("Descuento")
+                        .HasColumnType("numeric(10,2)");
+
+                    b.Property<int?>("EstilistaId")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("EstilistaNombre")
+                        .HasMaxLength(150)
+                        .HasColumnType("character varying(150)");
+
+                    b.Property<DateTime>("FechaEmision")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime>("FechaServicio")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("MetodoPago")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<decimal>("MontoBase")
+                        .HasColumnType("numeric(10,2)");
+
+                    b.Property<decimal>("MontoTotal")
+                        .HasColumnType("numeric(10,2)");
+
+                    b.Property<string>("NumeroComprobante")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<string>("NumeroOperacion")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<string>("ServicioNombre")
+                        .IsRequired()
+                        .HasMaxLength(150)
+                        .HasColumnType("character varying(150)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CitaId")
+                        .IsUnique();
+
+                    b.HasIndex("ClienteId");
+
+                    b.HasIndex("NumeroComprobante")
+                        .IsUnique();
+
+                    b.ToTable("ComprobantesPago", (string)null);
                 });
 
             modelBuilder.Entity("DKaiza.Web.Dominio.Estilista", b =>
@@ -541,6 +626,25 @@ namespace DKaiza.Migrations
                     b.Navigation("Estilista");
 
                     b.Navigation("Servicio");
+                });
+
+            modelBuilder.Entity("DKaiza.Web.Dominio.ComprobantePago", b =>
+                {
+                    b.HasOne("DKaiza.Web.Dominio.Cita", "Cita")
+                        .WithMany()
+                        .HasForeignKey("CitaId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("DKaiza.Web.Models.Usuario", "Cliente")
+                        .WithMany()
+                        .HasForeignKey("ClienteId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Cita");
+
+                    b.Navigation("Cliente");
                 });
 
             modelBuilder.Entity("DKaiza.Web.Dominio.NotaCliente", b =>

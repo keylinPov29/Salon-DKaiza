@@ -100,7 +100,13 @@
                             <span class="dk-mc__pill dk-mc__pill--hero @(primera.EstadoClase == "ok" ? "dk-mc__pill--ok" : "")">@primera.Estado</span>
                         </div>
                         <div class="dk-mc__acciones">
-                                                        <a class="dk-mc__btn dk-mc__btn--blanco" href="/reservas/reprogramar/@primera.Id">@Html.Raw(IcoRepetir) Reprogramar</a>
+                            @if (primera.EstadoClase == "ok")
+                            {
+                                <a class="dk-mc__btn dk-mc__btn--main" href="/comprobante/@primera.Id" style="background:#557A58; border-color:#557A58; color:#fff;">
+                                    <i class="bi bi-receipt"></i> Ver Comprobante
+                                </a>
+                            }
+                            <a class="dk-mc__btn dk-mc__btn--blanco" href="/reservas/reprogramar/@primera.Id">@Html.Raw(IcoRepetir) Reprogramar</a>
                             <button type="button" class="dk-mc__btn dk-mc__btn--linea" data-cancelar data-id="@primera.Id" data-resumen="@Resumen(primera)">@Html.Raw(IcoX) Cancelar</button>
                         </div>
                     </div>
@@ -148,7 +154,13 @@
                                 </div>
                                 <div class="dk-mc__itemfoot">
                                     <small>@Faltan(diasN)</small>
-                                                                        <a class="dk-mc__btn dk-mc__btn--main dk-mc__btn--sm" href="/reservas/reprogramar/@c.Id">@Html.Raw(IcoRepetir) Reprogramar</a>
+                                    @if (c.EstadoClase == "ok")
+                                    {
+                                        <a class="dk-mc__btn dk-mc__btn--main dk-mc__btn--sm" href="/comprobante/@c.Id" style="background:#557A58; border-color:#557A58; color:#fff;" title="Ver Comprobante">
+                                            <i class="bi bi-receipt"></i> Ver Comprobante
+                                        </a>
+                                    }
+                                    <a class="dk-mc__btn dk-mc__btn--main dk-mc__btn--sm" href="/reservas/reprogramar/@c.Id">@Html.Raw(IcoRepetir) Reprogramar</a>
                                     <button type="button" class="dk-mc__btn dk-mc__btn--peligro dk-mc__btn--sm" data-cancelar data-id="@c.Id" data-resumen="@Resumen(c)">@Html.Raw(IcoX) Cancelar</button>
                                 </div>
                             </article>
