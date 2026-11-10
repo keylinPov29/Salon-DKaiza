@@ -12,14 +12,14 @@
     .pdf-toolbar { background-color: #323639; color: white; padding: 10px 20px; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 100; }
 </style>
 
-<!-- Barra de Herramientas (Visual) -->
+<!-- Barra de Herramientas -->
 <div class="pdf-toolbar">
     <div class="fw-bold"><i class="bi bi-file-earmark-pdf me-2"></i> Vista Previa del Reporte</div>
     <div class="d-flex gap-2">
-        <button type="button" class="btn btn-sm btn-outline-light" onclick="alert('Simulando impresión...')">
+        <button type="button" class="btn btn-sm btn-outline-light" onclick="imprimirReporte()">
             <i class="bi bi-printer"></i> Imprimir
         </button>
-        <button type="button" class="btn btn-sm btn-success" onclick="alert('Simulando descarga...')">
+        <button type="button" class="btn btn-sm btn-success" id="btnDescargarPdf" onclick="descargarReporte()">
             <i class="bi bi-download"></i> Descargar
         </button>
         <button type="button" class="btn btn-sm btn-danger" data-bs-dismiss="modal">
@@ -29,8 +29,8 @@
 </div>
 
 <!-- Contenedor de las Hojas -->
-<div class="pdf-container">
-    
+<div class="pdf-container" id="areaReporte">
+
     <!-- HOJA 1: Resumen y Desglose -->
     <div class="hoja-a4">
         <h2 style="font-family: 'Playfair Display', serif; color: #222;">Reporte anual @Model.AnioSeleccionado</h2>
@@ -52,10 +52,10 @@
                 <div class="resumen-value">S/ @((Model.GranTotal / (Model.CantidadServicios > 0 ? Model.CantidadServicios : 1)).ToString("N2"))</div>
             </div>
         </div>
-        
+
         <p class="small text-muted mb-4">En total se registraron @Model.CantidadServicios servicios y S/ @Model.GranTotal en ingresos. @Model.EstilistaTop lidera el año con su desempeño.</p>
 
-        <!-- 02 Desglose mensual REAL -->
+        <!-- 02 Desglose mensual -->
         <h5 class="section-title">02 | Desglose anual de servicios</h5>
         <div class="text-end small text-muted mb-2">Cantidad de servicios e ingresos en S/</div>
         <table class="table table-sm table-borderless tabla-pdf">
@@ -98,7 +98,7 @@
             </tfoot>
         </table>
 
-        <!-- 03 Desempeño por estilista REAL -->
+        <!-- 03 Desempeño por estilista -->
         <h5 class="section-title">03 | Desempeño anual por estilista</h5>
         <div class="row mt-3">
             @foreach(var est in Model.TablaEstilistas.Take(4)) {
@@ -116,7 +116,7 @@
         <!-- 04 Reporte de Ingresos -->
         <h5 class="section-title" style="margin-top: 0;">04 | Reporte de ingresos</h5>
         <div class="text-end small text-muted mb-3">01/01/@Model.AnioSeleccionado - @Model.FechaFin?.ToString("dd/MM/yyyy")</div>
-        
+
         <div class="row g-2 mb-4">
             <div class="col-3">
                 <div class="pago-box" style="background-color: #f3ebe1; border-left: 3px solid #c9a8a1;">
@@ -181,7 +181,7 @@
             </tfoot>
         </table>
 
-        <!-- Distribución de pagos (Barra Real) -->
+        <!-- Distribución de pagos -->
         <h6 class="fw-bold mt-4">Distribución de pagos</h6>
         <div class="d-flex justify-content-center my-4">
             @{

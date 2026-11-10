@@ -25,6 +25,11 @@
         --shadow-sm: 0 1px 2px rgba(0,0,0,.03), 0 4px 14px rgba(0,0,0,.035);
         --shadow-md: 0 2px 4px rgba(0,0,0,.04), 0 12px 28px rgba(0,0,0,.08);
         --ease: cubic-bezier(.22,.8,.3,1);
+
+        background-color: var(--bg-page);
+        font-family: 'Montserrat', sans-serif;
+        color: var(--text-dark);
+        min-height: 100vh;
     }
 
     /* ===== ANIMACIONES ===== */
@@ -486,6 +491,8 @@
 
 @section Scripts {
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script>
         Chart.defaults.font.family = "'Montserrat', sans-serif";
         Chart.defaults.color = '#988d91';
@@ -552,6 +559,7 @@
             });
         });
 
+        // ===== VISTA PREVIA =====
         function abrirVistaPrevia() {
             const anio = @Model.AnioSeleccionado;
             fetch(`/AdminReportes/VistaPreviaReporte?anio=${anio}`)
@@ -562,6 +570,109 @@
                     myModal.show();
                 })
                 .catch(err => alert("Error al cargar la vista previa."));
+        }
+
+        // ===== IMPRIMIR =====
+        function imprimirReporte() {
+            const area = document.getElementById('areaReporte');
+            if (!area) return;
+
+            const links = Array.from(document.querySelectorAll('link[rel="stylesheet"]'))
+                .map(l => `<link rel="stylesheet" href="${l.href}">`).join('');
+            const estilos = Array.from(document.querySelectorAll('style'))
+                .map(s => s.outerHTML).join('');
+
+            const iframe = document.createElement('iframe');
+            iframe.style.cssText = 'position:fixed;right:0;bottom:0;width:0;height:0;border:0;';
+            document.body.appendChild(iframe);
+
+            const doc = iframe.contentWindow.document;
+            doc.open();
+            doc.write(`<!DOCTYPE html><html lang="es"><head><meta charset="utf-8">
+                <title>Reporte anual @(Model.AnioSeleccionado)</title>
+                ${links}${estilos}
+                <style>
+                    @@page { size: A4; margin: 0; }
+                    html, body { background: #fff !important; margin: 0; }
+                    * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+                    .pdf-container { background: #fff !important; padding: 0 !important; gap: 0 !important; display: block !important; }
+                    .hoja-a4 {
+                        width: 210mm !important; max-width: none !important; min-height: 297mm;
+                        margin: 0 !important; padding: 15mm !important; box-shadow: none !important;
+                        box-sizing: border-box; page-break-after: always; break-after: page;
+                    }
+                    .hoja-a4:last-child { page-break-after: auto; break-after: auto; }
+                </style></head><body>${area.outerHTML}</body></html>`);
+            doc.close();
+
+            // Espera a que carguen fuentes y estilos antes de imprimir
+            setTimeout(() => {
+                iframe.contentWindow.onafterprint = () => iframe.remove();
+                iframe.contentWindow.focus();
+                iframe.contentWindow.print();
+            }, 800);
+        }
+
+        // ===== DESCARGAR PDF =====
+        async function descargarReporte() {
+            const hojas = document.querySelectorAll('#areaReporte .hoja-a4');
+            if (!hojas.length) return;
+
+            const btn = document.getElementById('btnDescargarPdf');
+            const textoOriginal = btn.innerHTML;
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Generando...';
+
+            // Copia con ancho A4 fijo, detrás de la página (visible para html2canvas, no para el usuario)
+            const contenedor = document.createElement('div');
+            contenedor.style.cssText = 'position:absolute;left:0;top:0;width:794px;background:#fff;z-index:-1;';
+            hojas.forEach(h => {
+                const copia = h.cloneNode(true);
+                copia.style.cssText = 'width:794px;max-width:none;min-height:1100px;margin:0;padding:50px;box-shadow:none;box-sizing:border-box;background:#fff;';
+                contenedor.appendChild(copia);
+            });
+            document.body.appendChild(contenedor);
+
+            try {
+                // Espera a que las fuentes estén listas
+                if (document.fonts && document.fonts.ready) await document.fonts.ready;
+
+                const { jsPDF } = window.jspdf;
+                const pdf = new jsPDF({ unit: 'mm', format: 'a4', orientation: 'portrait' });
+                const anchoPagina = 210, altoPagina = 297;
+                const copias = contenedor.children;
+
+                for (let i = 0; i < copias.length; i++) {
+                    const canvas = await html2canvas(copias[i], {
+                        scale: 2,
+                        useCORS: true,
+                        backgroundColor: '#ffffff',
+                        scrollX: 0,
+                        scrollY: 0,
+                        windowWidth: 794
+                    });
+
+                    let ancho = anchoPagina;
+                    let alto = canvas.height * ancho / canvas.width;
+                    if (alto > altoPagina) {            // si la hoja es más alta que A4, se ajusta
+                        alto = altoPagina;
+                        ancho = canvas.width * alto / canvas.height;
+                    }
+                    const x = (anchoPagina - ancho) / 2;
+
+                    if (i > 0) pdf.addPage();
+                    pdf.addImage(canvas.toDataURL('image/jpeg', 0.95), 'JPEG', x, 0, ancho, alto);
+                }
+
+                pdf.save('Reporte-anual-@(Model.AnioSeleccionado).pdf');
+            } catch (e) {
+                console.error(e);
+                alert('No se pudo generar el PDF.');
+            } finally {
+                contenedor.remove();
+                btn.disabled = false;
+                btn.innerHTML = textoOriginal;
+            }
         }
     </script>
 }
