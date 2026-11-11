@@ -1,0 +1,635 @@
+@model DKaiza.Web.Models.ComprobanteViewModel
+@{
+    ViewData["Title"] = $"Comprobante {Model.NumeroComprobante}";
+}
+
+<section class="dk-comprobante-wrapper">
+    <div class="dk-comprobante-container">
+
+        <!-- Barra de acciones superior (no se imprime) -->
+        <div class="dk-comp-actions no-print">
+            <a href="/cuenta/mis-citas" class="dk-comp-btn dk-comp-btn--back">
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <line x1="19" y1="12" x2="5" y2="12"></line>
+                    <polyline points="12 19 5 12 12 5"></polyline>
+                </svg>
+                <span>Volver a mis citas</span>
+            </a>
+            <div class="dk-comp-actions__right">
+                <!-- Botón de descarga con el símbolo de descargar -->
+                <button type="button" 
+                        id="btnDescargarPdf"
+                        class="dk-comp-btn dk-comp-btn--download" 
+                        title="Descargar comprobante digital"
+                        data-cita-id="@Model.CitaId"
+                        data-numero="@Model.NumeroComprobante">
+                    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                        <polyline points="7 10 12 15 17 10"></polyline>
+                        <line x1="12" y1="15" x2="12" y2="3"></line>
+                    </svg>
+                    <span>Descargar</span>
+                </button>
+                <!-- Botón de impresión / guardar PDF -->
+                <button type="button" 
+                        class="dk-comp-btn dk-comp-btn--print" 
+                        onclick="window.print()" 
+                        title="Imprimir comprobante o guardar como PDF">
+                    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <polyline points="6 9 6 2 18 2 18 9"></polyline>
+                        <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path>
+                        <rect x="6" y="14" width="12" height="8"></rect>
+                    </svg>
+                    <span>Imprimir</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- ESTRUCTURA DEL COMPROBANTE DIGITAL (TICKET) -->
+        <article class="dk-ticket-digital" id="comprobanteTicket">
+            
+            <!-- Encabezado fiscal y de marca -->
+            <header class="dk-td__header">
+                <div class="dk-td__logo-circle">D</div>
+                <h1 class="dk-td__brand">D'Kaiza</h1>
+                <p class="dk-td__subbrand">Salón de Belleza</p>
+                
+                <div class="dk-td__company-info">
+                    <p class="dk-td__empresa">@Model.EmpresaNombre</p>
+                    <p class="dk-td__ruc"><strong>RUC:</strong> @Model.EmpresaRuc</p>
+                    <p class="dk-td__dir">@Model.EmpresaDireccion</p>
+                    <p class="dk-td__tel">Tel: @Model.EmpresaTelefono | @Model.EmpresaEmail</p>
+                </div>
+
+                <div class="dk-td__badge-status">
+                    <span class="dk-td__badge-dot"></span> @Model.EstadoPago
+                </div>
+            </header>
+
+            <!-- Recuadro del Identificador Único de Comprobante -->
+            <div class="dk-td__box-id">
+                <span class="dk-td__doc-type">BOLETA DE VENTA ELECTRÓNICA</span>
+                <strong class="dk-td__doc-num">@Model.NumeroComprobante</strong>
+                <div class="dk-td__meta-op">
+                    <span><strong>N° Operación:</strong> @Model.NumeroOperacion</span>
+                    <span><strong>Emisión:</strong> @Model.FechaEmision.ToString("dd/MM/yyyy hh:mm tt")</span>
+                </div>
+            </div>
+
+            <!-- Cuerpo del ticket -->
+            <div class="dk-td__body">
+
+                <!-- 1. Datos del Cliente -->
+                <section class="dk-td__sec">
+                    <h2 class="dk-td__sec-title">Datos del Cliente</h2>
+                    <div class="dk-td__row">
+                        <span class="dk-td__lbl">Cliente:</span>
+                        <strong class="dk-td__val">@Model.ClienteNombre</strong>
+                    </div>
+                    <div class="dk-td__row">
+                        <span class="dk-td__lbl">Email:</span>
+                        <span class="dk-td__val">@Model.ClienteEmail</span>
+                    </div>
+                    @if (!string.IsNullOrWhiteSpace(Model.ClienteTelefono))
+                    {
+                        <div class="dk-td__row">
+                            <span class="dk-td__lbl">Teléfono:</span>
+                            <span class="dk-td__val">@Model.ClienteTelefono</span>
+                        </div>
+                    }
+                </section>
+
+                <div class="dk-td__divider"></div>
+
+                <!-- 2. Detalle del Servicio -->
+                <section class="dk-td__sec">
+                    <h2 class="dk-td__sec-title">Servicio Brindado</h2>
+                    <div class="dk-td__row">
+                        <span class="dk-td__lbl">Servicio:</span>
+                        <strong class="dk-td__val">@Model.ServicioNombre</strong>
+                    </div>
+                    <div class="dk-td__row">
+                        <span class="dk-td__lbl">Categoría:</span>
+                        <span class="dk-td__val">@Model.CategoriaNombre</span>
+                    </div>
+                    <div class="dk-td__row">
+                        <span class="dk-td__lbl">Estilista:</span>
+                        <span class="dk-td__val">@Model.EstilistaNombre</span>
+                    </div>
+                    <div class="dk-td__row">
+                        <span class="dk-td__lbl">Fecha de Cita:</span>
+                        <span class="dk-td__val">@Model.FechaCitaInicio.ToString("dd/MM/yyyy")</span>
+                    </div>
+                    <div class="dk-td__row">
+                        <span class="dk-td__lbl">Horario programado:</span>
+                        <span class="dk-td__val">@Model.FechaCitaInicio.ToString("hh:mm tt") – @Model.FechaCitaFin.ToString("hh:mm tt")</span>
+                    </div>
+                    <div class="dk-td__row">
+                        <span class="dk-td__lbl">Duración estimada:</span>
+                        <span class="dk-td__val">@Model.DuracionMinutos min</span>
+                    </div>
+                </section>
+
+                <div class="dk-td__divider"></div>
+
+                <!-- 3. Desglose Económico y Liquidación -->
+                <section class="dk-td__sec">
+                    <h2 class="dk-td__sec-title">Detalle de Pago</h2>
+                    
+                    <div class="dk-td__row">
+                        <span class="dk-td__lbl">Precio base:</span>
+                        <span class="dk-td__val">S/ @Model.PrecioBase.ToString("F2")</span>
+                    </div>
+
+                    @if (Model.Descuento > 0)
+                    {
+                        <div class="dk-td__row dk-td__row--discount">
+                            <span class="dk-td__lbl">
+                                Descuento aplicado @(string.IsNullOrWhiteSpace(Model.CuponCodigo) ? "" : $"({Model.CuponCodigo})"):
+                            </span>
+                            <span class="dk-td__val">− S/ @Model.Descuento.ToString("F2")</span>
+                        </div>
+                    }
+
+                    <div class="dk-td__row">
+                        <span class="dk-td__lbl">Op. Gravada:</span>
+                        <span class="dk-td__val">S/ @Model.SubtotalGravado.ToString("F2")</span>
+                    </div>
+
+                    <div class="dk-td__row">
+                        <span class="dk-td__lbl">I.G.V. (18%):</span>
+                        <span class="dk-td__val">S/ @Model.MontoIgv.ToString("F2")</span>
+                    </div>
+
+                    <div class="dk-td__total-box">
+                        <span class="dk-td__total-lbl">TOTAL PAGADO</span>
+                        <strong class="dk-td__total-val">S/ @Model.TotalPagado.ToString("F2")</strong>
+                    </div>
+
+                    <div class="dk-td__row dk-td__row--metodo">
+                        <span class="dk-td__lbl">Método de pago:</span>
+                        <strong class="dk-td__val">@Model.MetodoPago</strong>
+                    </div>
+                </section>
+
+                <div class="dk-td__divider dk-td__divider--dashed"></div>
+
+                <!-- 4. Verificación y Trazabilidad -->
+                <footer class="dk-td__footer">
+                    <div class="dk-td__qr-wrap">
+                        <!-- Código QR dinámico para verificación rápida -->
+                        <img src="https://api.qrserver.com/v1/create-qr-code/?size=110x110&data=@Uri.EscapeDataString(Model.CodigoVerificacion)" 
+                             alt="Código QR de Verificación" 
+                             class="dk-td__qr" 
+                             loading="lazy" />
+                        <div class="dk-td__qr-text">
+                            <p><strong>Comprobante Electrónico Autorizado</strong></p>
+                            <p>Escanea el código QR para validar la trazabilidad del pago.</p>
+                            <small class="dk-td__hash">@Model.CodigoVerificacion</small>
+                        </div>
+                    </div>
+
+                    <p class="dk-td__thanks">
+                        ¡Gracias por confiar en <strong>D'Kaiza</strong>!<br>
+                        <em>Elegancia que transforma</em>
+                    </p>
+                </footer>
+
+            </div>
+        </article>
+
+    </div>
+</section>
+
+@section Styles {
+<style>
+    /* =========================================================
+       ESTILOS DEL COMPROBANTE DIGITAL (TICKET)
+       ========================================================= */
+    .dk-comprobante-wrapper {
+        min-height: calc(100vh - 120px);
+        background: linear-gradient(160deg, #F7F2EC 0%, #EDE4D8 100%);
+        padding: 2.5rem 1rem 4rem;
+    }
+
+    .dk-comprobante-container {
+        max-width: 580px;
+        margin: 0 auto;
+    }
+
+    /* Barra de acciones */
+    .dk-comp-actions {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1.5rem;
+        flex-wrap: wrap;
+        gap: 0.75rem;
+    }
+
+    .dk-comp-actions__right {
+        display: flex;
+        gap: 0.5rem;
+    }
+
+    .dk-comp-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.45rem;
+        padding: 0.6rem 1.1rem;
+        border-radius: 24px;
+        font-family: 'Montserrat', sans-serif;
+        font-size: 0.82rem;
+        font-weight: 600;
+        text-decoration: none;
+        cursor: pointer;
+        transition: all 0.25s ease;
+        border: 1px solid transparent;
+    }
+
+    .dk-comp-btn--back {
+        background: #FFFFFF;
+        color: #7E675A;
+        border-color: #E5D9C9;
+    }
+    .dk-comp-btn--back:hover {
+        background: #F3EDE6;
+        color: #5E4A40;
+    }
+
+    .dk-comp-btn--download {
+        background: #7E675A;
+        color: #FFFFFF;
+    }
+    .dk-comp-btn--download:hover {
+        background: #5E4A40;
+        color: #FFFFFF;
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(94, 74, 64, 0.25);
+    }
+
+    .dk-comp-btn--print {
+        background: #FFFFFF;
+        color: #4A3730;
+        border-color: #B79C8A;
+    }
+    .dk-comp-btn--print:hover {
+        background: #F7F2EC;
+        color: #2E2421;
+    }
+
+    /* Tarjeta del Ticket */
+    .dk-ticket-digital {
+        background: #FFFFFF;
+        border-radius: 18px;
+        border: 1px solid #E5D9C9;
+        box-shadow: 0 16px 40px rgba(94, 74, 64, 0.12);
+        overflow: hidden;
+        position: relative;
+    }
+
+    /* Borde superior dentado decorativo */
+    .dk-ticket-digital::before {
+        content: "";
+        display: block;
+        height: 6px;
+        background: linear-gradient(90deg, #D5B7AF, #B79C8A, #7E675A, #C47D5C);
+    }
+
+    .dk-td__header {
+        background: #7E675A;
+        color: #FFFFFF;
+        text-align: center;
+        padding: 2rem 1.5rem 1.4rem;
+        position: relative;
+    }
+
+    .dk-td__logo-circle {
+        width: 44px;
+        height: 44px;
+        border-radius: 50%;
+        background: #FFFFFF;
+        color: #7E675A;
+        font-family: 'Playfair Display', serif;
+        font-weight: 700;
+        font-size: 1.4rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 0.6rem;
+    }
+
+    .dk-td__brand {
+        font-family: 'Playfair Display', serif;
+        font-size: 1.9rem;
+        letter-spacing: 1px;
+        line-height: 1;
+        margin: 0;
+        color: #FFFFFF;
+    }
+
+    .dk-td__subbrand {
+        font-family: 'Montserrat', sans-serif;
+        font-size: 0.72rem;
+        text-transform: uppercase;
+        letter-spacing: 2px;
+        opacity: 0.9;
+        margin-top: 2px;
+        color: #F7F2EC;
+    }
+
+    .dk-td__company-info {
+        font-size: 0.76rem;
+        opacity: 0.92;
+        margin-top: 0.9rem;
+        line-height: 1.45;
+    }
+    .dk-td__company-info p { color: #F7F2EC !important; margin: 0; }
+
+    .dk-td__badge-status {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        background: #557A58;
+        color: #FFFFFF;
+        font-family: 'Montserrat', sans-serif;
+        font-size: 0.7rem;
+        font-weight: 700;
+        letter-spacing: 1.2px;
+        text-transform: uppercase;
+        padding: 5px 14px;
+        border-radius: 20px;
+        margin-top: 1rem;
+        box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+    }
+
+    .dk-td__badge-dot {
+        width: 7px;
+        height: 7px;
+        border-radius: 50%;
+        background: #A3E4D7;
+    }
+
+    /* Recuadro Identificador */
+    .dk-td__box-id {
+        background: #FAF8F5;
+        border: 2px dashed #B79C8A;
+        border-radius: 12px;
+        margin: 1.25rem 1.5rem 0.5rem;
+        padding: 1rem;
+        text-align: center;
+    }
+
+    .dk-td__doc-type {
+        display: block;
+        font-family: 'Montserrat', sans-serif;
+        font-size: 0.7rem;
+        font-weight: 700;
+        letter-spacing: 1.5px;
+        color: #7E675A;
+        text-transform: uppercase;
+    }
+
+    .dk-td__doc-num {
+        display: block;
+        font-family: 'Montserrat', sans-serif;
+        font-size: 1.55rem;
+        font-weight: 800;
+        color: #4A3730;
+        letter-spacing: 1px;
+        margin: 0.2rem 0;
+    }
+
+    .dk-td__meta-op {
+        display: flex;
+        justify-content: space-around;
+        font-size: 0.74rem;
+        color: #8A7568;
+        margin-top: 0.4rem;
+        border-top: 1px solid #EAE3DA;
+        padding-top: 0.4rem;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+    }
+
+    /* Cuerpo */
+    .dk-td__body {
+        padding: 1rem 1.75rem 2rem;
+    }
+
+    .dk-td__sec {
+        margin: 1rem 0;
+    }
+
+    .dk-td__sec-title {
+        font-family: 'Montserrat', sans-serif;
+        font-size: 0.78rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        color: #7E675A;
+        margin-bottom: 0.65rem;
+    }
+
+    .dk-td__row {
+        display: flex;
+        justify-content: space-between;
+        align-items: baseline;
+        padding: 0.35rem 0;
+        font-size: 0.84rem;
+        line-height: 1.4;
+    }
+
+    .dk-td__lbl {
+        color: #8A7568;
+    }
+
+    .dk-td__val {
+        color: #4A3730;
+        font-weight: 500;
+        text-align: right;
+    }
+
+    .dk-td__row--discount .dk-td__val {
+        color: #B83232;
+        font-weight: 600;
+    }
+
+    .dk-td__divider {
+        height: 1px;
+        background: #EEE7E0;
+        margin: 1rem 0;
+    }
+    .dk-td__divider--dashed {
+        background: transparent;
+        border-top: 1px dashed #D5B7AF;
+    }
+
+    /* Total destacado */
+    .dk-td__total-box {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        background: #F3EDE6;
+        border: 1px solid #E5D9C9;
+        border-radius: 8px;
+        padding: 0.9rem 1.2rem;
+        margin: 1rem 0 0.5rem;
+    }
+
+    .dk-td__total-lbl {
+        font-family: 'Montserrat', sans-serif;
+        font-size: 0.85rem;
+        font-weight: 700;
+        letter-spacing: 1px;
+        color: #4A3730;
+    }
+
+    .dk-td__total-val {
+        font-family: 'Playfair Display', serif;
+        font-size: 1.6rem;
+        font-weight: 700;
+        color: #477765;
+    }
+
+    .dk-td__row--metodo {
+        margin-top: 0.5rem;
+    }
+
+    /* Pie de ticket y QR */
+    .dk-td__footer {
+        margin-top: 1.25rem;
+        text-align: center;
+    }
+
+    .dk-td__qr-wrap {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 1.25rem;
+        background: #FAF8F5;
+        border: 1px solid #EAE3DA;
+        border-radius: 10px;
+        padding: 0.9rem 1.2rem;
+        margin-bottom: 1.25rem;
+        text-align: left;
+    }
+
+    .dk-td__qr {
+        width: 80px;
+        height: 80px;
+        border-radius: 4px;
+        border: 1px solid #DDD;
+        background: #FFF;
+        padding: 3px;
+        flex-shrink: 0;
+    }
+
+    .dk-td__qr-text p {
+        margin: 0;
+        font-size: 0.74rem;
+        color: #4A3730;
+        line-height: 1.35;
+    }
+    .dk-td__hash {
+        display: block;
+        font-size: 0.65rem;
+        color: #A08C82;
+        word-break: break-all;
+        margin-top: 4px;
+        font-family: monospace;
+    }
+
+    .dk-td__thanks {
+        font-size: 0.8rem;
+        color: #8A7568;
+        line-height: 1.5;
+        margin: 0;
+    }
+
+    /* =========================================================
+       REGLAS DE IMPRESIÓN (@@media print)
+       ========================================================= */
+    @@media print {
+        body {
+            background: #FFFFFF !important;
+            padding: 0 !important;
+        }
+
+        #main-navbar,
+        #main-footer,
+        #chatbot-toggle,
+        #chatbot-window,
+        .no-print {
+            display: none !important;
+        }
+
+        .dk-comprobante-wrapper {
+            background: #FFFFFF !important;
+            padding: 0 !important;
+            min-height: auto !important;
+        }
+
+        .dk-comprobante-container {
+            max-width: 100% !important;
+            margin: 0 !important;
+        }
+
+        .dk-ticket-digital {
+            border: none !important;
+            box-shadow: none !important;
+            border-radius: 0 !important;
+            max-width: 100% !important;
+        }
+
+        .dk-td__header {
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+        }
+
+        .dk-td__badge-status,
+        .dk-td__total-box {
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+        }
+    }
+</style>
+}
+
+@section Scripts {
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+<script>
+    document.getElementById('btnDescargarPdf')?.addEventListener('click', function () {
+        var btn = this;
+        var originalHtml = btn.innerHTML;
+        var element = document.getElementById('comprobanteTicket');
+        var numero = btn.getAttribute('data-numero') || 'Ticket';
+        var citaId = btn.getAttribute('data-cita-id');
+
+        if (typeof html2pdf !== 'undefined' && element) {
+            btn.disabled = true;
+            btn.innerHTML = '<span style="font-size:0.75rem">Descargando...</span>';
+
+            var opt = {
+                margin: [6, 6, 6, 6],
+                filename: 'Comprobante_' + numero + '.pdf',
+                image: { type: 'jpeg', quality: 0.98 },
+                html2canvas: { scale: 2, useCORS: true, scrollY: 0 },
+                jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+            };
+
+            html2pdf().set(opt).from(element).save().then(function () {
+                btn.disabled = false;
+                btn.innerHTML = originalHtml;
+            }).catch(function (err) {
+                console.warn('Error al generar PDF en cliente, recurriendo a descarga nativa:', err);
+                window.location.href = '/comprobante/' + citaId + '/descargar';
+                btn.disabled = false;
+                btn.innerHTML = originalHtml;
+            });
+        } else {
+            window.location.href = '/comprobante/' + citaId + '/descargar';
+        }
+    });
+</script>
+}

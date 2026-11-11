@@ -1,0 +1,202 @@
+@model ClientesBuscarViewModel
+@using System.Net
+@using System.Text
+@using System.Text.RegularExpressions
+@using Microsoft.AspNetCore.Html
+
+@functions {
+    static readonly string[] MesesCorto = { "ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "sep", "oct", "nov", "dic" };
+
+    const string Svg = "<svg viewBox=\"0 0 24 24\" width=\"15\" height=\"15\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\">";
+    static readonly string IcoBuscar = Svg + "<circle cx=\"11\" cy=\"11\" r=\"7\"/><path d=\"M21 21l-4.3-4.3\"/></svg>";
+    static readonly string IcoUsuarios = Svg + "<circle cx=\"9\" cy=\"8\" r=\"3.5\"/><path d=\"M2.5 20a6.5 6.5 0 0 1 13 0\"/><path d=\"M16 4.5a3.5 3.5 0 0 1 0 7M18 14.5a6.5 6.5 0 0 1 3.5 5.5\"/></svg>";
+    static readonly string IcoTel = Svg + "<path d=\"M5 4h4l2 5-2.5 1.5a11 11 0 0 0 5 5L15 13l5 2v4a2 2 0 0 1-2 2A16 16 0 0 1 3 6a2 2 0 0 1 2-2z\"/></svg>";
+    static readonly string IcoMail = Svg + "<rect x=\"3\" y=\"5\" width=\"18\" height=\"14\" rx=\"3\"/><path d=\"M3 7l9 6 9-6\"/></svg>";
+    static readonly string IcoRepetir = Svg + "<path d=\"M17 2l4 4-4 4\"/><path d=\"M3 11V9a3 3 0 0 1 3-3h15\"/><path d=\"M7 22l-4-4 4-4\"/><path d=\"M21 13v2a3 3 0 0 1-3 3H3\"/></svg>";
+
+    static string Iniciales(string? nombre)
+    {
+        var partes = (nombre ?? "").Split(' ', StringSplitOptions.RemoveEmptyEntries);
+        var s = string.Concat(partes.Take(2).Select(p => char.ToUpperInvariant(p[0])));
+        return s.Length == 0 ? "?" : s;
+    }
+
+    static string Fecha(DateTime d) => $"{d.Day} {MesesCorto[d.Month - 1]} {d.Year}";
+
+    // "hace 3 días", "hace 2 meses"... (Lima no cambia de hora en el año: UTC-5)
+    static string Hace(DateTime f)
+    {
+        var hoy = DateTime.UtcNow.AddHours(-5).Date;
+        var dias = (hoy - f.Date).Days;
+        if (dias <= 0) return "hoy";
+        if (dias == 1) return "ayer";
+        if (dias < 30) return $"hace {dias} días";
+        if (dias < 365) { var m = dias / 30; return m == 1 ? "hace 1 mes" : $"hace {m} meses"; }
+        var a = dias / 365;
+        return a == 1 ? "hace 1 año" : $"hace {a} años";
+    }
+
+    // Marca con <mark> lo que el estilista escribió en el buscador
+    static HtmlString Resaltar(string texto, string? q)
+    {
+        var terminos = (q ?? "").Split(' ', StringSplitOptions.RemoveEmptyEntries);
+        if (terminos.Length == 0) return new HtmlString(WebUtility.HtmlEncode(texto));
+
+        var regex = new Regex("(" + string.Join("|", terminos.Select(Regex.Escape)) + ")", RegexOptions.IgnoreCase);
+        var sb = new StringBuilder();
+        foreach (var parte in regex.Split(texto))
+        {
+            if (parte.Length == 0) continue;
+            var enc = WebUtility.HtmlEncode(parte);
+            sb.Append(regex.IsMatch(parte) ? $"<mark>{enc}</mark>" : enc);
+        }
+        return new HtmlString(sb.ToString());
+    }
+}
+
+@{
+    ViewData["Title"] = "Consultar clientes";
+    var q = Model.Q ?? "";
+    var qUrl = Uri.EscapeDataString(q);
+    var desde = (Model.Pagina - 1) * Model.PorPagina + 1;
+    var hasta = desde + Model.Resultados.Count - 1;
+}
+
+<section class="dk-mc dk-cl">
+    <div class="dk-mc__card dk-cl__card">
+
+        <div class="dk-mc__band">
+            <div class="dk-mc__bandtxt">
+                <span class="dk-mc__hola">Atención personalizada</span>
+                <h1 class="dk-mc__title">Consultar clientes</h1>
+            </div>
+            <div class="dk-mc__bandico">@Html.Raw(IcoBuscar)</div>
+        </div>
+
+        <div class="dk-mc__body">
+
+            <form method="get" action="/clientes" class="dk-cl__buscar" role="search">
+                <label class="dk-cl__campo">
+                    @Html.Raw(IcoBuscar)
+                    <input type="search" name="q" value="@q" maxlength="60" autocomplete="off"
+                           placeholder="Nombre, apellido o teléfono" aria-label="Buscar cliente" />
+                </label>
+                <button type="submit" class="dk-mc__btn dk-mc__btn--main dk-cl__btnbuscar">Buscar</button>
+            </form>
+            <p class="dk-cl__ayuda">Busca por nombre, apellido o teléfono.</p>
+
+            @if (Model.Total == 0 && Model.Buscado)
+            {
+                <div class="dk-mc__vacio">
+                    <div class="dk-mc__vacio-ico">@Html.Raw(IcoBuscar)</div>
+                    <h2>Sin resultados</h2>
+                    <p>No encontramos clientes que coincidan con “@q”.</p>
+                    <a class="dk-mc__btn dk-mc__btn--main" href="/clientes">Ver mis clientes</a>
+                </div>
+            }
+            else if (Model.Total == 0)
+            {
+                <div class="dk-mc__vacio">
+                    <div class="dk-mc__vacio-ico">@Html.Raw(IcoUsuarios)</div>
+                    <h2>Aún no tienes clientes</h2>
+                    <p>Cuando un cliente reserve una cita contigo, aparecerá aquí. También puedes buscar a cualquier cliente arriba.</p>
+                </div>
+            }
+            else
+            {
+                <div class="dk-cl__res">
+                    @if (Model.Buscado)
+                    {
+                        <span>@Html.Raw(IcoUsuarios) <b>@Model.Total</b> @(Model.Total == 1 ? "cliente coincide" : "clientes coinciden") con “@q”</span>
+                        <a href="/clientes">Ver mis clientes</a>
+                    }
+                    else
+                    {
+                        <span>@Html.Raw(IcoUsuarios) Mis clientes · <b>@Model.Total</b> @(Model.Total == 1 ? "cliente con citas contigo" : "clientes con citas contigo")</span>
+                    }
+                </div>
+
+                <div class="dk-cl__tabla">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Cliente</th>
+                                <th>Contacto</th>
+                                <th>Preferencia</th>
+                                <th>Visitas</th>
+                                <th>Última visita</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var r in Model.Resultados)
+                            {
+                                var pct = Model.MaxVisitas == 0 ? 0 : (int)Math.Round(100.0 * r.Visitas / Model.MaxVisitas);
+                                <tr>
+                                    <td>
+                                        <div class="dk-cl__quien">
+                                            <i class="dk-cl__av">@Iniciales(r.Nombre)</i>
+                                            <b>@Resaltar(r.Nombre, q)</b>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <div class="dk-cl__ct">
+                                            <span>@Html.Raw(IcoTel) @Resaltar(r.Telefono, q)</span>
+                                            <span>@Html.Raw(IcoMail) @r.Email</span>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        @if (!string.IsNullOrEmpty(r.Preferencia))
+                                        {
+                                            <span class="dk-cl__pref">@Html.Raw(IcoRepetir) @r.Preferencia</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="dk-cl__nada">—</span>
+                                        }
+                                    </td>
+                                    <td>
+                                        <div class="dk-cl__vis">
+                                            <b>@r.Visitas</b>
+                                            <span class="dk-cl__barra"><i style="width:@(pct)%"></i></span>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        @if (r.UltimaVisita != null)
+                                        {
+                                            <div class="dk-cl__ult">@Fecha(r.UltimaVisita.Value)<small>@Hace(r.UltimaVisita.Value)</small></div>
+                                        }
+                                        else if (r.ProximaCita != null)
+                                        {
+                                            <div class="dk-cl__ult">@Fecha(r.ProximaCita.Value)<small>Próxima cita</small></div>
+                                        }
+                                        else
+                                        {
+                                            <span class="dk-cl__nada">—</span>
+                                        }
+                                    </td>
+                                    <td class="dk-cl__acc">
+                                        <a class="dk-mc__btn dk-mc__btn--main dk-mc__btn--sm" href="/clientes/@(r.Id)?q=@qUrl">Ver Detalle</a>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="dk-cl__pie">
+                    <span>Mostrando @desde a @hasta de @Model.Total resultados</span>
+                    @if (Model.TotalPaginas > 1)
+                    {
+                        <nav class="dk-cl__pag" aria-label="Páginas">
+                            @for (var p = 1; p <= Model.TotalPaginas; p++)
+                            {
+                                <a href="/clientes?q=@qUrl&pagina=@p" class="@(p == Model.Pagina ? "is-on" : "")">@p</a>
+                            }
+                        </nav>
+                    }
+                </div>
+            }
+        </div>
+    </div>
+</section>

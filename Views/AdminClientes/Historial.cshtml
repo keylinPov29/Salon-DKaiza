@@ -1,0 +1,177 @@
+@model DKaiza.Web.Models.AdminClienteHistorialViewModel
+@{
+    ViewData["Title"] = "Historial del cliente";
+
+    var desdeTxt = Model.Desde?.ToString("yyyy-MM-dd") ?? "";
+    var hastaTxt = Model.Hasta?.ToString("yyyy-MM-dd") ?? "";
+    var filtrado = Model.Desde.HasValue || Model.Hasta.HasValue;
+
+    string Enlace(int p)
+    {
+        var url = $"/admin/clientes/{Model.Id}?pagina={p}";
+        if (desdeTxt != "") url += "&desde=" + desdeTxt;
+        if (hastaTxt != "") url += "&hasta=" + hastaTxt;
+        return url;
+    }
+}
+
+@functions {
+    static string Iniciales(string nombre)
+    {
+        var partes = (nombre ?? "").Split(' ', StringSplitOptions.RemoveEmptyEntries);
+        if (partes.Length == 0) return "?";
+        if (partes.Length == 1) return partes[0].Substring(0, 1).ToUpper();
+        return (partes[0].Substring(0, 1) + partes[1].Substring(0, 1)).ToUpper();
+    }
+
+    static readonly string[] Meses = { "ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "sep", "oct", "nov", "dic" };
+    static string Mes(DateTime f) => Meses[f.Month - 1];
+
+    static string TextoFrecuencia(string f) =>
+        f == "alta" ? "Frecuencia alta" : f == "media" ? "Frecuencia media" : "Frecuencia baja";
+}
+
+<section class="dk-mc dk-cl">
+    <div class="dk-mc__card dk-cl__card">
+        <div class="dk-mc__body dk-cl__ficha">
+
+            <a class="dk-cl__volver" href="/admin/clientes">
+                <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg>
+                Gestión de historial de clientes
+            </a>
+
+            <article class="dk-mc__hero dk-cl__hero">
+                <div class="dk-mc__herotop">
+                    <span class="dk-mc__kicker">Historial del cliente</span>
+
+                    <form method="post" asp-controller="AdminClientes" asp-action="CambiarVip" asp-route-id="@Model.Id">
+                        <input type="hidden" name="desde" value="@desdeTxt" />
+                        <input type="hidden" name="hasta" value="@hastaTxt" />
+                        <button type="submit" class="dk-mc__btn dk-mc__btn--blanco">
+                            <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 8l4 4 5-7 5 7 4-4-2 11H5z"/></svg>
+                                                        @(Model.EsVip ? "Quitar VIP" : "Cliente VIP")
+                        </button>
+                    </form>
+                </div>
+
+                <div class="dk-mc__heromain">
+                    <i class="dk-cl__avgrande">@Iniciales(Model.Nombre)</i>
+                    <div class="dk-mc__heroinfo">
+                        <h1 class="dk-mc__herosv">
+                            @Model.Nombre
+                            @if (Model.EsVip)
+                            {
+                                <span class="dk-ad__vipchip"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 8l4 4 5-7 5 7 4-4-2 11H5z"/></svg> VIP</span>
+                            }
+                        </h1>
+                        <div class="dk-mc__herometa">
+                            @if (!string.IsNullOrWhiteSpace(Model.Telefono))
+                            {
+                                <span><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 4h4l2 5-2.5 1.5a11 11 0 0 0 5 5L15 13l5 2v4a2 2 0 0 1-2 2A16 16 0 0 1 3 6a2 2 0 0 1 2-2z"/></svg> @Model.Telefono</span>
+                            }
+                            @if (!string.IsNullOrWhiteSpace(Model.Email))
+                            {
+                                <span><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="3"/><path d="M3 7l9 6 9-6"/></svg> @Model.Email</span>
+                            }
+                        </div>
+                        <span class="dk-ad__frecpill">
+                            <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>
+                            @TextoFrecuencia(Model.Frecuencia) · @Model.AsistenciasUltimos6Meses @(Model.AsistenciasUltimos6Meses == 1 ? "asistencia" : "asistencias") en los últimos 6 meses
+                        </span>
+                    </div>
+                </div>
+            </article>
+
+            <div class="dk-ad__kpis dk-ad__kpis--4">
+                <div class="dk-ad__kpi">
+                    <span class="dk-ad__kpi-ico"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg></span>
+                    <div><b>@Model.TotalRegistros</b><span>Total de registros</span></div>
+                </div>
+                <div class="dk-ad__kpi dk-ad__kpi--ok">
+                    <span class="dk-ad__kpi-ico"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M8 12.5l3 3 5-6"/></svg></span>
+                    <div><b>@Model.Asistencias</b><span>Asistencias</span></div>
+                </div>
+                <div class="dk-ad__kpi dk-ad__kpi--rd">
+                    <span class="dk-ad__kpi-ico"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M15 9l-6 6M9 9l6 6"/></svg></span>
+                    <div><b>@Model.Cancelaciones</b><span>Cancelaciones</span></div>
+                </div>
+                <div class="dk-ad__kpi dk-ad__kpi--am">
+                    <span class="dk-ad__kpi-ico"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v6M12 16.5h.01"/></svg></span>
+                    <div><b>@Model.Ausencias</b><span>Ausencias</span></div>
+                </div>
+            </div>
+
+            <form method="get" asp-controller="AdminClientes" asp-action="Historial" asp-route-id="@Model.Id" class="dk-ad__filtro">
+                <div>
+                    <label for="desde">Desde</label>
+                    <div class="dk-ad__fecha">
+                        <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="3"/><path d="M8 3v4M16 3v4M3 11h18"/></svg>
+                        <input type="date" id="desde" name="desde" value="@desdeTxt" />
+                    </div>
+                </div>
+                <div>
+                    <label for="hasta">Hasta</label>
+                    <div class="dk-ad__fecha">
+                        <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="3"/><path d="M8 3v4M16 3v4M3 11h18"/></svg>
+                        <input type="date" id="hasta" name="hasta" value="@hastaTxt" />
+                    </div>
+                </div>
+                <button type="submit" class="dk-mc__btn dk-mc__btn--main">Filtrar</button>
+                @if (filtrado)
+                {
+                    <a class="dk-mc__btn dk-mc__btn--sm" style="border-color:#D9C9BD;color:#5E4A40" href="/admin/clientes/@Model.Id">Limpiar</a>
+                }
+            </form>
+
+            <div class="dk-cl__histtop">
+                <h2>Registros</h2>
+                <span>Más reciente primero</span>
+            </div>
+
+            @if (!Model.Registros.Any())
+            {
+                <div class="dk-mc__vacio">
+                    @(filtrado ? "No hay registros en ese rango de fechas." : "Este cliente todavía no tiene registros.")
+                </div>
+            }
+            else
+            {
+                foreach (var r in Model.Registros)
+                {
+                    <article class="dk-cl__cita dk-cl__cita--@r.EstadoClase">
+                        <div class="dk-cl__dia"><b>@r.Inicio.Day</b><small>@Mes(r.Inicio)</small></div>
+                        <div class="dk-cl__cinfo">
+                            <h3>@r.Servicio</h3>
+                            <div class="dk-cl__cmeta">
+                                <span>@r.Estilista</span>
+                                <span>
+                                    <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>
+                                    @r.Inicio.ToString("HH:mm") · @r.Inicio.Year
+                                </span>
+                            </div>
+                        </div>
+                        <span class="dk-cl__est dk-cl__est--@r.EstadoClase">@r.EstadoTexto</span>
+                    </article>
+                }
+
+                if (Model.TotalPaginas > 1)
+                {
+                    <nav class="dk-cl__pag dk-cl__pag--centro">
+                        @for (var p = 1; p <= Model.TotalPaginas; p++)
+                        {
+                            if (p == Model.Pagina)
+                            {
+                                <a class="is-on">@p</a>
+                            }
+                            else
+                            {
+                                <a href="@Enlace(p)">@p</a>
+                            }
+                        }
+                    </nav>
+                }
+            }
+
+        </div>
+    </div>
+</section>

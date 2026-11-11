@@ -3,6 +3,7 @@
     ViewData["Title"] = "Elegir hora";
     var fechaDisplay = Model.Fecha.ToString("dddd d 'de' MMMM", new System.Globalization.CultureInfo("es-PE"));
     fechaDisplay = char.ToUpper(fechaDisplay[0]) + fechaDisplay[1..];
+    var rq = Model.ReprogramarId.HasValue ? $"&reprogramarId={Model.ReprogramarId}" : "";
 }
 
 <section class="dk-reserva">
@@ -31,9 +32,14 @@
             </div>
         </div>
 
+        @if (Model.ReprogramarId.HasValue)
+        {
+            <partial name="_AvisoReprogramar" model="Model.ReprogramarResumen" />
+        }
+
         <!-- Cabecera -->
         <div class="dk-reserva__head">
-            <a href="/reservas/estilistas?servicioId=@Model.ServicioId&fecha=@Model.Fecha.ToString("yyyy-MM-dd")"
+            <a href="/reservas/estilistas?servicioId=@Model.ServicioId&fecha=@Model.Fecha.ToString("yyyy-MM-dd")@rq"
                class="dk-back">&larr; Cambiar estilista</a>
             <div class="dk-reserva__servicio">
                 <span class="dk-reserva__eyebrow">— @Model.ServicioNombre —</span>
@@ -52,13 +58,13 @@
         </div>
 
         <!-- Horarios -->
-        @if (!Model.HorariosDisponibles.Any())
+               @if (!Model.HorariosDisponibles.Any(h => h != Model.HoraActual))
         {
             <div class="dk-empty">
                 <span class="dk-empty__icon">✦</span>
                 <h3 class="dk-empty__title">Sin horarios disponibles</h3>
                 <p class="dk-empty__text">Este estilista ya no tiene horarios libres ese día. Elige otro estilista o fecha.</p>
-                <a href="/reservas/estilistas?servicioId=@Model.ServicioId&fecha=@Model.Fecha.ToString("yyyy-MM-dd")"
+                <a href="/reservas/estilistas?servicioId=@Model.ServicioId&fecha=@Model.Fecha.ToString("yyyy-MM-dd")@rq"
                    class="dk-btn dk-btn--primary">Elegir otro estilista</a>
             </div>
         }
@@ -72,17 +78,23 @@
                     <input type="hidden" name="fecha"       value="@Model.Fecha.ToString("yyyy-MM-dd")" />
                     <input type="hidden" name="estilistaId" value="@Model.EstilistaId" />
                     <input type="hidden" name="hora"        id="horaSeleccionada" value="" />
+                    @if (Model.ReprogramarId.HasValue)
+                    {
+                        <input type="hidden" name="reprogramarId" value="@Model.ReprogramarId" />
+                    }
 
                     <div class="dk-horarios__grid">
-                        @foreach (var h in Model.HorariosDisponibles)
+                                                @foreach (var h in Model.HorariosDisponibles)
                         {
                             var fin = h.AddMinutes(Model.DuracionMinutos);
+                            var esActual = Model.HoraActual.HasValue && Model.HoraActual.Value == h;
                             <button type="button"
-                                    class="dk-hora-btn"
+                                    class="dk-hora-btn @(esActual ? "dk-hora-btn--actual" : "")"
                                     data-hora="@h.ToString("HH:mm")"
+                                    disabled="@esActual"
                                     aria-label="Seleccionar @h.ToString("hh:mm tt", new System.Globalization.CultureInfo("es-PE"))">
                                 <span class="dk-hora-btn__time">@h.ToString("h:mm tt", new System.Globalization.CultureInfo("es-PE"))</span>
-                                <span class="dk-hora-btn__until">hasta @fin.ToString("h:mm tt", new System.Globalization.CultureInfo("es-PE"))</span>
+                                <span class="dk-hora-btn__until">@(esActual ? "Tu cita actual" : "hasta " + fin.ToString("h:mm tt", new System.Globalization.CultureInfo("es-PE")))</span>
                             </button>
                         }
                     </div>
@@ -95,7 +107,7 @@
                             <span class="dk-confirm-panel__precio">S/ @Model.Precio.ToString("F2")</span>
                         </div>
                         <button type="submit" class="dk-btn dk-btn--primary dk-btn--confirmar">
-                            Confirmar reserva
+                            @(Model.ReprogramarId.HasValue ? "Confirmar reprogramación" : "Confirmar reserva")
                             <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
                         </button>
                     </div>

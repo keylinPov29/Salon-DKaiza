@@ -1,5 +1,6 @@
 using System.Threading.RateLimiting;
 using DKaiza.Data;
+using DKaiza.Web.Services;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -11,6 +12,9 @@ builder.Services.AddControllersWithViews(o =>
 
 builder.Services.AddDbContext<ApplicationDbContext>(o =>
     o.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
+builder.Services.AddHttpClient();
+builder.Services.AddScoped<IComprobanteService, ComprobanteService>();
+builder.Services.AddHostedService<NotificacionCitasWorker>();
 
 builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
     .AddCookie(o =>
