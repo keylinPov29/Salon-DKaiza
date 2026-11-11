@@ -26,7 +26,7 @@ public class AgendaController : Controller
         var userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
         if (string.IsNullOrEmpty(userIdString)) return RedirectToAction("Login", "Account"); 
         
-        var usuario = await _context.Usuarios.FirstOrDefaultAsync(u => u.Id == int.Parse(userIdString));
+        var usuario = await _context.Usuarios.FirstOrDefaultAsync(u => u.Id == int.Parse(userIdString!));
         if (usuario == null) return Unauthorized();
 
         var query = _context.Citas
@@ -132,7 +132,7 @@ public class AgendaController : Controller
         try
         {
             var userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            var usuario = await _context.Usuarios.FirstOrDefaultAsync(u => u.Id == int.Parse(userIdString));
+            var usuario = await _context.Usuarios.FirstOrDefaultAsync(u => u.Id == int.Parse(userIdString!));
 
             if (usuario == null || usuario.EstilistaId == null) return Unauthorized();
 
@@ -156,9 +156,12 @@ public class AgendaController : Controller
                 return BadRequest("Solo se pueden iniciar citas Pendientes o con pago registrado.");
             }
 
-            cita.HoraInicioReal = DateTime.UtcNow;
-            cita.Estado = EstadoCita.EnProceso; 
-            await _context.SaveChangesAsync();
+            // ACTUALIZACIÓN DIRECTA A POSTGRESQL (Evita problemas con fechas)
+            await _context.Database.ExecuteSqlInterpolatedAsync($@"
+                UPDATE ""Citas"" 
+                SET ""HoraInicioReal"" = {DateTime.UtcNow}, ""Estado"" = {(int)EstadoCita.EnProceso} 
+                WHERE ""Id"" = {id}
+            ");
             
             return RedirectToAction(nameof(EnProceso), new { id = cita.Id });
         }
@@ -172,19 +175,19 @@ public class AgendaController : Controller
     public async Task<IActionResult> EnProceso(int id)
     {
         var userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
-        var usuario = await _context.Usuarios.FirstOrDefaultAsync(u => u.Id == int.Parse(userIdString));
+        var usuario = await _context.Usuarios.FirstOrDefaultAsync(u => u.Id == int.Parse(userIdString!));
 
         var cita = await _context.Citas
             .Include(c => c.Cliente)
             .Include(c => c.Servicio)
             .FirstOrDefaultAsync(c => c.Id == id);
 
-        if (cita == null || cita.EstilistaId != usuario.EstilistaId || cita.Estado != EstadoCita.EnProceso || cita.HoraInicioReal == null)
+        if (cita == null || cita.EstilistaId != usuario!.EstilistaId || cita.Estado != EstadoCita.EnProceso || cita.HoraInicioReal == null)
             return RedirectToAction(nameof(Index));
 
-        ViewBag.HoraInicioStr = cita.HoraInicioReal.Value.ToLocalTime().ToString("HH:mm:ss");
+        ViewBag.HoraInicioStr = cita.HoraInicioReal!.Value.ToLocalTime().ToString("HH:mm:ss");
         // Enviamos la fecha de inicio en milisegundos para que JS no falle
-        ViewBag.HoraInicioMs = new DateTimeOffset(cita.HoraInicioReal.Value).ToUnixTimeMilliseconds();
+        ViewBag.HoraInicioMs = new DateTimeOffset(cita.HoraInicioReal!.Value).ToUnixTimeMilliseconds();
         ViewBag.DuracionEstimada = (int)(cita.Fin - cita.Inicio).TotalMinutes;
 
         return View(cita);
@@ -197,22 +200,23 @@ public class AgendaController : Controller
         try
         {
             var userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            var usuario = await _context.Usuarios.FirstOrDefaultAsync(u => u.Id == int.Parse(userIdString));
+            var usuario = await _context.Usuarios.FirstOrDefaultAsync(u => u.Id == int.Parse(userIdString!));
 
             var cita = await _context.Citas.FindAsync(id);
             if (cita == null) return NotFound();
 
-            if (cita.EstilistaId != usuario.EstilistaId)
+            if (cita.EstilistaId != usuario!.EstilistaId)
                 return Forbid();
 
             if (cita.Estado != EstadoCita.EnProceso)
                 return BadRequest("La cita debe estar En Proceso.");
 
-            // Guardamos la hora de fin y cambiamos el estado
-            cita.HoraFinReal = DateTime.UtcNow;
-            cita.Estado = EstadoCita.Completada;
-            
-            await _context.SaveChangesAsync();
+            // ACTUALIZACIÓN DIRECTA A POSTGRESQL (Evita problemas con fechas)
+            await _context.Database.ExecuteSqlInterpolatedAsync($@"
+                UPDATE ""Citas"" 
+                SET ""HoraFinReal"" = {DateTime.UtcNow}, ""Estado"" = {(int)EstadoCita.Completada} 
+                WHERE ""Id"" = {id}
+            ");
 
             // Guardamos el mensaje en TempData para mostrarlo en la agenda
             TempData["Success"] = "¡Atención finalizada correctamente!";
