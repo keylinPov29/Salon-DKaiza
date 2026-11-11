@@ -141,11 +141,20 @@ public class AgendaController : Controller
 
             if (cita.EstilistaId != usuario.EstilistaId) return Forbid();
 
+            // Validar si la cita tiene el pago pendiente
+            if (cita.Estado == EstadoCita.PendientePago)
+            {
+                TempData["Error"] = "No se puede iniciar la atención: la cita tiene el pago pendiente.";
+                return RedirectToAction("Index");
+            }
+
+            // Validar los estados permitidos para iniciar la atención
             if (cita.Estado != EstadoCita.Pendiente &&
-                cita.Estado != EstadoCita.PendientePago &&
                 cita.Estado != EstadoCita.Pagada &&
                 cita.Estado != EstadoCita.Confirmada)
+            {
                 return BadRequest("Solo se pueden iniciar citas Pendientes o con pago registrado.");
+            }
 
             cita.HoraInicioReal = DateTime.UtcNow;
             cita.Estado = EstadoCita.EnProceso; 
