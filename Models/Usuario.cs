@@ -32,6 +32,9 @@ public class Usuario
     public RolUsuario Rol { get; set; } = RolUsuario.Cliente;
     public bool Activo { get; set; } = true;
     public bool DebeCambiarPassword { get; set; }
+        // HU-08: VIP decidido a mano por la administradora.
+    // null = automático (según frecuencia) · true = marcado VIP · false = VIP quitado
+    public bool? VipManual { get; set; }
 
     // Solo se llena cuando Rol = Estilista (vincula la cuenta con su ficha de estilista)
     public int? EstilistaId { get; set; }

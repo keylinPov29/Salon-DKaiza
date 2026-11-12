@@ -4,6 +4,7 @@
     var hoy = Model.FechaMinima;
     var primerMes = new DateOnly(hoy.Year, hoy.Month, 1);
     var diasSet = Model.DiasDisponibles.ToHashSet();
+    var rq = Model.ReprogramarId.HasValue ? $"&reprogramarId={Model.ReprogramarId}" : "";
 }
 
 <section class="dk-reserva">
@@ -32,11 +33,16 @@
             </div>
         </div>
 
+        @if (Model.ReprogramarId.HasValue)
+        {
+            <partial name="_AvisoReprogramar" model="Model.ReprogramarResumen" />
+        }
+
         <!-- Cabecera servicio -->
         <div class="dk-reserva__head">
-            <a href="/" class="dk-back">&larr; Volver al catálogo</a>
+            <a href="@(Model.ReprogramarId.HasValue ? "/cuenta/mis-citas" : "/")" class="dk-back">&larr; @(Model.ReprogramarId.HasValue ? "Volver a mis citas" : "Volver al catálogo")</a>
             <div class="dk-reserva__servicio">
-                <span class="dk-reserva__eyebrow">— Reservar cita —</span>
+                <span class="dk-reserva__eyebrow">— @(Model.ReprogramarId.HasValue ? "Reprogramar cita" : "Reservar cita") —</span>
                 <h1 class="dk-reserva__titulo">@Model.ServicioNombre</h1>
                 <div class="dk-reserva__meta">
                     <span class="dk-chip dk-chip--time">
@@ -98,7 +104,7 @@
                                     if (disponible && !esDomingo && !fueraDeRango)
                                     {
                                         <a class="@css"
-                                           href="/reservas/estilistas?servicioId=@Model.ServicioId&fecha=@d.ToString("yyyy-MM-dd")">
+                                           href="/reservas/estilistas?servicioId=@Model.ServicioId&fecha=@d.ToString("yyyy-MM-dd")@rq">
                                             @d.Day
                                         </a>
                                     }

@@ -1,0 +1,326 @@
+@model DKaiza.Web.Dominio.Cita
+@{
+    ViewData["Title"] = "Atención en curso";
+}
+
+<style>
+    :root {
+        --crema:        #fcf9f2;
+        --terracota:    #c47d5c;
+        --cafe:         #9b7b6d;
+        --cafe-os:      #7d6055;
+        --marron:       #5a4b41;
+        --crema-card:   #f3ebe1;
+        --borde:        #eae1d8;
+        --texto-suave:  #8f8179;
+        --ease:         cubic-bezier(.22,.8,.3,1);
+    }
+
+    .ep-page {
+        background-color: var(--crema);
+        background-image:
+            radial-gradient(800px 400px at 15% -5%, rgba(243,235,225,.9), transparent 60%),
+            radial-gradient(700px 400px at 100% 0%, rgba(155,123,109,.12), transparent 60%);
+        background-repeat: no-repeat;
+        font-family: 'Montserrat', sans-serif;
+        color: var(--marron);
+        min-height: calc(100vh - 68px);
+        margin-bottom: -50px;
+        padding-bottom: 50px;
+    }
+
+    @@keyframes subirSuave {
+        from { opacity: 0; transform: translateY(18px) scale(.98); }
+        to   { opacity: 1; transform: translateY(0) scale(1); }
+    }
+    @@keyframes latido {
+        0%   { box-shadow: 0 0 0 0 rgba(255,255,255,.7); }
+        70%  { box-shadow: 0 0 0 8px rgba(255,255,255,0); }
+        100% { box-shadow: 0 0 0 0 rgba(255,255,255,0); }
+    }
+
+    .ep-volver {
+        display: inline-flex; align-items: center; gap: 6px;
+        color: var(--texto-suave); font-weight: 600; font-size: .88rem; text-decoration: none;
+        transition: color .2s, transform .25s var(--ease);
+    }
+    .ep-volver:hover { color: var(--marron); transform: translateX(-3px); }
+
+    /* ===== PANEL ===== */
+    .ep-panel {
+        background: #fff; border: 1px solid var(--borde); border-radius: 24px; overflow: hidden;
+        box-shadow: 0 2px 4px rgba(90,75,65,.04), 0 18px 40px rgba(90,75,65,.1);
+        animation: subirSuave .7s var(--ease) both;
+    }
+    .ep-header {
+        display: flex; align-items: center; justify-content: space-between; gap: 12px;
+        padding: 20px 30px; color: #fff;
+        background: linear-gradient(135deg, var(--cafe), var(--cafe-os));
+    }
+    .ep-header h4 { margin: 0; font-family: 'Playfair Display', serif; font-weight: 600; font-size: 1.35rem; }
+    .ep-vivo {
+        display: inline-flex; align-items: center; gap: 8px;
+        background: rgba(255,255,255,.18); border: 1px solid rgba(255,255,255,.3);
+        padding: 6px 14px; border-radius: 999px; font-size: .75rem; font-weight: 700; letter-spacing: .8px; text-transform: uppercase;
+    }
+    .ep-vivo::before {
+        content: ''; width: 8px; height: 8px; border-radius: 50%; background: #fff;
+        animation: latido 1.8s infinite;
+    }
+
+    /* ===== RELOJ ===== */
+    .reloj-contenedor {
+        position: relative; width: 280px; height: 280px; margin: 0 auto;
+        display: flex; align-items: center; justify-content: center;
+    }
+    .reloj-svg { position: absolute; inset: 0; width: 100%; height: 100%; transform: rotate(-90deg); }
+    .reloj-circulo-fondo { fill: none; stroke: var(--crema-card); stroke-width: 10; }
+    .reloj-circulo-progreso {
+        fill: none; stroke: url(#gradienteTiempo); stroke-width: 10; stroke-linecap: round;
+        stroke-dasharray: 785; stroke-dashoffset: 785;
+        transition: stroke-dashoffset 1s linear;
+        filter: drop-shadow(0 4px 8px rgba(196,125,92,.3));
+    }
+    .reloj-circulo-progreso.excedido { stroke: #c0504d; filter: drop-shadow(0 4px 8px rgba(192,80,77,.35)); }
+
+    .reloj-texto { position: absolute; z-index: 10; text-align: center; display: flex; flex-direction: column; align-items: center; padding: 0 30px; }
+    .reloj-cliente { font-size: .95rem; color: var(--texto-suave); font-weight: 600; margin-bottom: 6px; }
+    .reloj-tiempo {
+        font-family: 'Playfair Display', serif; font-size: 3.3rem; font-weight: 700; line-height: 1;
+        letter-spacing: 2px; color: var(--marron); font-variant-numeric: tabular-nums;
+    }
+    .reloj-servicio { font-size: .7rem; color: var(--terracota); text-transform: uppercase; letter-spacing: 2px; margin-top: 10px; font-weight: 700; }
+
+    /* ===== INFO ===== */
+    .info-box {
+        background: var(--crema); border: 1px solid var(--borde); border-radius: 14px;
+        padding: 14px 10px; text-align: center; height: 100%;
+        transition: transform .3s var(--ease), box-shadow .3s var(--ease);
+    }
+    .info-box:hover { transform: translateY(-3px); box-shadow: 0 10px 22px rgba(90,75,65,.1); }
+    .info-label { display: block; font-size: .66rem; text-transform: uppercase; letter-spacing: 1px; color: var(--texto-suave); font-weight: 700; margin-bottom: 5px; }
+    .info-value { font-size: 1.05rem; font-weight: 700; color: var(--marron); }
+    .info-value.excedido { color: #c0504d; }
+
+    /* ===== BOTONES ===== */
+    .btn-custom {
+        position: relative; overflow: hidden; border: none; border-radius: 14px; padding: 13px 25px;
+        font-family: inherit; font-weight: 600; font-size: .98rem; letter-spacing: .3px;
+        transition: transform .3s var(--ease), box-shadow .3s var(--ease), filter .3s;
+    }
+    .btn-custom:focus-visible { outline: 2px solid var(--terracota); outline-offset: 2px; }
+    .btn-rojo {
+        background: linear-gradient(135deg, #c85f58, #a8443f); color: #fff;
+        box-shadow: 0 8px 18px rgba(168,68,63,.28);
+    }
+    .btn-rojo::after {
+        content: ''; position: absolute; top: 0; left: -80%; width: 50%; height: 100%;
+        background: linear-gradient(120deg, transparent, rgba(255,255,255,.35), transparent);
+        transform: skewX(-20deg); transition: left .7s var(--ease);
+    }
+    .btn-rojo:hover { color: #fff; transform: translateY(-2px); box-shadow: 0 12px 24px rgba(168,68,63,.38); filter: brightness(1.05); }
+    .btn-rojo:hover::after { left: 130%; }
+    .btn-rojo:active { transform: scale(.98); }
+    .btn-sec { background: var(--borde); color: var(--marron); }
+    .btn-sec:hover { background: #dfd3c7; color: var(--marron); }
+    .btn-ok { background: linear-gradient(135deg, var(--cafe), var(--marron)); color: #fff; box-shadow: 0 8px 18px rgba(90,75,65,.25); }
+    .btn-ok:hover { color: #fff; transform: translateY(-2px); filter: brightness(1.06); }
+
+    /* ===== MODAL RESUMEN ===== */
+    .res-header { background: linear-gradient(135deg, var(--cafe), var(--cafe-os)); color: #fff; border-bottom: none; padding: 20px 24px; }
+    .res-header h5 { font-family: 'Playfair Display', serif; font-weight: 600; margin: 0; }
+    .res-body { background: var(--crema); padding: 24px; text-align: center; }
+    .res-fila {
+        display: flex; justify-content: space-between; align-items: center;
+        background: #fff; border: 1px solid var(--borde); border-radius: 12px; padding: 14px 16px; margin-bottom: 12px;
+    }
+    .res-fila:last-child { margin-bottom: 0; }
+    .res-fila span { color: var(--texto-suave); font-size: .9rem; }
+    .res-fila strong { color: var(--marron); }
+    .res-fila.total { background: var(--crema-card); }
+    .res-fila.total strong { color: var(--terracota); font-size: 1.15rem; }
+    .res-footer { background: var(--crema); border-top: none; padding: 6px 24px 24px; gap: 10px; }
+
+    @@media (prefers-reduced-motion: reduce) {
+        *, *::before, *::after { animation: none !important; transition: none !important; }
+    }
+    @@media (max-width: 575px) {
+        .reloj-contenedor { width: 240px; height: 240px; }
+        .reloj-tiempo { font-size: 2.7rem; }
+        .ep-header { padding: 16px 20px; }
+    }
+</style>
+
+<div class="ep-page">
+<div class="container py-4">
+    <div class="text-center mb-4">
+        <a href="/Agenda" class="ep-volver">← Volver a la agenda</a>
+    </div>
+
+    <div class="row justify-content-center">
+        <div class="col-lg-7 col-md-10">
+            <div class="ep-panel text-center">
+                <div class="ep-header">
+                    <h4>Atención en curso</h4>
+                    <span class="ep-vivo">En proceso</span>
+                </div>
+
+                <div class="p-4 p-md-5">
+
+                    <div class="reloj-contenedor">
+                        <svg class="reloj-svg" viewBox="0 0 280 280">
+                            <defs>
+                                <linearGradient id="gradienteTiempo" x1="0%" y1="0%" x2="100%" y2="100%">
+                                    <stop offset="0%" stop-color="#27ae60" />
+                                    <stop offset="50%" stop-color="#f5b041" />
+                                    <stop offset="100%" stop-color="#c47d5c" />
+                                </linearGradient>
+                            </defs>
+                            <circle class="reloj-circulo-fondo" cx="140" cy="140" r="125"></circle>
+                            <circle id="circuloProgreso" class="reloj-circulo-progreso" cx="140" cy="140" r="125"></circle>
+                        </svg>
+
+                        <div class="reloj-texto">
+                            <div class="reloj-cliente">@Model.Cliente?.Nombre @Model.Cliente?.Apellido</div>
+                            <div class="reloj-tiempo" id="cronometro">00:00:00</div>
+                            <div class="reloj-servicio">@Model.Servicio?.Nombre</div>
+                        </div>
+                    </div>
+
+                    <div class="row g-3 mt-4 mb-4">
+                        <div class="col-4">
+                            <div class="info-box">
+                                <span class="info-label">Hora de inicio</span>
+                                <span class="info-value">@ViewBag.HoraInicioStr</span>
+                            </div>
+                        </div>
+                        <div class="col-4">
+                            <div class="info-box">
+                                <span class="info-label">Tiempo estimado</span>
+                                <span class="info-value">@ViewBag.DuracionEstimada min</span>
+                            </div>
+                        </div>
+                        <div class="col-4">
+                            <div class="info-box">
+                                <span class="info-label" id="restanteEtiqueta">Tiempo restante</span>
+                                <span class="info-value" id="restanteValor">-- min</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <button type="button" class="btn btn-custom btn-rojo w-100" onclick="abrirModalResumen()">
+                        Finalizar atención
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+</div>
+
+<!-- MODAL DE RESUMEN -->
+<div class="modal fade" id="modalResumen" tabindex="-1" aria-hidden="true" data-bs-backdrop="static">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content" style="border-radius: 20px; border: none; overflow: hidden; box-shadow: 0 20px 50px rgba(90,75,65,.3);">
+            <div class="res-header">
+                <h5>Resumen de atención</h5>
+            </div>
+
+            <!-- FORMULARIO PARA ENVIAR AL CONTROLADOR -->
+            <form asp-action="FinalizarAtencion" asp-controller="Agenda" method="post">
+                <input type="hidden" name="id" value="@Model.Id" />
+
+                <div class="res-body">
+                    <p class="mb-4 text-muted">Revisa los datos antes de finalizar la cita.</p>
+
+                    <div class="res-fila">
+                        <span>Hora de inicio</span>
+                        <strong>@ViewBag.HoraInicioStr</strong>
+                    </div>
+                    <div class="res-fila">
+                        <span>Hora de fin</span>
+                        <strong id="resumenHoraFin">--:--:--</strong>
+                    </div>
+                    <div class="res-fila total">
+                        <span>Tiempo total</span>
+                        <strong id="resumenTiempoTotal">00:00:00</strong>
+                    </div>
+                </div>
+                <div class="modal-footer res-footer flex-nowrap">
+                    <button type="button" class="btn btn-custom btn-sec flex-fill" data-bs-dismiss="modal">
+                        Cancelar
+                    </button>
+                    <button type="submit" class="btn btn-custom btn-ok flex-fill">
+                        ✓ Aceptar
+                    </button>
+                </div>
+            </form>
+
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        // Recibimos los milisegundos desde el controlador
+        const horaInicioMs = @ViewBag.HoraInicioMs;
+        const duracionEstimadaSegundos = @ViewBag.DuracionEstimada * 60;
+        const circunferencia = 785;
+
+        function formatoMinutos(segundos) {
+            const min = Math.ceil(segundos / 60);
+            if (min >= 60) {
+                return `${Math.floor(min / 60)} h ${(min % 60).toString().padStart(2, '0')} min`;
+            }
+            return `${min} min`;
+        }
+
+        function actualizarCronometro() {
+            const diferenciaMs = Date.now() - horaInicioMs;
+            if (diferenciaMs < 0) return;
+
+            const segundosTotales = Math.floor(diferenciaMs / 1000);
+            const h = Math.floor(segundosTotales / 3600).toString().padStart(2, '0');
+            const m = Math.floor((segundosTotales % 3600) / 60).toString().padStart(2, '0');
+            const s = (segundosTotales % 60).toString().padStart(2, '0');
+            document.getElementById('cronometro').innerText = `${h}:${m}:${s}`;
+
+            // Anillo de progreso
+            let progreso = duracionEstimadaSegundos > 0 ? segundosTotales / duracionEstimadaSegundos : 1;
+            if (progreso > 1) progreso = 1;
+            const anillo = document.getElementById('circuloProgreso');
+            anillo.style.strokeDashoffset = circunferencia - (progreso * circunferencia);
+
+            // Tiempo restante o excedido
+            const restante = duracionEstimadaSegundos - segundosTotales;
+            const etiqueta = document.getElementById('restanteEtiqueta');
+            const valor = document.getElementById('restanteValor');
+            if (restante >= 0) {
+                etiqueta.innerText = 'Tiempo restante';
+                valor.innerText = formatoMinutos(restante);
+                valor.classList.remove('excedido');
+                anillo.classList.remove('excedido');
+            } else {
+                etiqueta.innerText = 'Tiempo excedido';
+                valor.innerText = '+' + formatoMinutos(-restante);
+                valor.classList.add('excedido');
+                anillo.classList.add('excedido');
+            }
+        }
+
+        setInterval(actualizarCronometro, 1000);
+        actualizarCronometro(); // Llamada inicial
+
+        function abrirModalResumen() {
+            const ahora = new Date();
+            const horaFin = ahora.toLocaleTimeString('es-PE', { hour12: false });
+            const tiempoTotal = document.getElementById('cronometro').innerText;
+
+            document.getElementById('resumenHoraFin').innerText = horaFin;
+            document.getElementById('resumenTiempoTotal').innerText = tiempoTotal;
+
+            var myModal = new bootstrap.Modal(document.getElementById('modalResumen'));
+            myModal.show();
+        }
+    </script>
+}

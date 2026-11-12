@@ -1,5 +1,6 @@
 using System.Threading.RateLimiting;
 using DKaiza.Data;
+using DKaiza.Web.Services;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.Mvc;
@@ -30,6 +31,9 @@ if (!string.IsNullOrWhiteSpace(databaseUrl))
 
 builder.Services.AddDbContext<ApplicationDbContext>(o =>
     o.UseNpgsql(connectionString));
+builder.Services.AddHttpClient();
+builder.Services.AddScoped<IComprobanteService, ComprobanteService>();
+builder.Services.AddHostedService<NotificacionCitasWorker>();
 
 // Render termina HTTPS en su proxy y reenvía la petición por HTTP.
 builder.Services.Configure<ForwardedHeadersOptions>(o =>

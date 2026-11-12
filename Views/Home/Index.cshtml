@@ -8,62 +8,260 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-
     <title>Salón de Belleza D'Kaiza</title>
-
+    
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-
-    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600&family=Playfair+Display:ital,wght@0,500;0,600;1,400&display=swap"
-          rel="stylesheet" />
-
-    <link rel="stylesheet"
-          href="~/css/dkaiza.css"
-          asp-append-version="true" />
-
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600&family=Playfair+Display:ital,wght@0,500;0,600;1,400&display=swap" rel="stylesheet" />
+    
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" />
+    
+    <link rel="stylesheet" href="~/css/dkaiza.css" asp-append-version="true" />
+    @if (User.Identity?.IsAuthenticated != true || User.IsInRole("Cliente"))
+    {
+        <link rel="stylesheet" href="~/css/chatbot.css" asp-append-version="true" />
+    }
+    
     <style>
         .dk-cat__img { width: 72px; height: 72px; object-fit: cover; border-radius: 14px; display: block; }
         .dk-cat__icon:has(.dk-cat__img) svg { display: none; }
+
+        /* ===== ESTILOS DEL NAVBAR Y FOOTER (SINCRONIZADOS CON EL LAYOUT) ===== */
+        :root {
+            --layout-bg-dark: #9b7b6d; 
+            --layout-badge-bg: #c47d5c; 
+            --layout-text-light: #fcf9f2; 
+            --layout-text-muted: #f5ebe6; 
+            --layout-hover-color: #e6dacb; 
+            --layout-border-color: #bca59a; 
+        }
+
+        #main-navbar {
+            background-color: var(--layout-bg-dark) !important;
+            padding: 12px 40px !important;
+            display: flex !important;
+            justify-content: space-between !important;
+            align-items: center !important;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2) !important;
+            position: sticky !important;
+            top: 0 !important;
+            z-index: 1050 !important;
+            border-bottom: 1px solid var(--layout-border-color) !important;
+        }
+
+        #main-navbar a, #main-navbar button, #main-navbar span {
+            color: var(--layout-text-muted) !important;
+            opacity: 1 !important;
+            filter: none !important;
+        }
+
+        #main-navbar .dk-nav__brand {
+            display: inline-flex !important;
+            align-items: center !important;
+            gap: 12px !important;
+            text-decoration: none !important;
+        }
+        
+        #main-navbar .dk-nav__logo {
+            width: 40px !important; height: 40px !important;
+            display: inline-flex !important; align-items: center !important; justify-content: center !important;
+            border-radius: 50% !important;
+            font-family: 'Playfair Display', serif !important;
+            font-size: 1.2rem !important;
+            font-weight: 600 !important;
+            color: var(--layout-bg-dark) !important;
+            background: var(--layout-text-light) !important;
+        }
+        
+        #main-navbar .dk-nav__brandtext {
+            display: inline-flex !important; flex-direction: column !important;
+            font-family: 'Playfair Display', serif !important;
+            font-size: 1.3rem !important; font-weight: 600 !important; line-height: 1.1 !important;
+            color: var(--layout-text-light) !important;
+        }
+        #main-navbar .dk-nav__brandtext small {
+            font-size: .6rem !important; font-weight: 500 !important;
+            letter-spacing: 1.5px !important; text-transform: uppercase !important;
+            color: var(--layout-text-muted) !important;
+            margin-top: 2px !important;
+        }
+
+        #main-navbar .dk-nav__links {
+            display: flex !important;
+            align-items: center !important;
+            gap: 8px !important;
+        }
+
+        #main-navbar .dk-nav__link {
+            color: var(--layout-text-muted) !important;
+            font-weight: 500 !important;
+            font-size: 0.95rem !important;
+            text-decoration: none !important;
+            padding: 8px 16px !important;
+            border-radius: 20px !important;
+            transition: all 0.2s ease !important;
+        }
+
+        #main-navbar .dk-nav__link:hover {
+            color: var(--layout-text-light) !important;
+            background-color: rgba(255, 255, 255, 0.15) !important;
+        }
+
+        #main-navbar .dk-nav__link.active {
+            background-color: var(--layout-text-light) !important;
+            color: var(--layout-bg-dark) !important;
+            font-weight: 700 !important;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2) !important;
+        }
+
+        #main-navbar .dk-nav__user {
+            display: flex !important;
+            align-items: center !important;
+            color: var(--layout-text-light) !important;
+            font-weight: 500 !important;
+            font-size: 0.9rem !important;
+            margin-left: 15px !important;
+            padding-left: 15px !important;
+            border-left: 1px solid var(--layout-border-color) !important;
+        }
+
+        #main-navbar .badge-rol {
+            background-color: var(--layout-badge-bg) !important;
+            color: #ffffff !important;
+            font-size: 0.6rem !important;
+            padding: 3px 8px !important;
+            border-radius: 12px !important;
+            text-transform: uppercase !important;
+            font-weight: bold !important;
+            margin-right: 8px !important;
+        }
+
+        #main-navbar .dk-nav__form { margin: 0 !important; padding: 0 !important; }
+        
+        #main-navbar .dk-nav__logout {
+            background: transparent !important;
+            border: 1px solid var(--layout-text-light) !important;
+            color: var(--layout-text-light) !important;
+            font-weight: 500 !important;
+            font-size: 0.85rem !important;
+            padding: 6px 16px !important;
+            border-radius: 20px !important;
+            cursor: pointer !important;
+            transition: all 0.3s ease !important;
+            display: inline-flex !important;
+            align-items: center !important;
+            gap: 6px !important;
+        }
+
+        #main-navbar .dk-nav__logout:hover {
+            background-color: var(--layout-text-light) !important;
+            color: var(--layout-bg-dark) !important;
+            border-color: var(--layout-text-light) !important;
+            transform: translateY(-1px) !important;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.15) !important;
+        }
+
+        /* Footer */
+        #main-footer {
+            background-color: var(--layout-bg-dark) !important;
+            padding: 50px 0 30px 0 !important;
+            margin-top: 60px !important;
+            color: var(--layout-text-muted) !important;
+            position: relative !important;
+            z-index: 1050 !important;
+            border-top: 2px solid var(--layout-border-color) !important;
+        }
+
+        #main-footer .footer-link {
+            color: var(--layout-text-muted) !important;
+            transition: color 0.2s !important;
+            text-decoration: none !important;
+        }
+        #main-footer .footer-link:hover {
+            color: var(--layout-hover-color) !important;
+        }
+
+        #main-footer .social-link {
+            color: var(--layout-text-muted) !important;
+            text-decoration: none !important;
+            transition: color 0.2s !important;
+            margin-left: 15px !important;
+        }
+        #main-footer .social-link:hover {
+            color: var(--layout-hover-color) !important;
+        }
+
+        #main-footer h4, #main-footer h6 { color: var(--layout-text-light) !important; }
+        #main-footer p, #main-footer span, #main-footer div { color: var(--layout-text-muted) !important; }
+        #main-footer hr { border-color: var(--layout-border-color) !important; opacity: 1 !important; }
     </style>
 </head>
 
 <body>
-
-    <!-- ================= NAVBAR ================= -->
-    <header class="dk-nav">
-
-        <a href="#inicio" class="dk-nav__brand" id="brand">
-            Salón de belleza D'Kaiza
+    <!-- ================= NAVBAR SINCRONIZADO ================= -->
+    <nav class="dk-nav" id="main-navbar">
+        <a class="dk-nav__brand" href="/">
+            <span class="dk-nav__logo">D</span>
+            <span class="dk-nav__brandtext">
+                D'Kaiza
+                <small>Salón de belleza</small>
+            </span>
         </a>
 
-        <nav class="dk-nav__links">
-            <button type="button" class="dk-nav__link" id="navServicios"
-                    style="@(User.IsInRole("Administrador") ? "display:none" : "")">
-                Servicios
-            </button>
-
-            @if (User.Identity?.IsAuthenticated == true)
+        <div class="dk-nav__links">
+            @if (User.IsInRole("Administrador"))
             {
-                @if (User.IsInRole("Administrador"))
-                {
-                    <a href="/admin/categorias" class="dk-nav__link">Catálogo de servicios</a>
-                    <a href="/admin/estilistas" class="dk-nav__link">Estilistas</a>
-                }
-
-                <span class="dk-nav__link" style="cursor:default">@User.Identity!.Name</span>
-
-                <form asp-controller="Account" asp-action="Logout" method="post" style="display:inline;margin:0">
-                    <button type="submit" class="dk-nav__link">Cerrar sesión</button>
-                </form>
+                <a class="dk-nav__link" href="/admin/categorias">Catálogo</a>
+                <a class="dk-nav__link" href="/admin/estilistas">Estilistas</a>
+                <a class="dk-nav__link" href="/AdminAgenda">Agenda</a>
+                <a class="dk-nav__link" href="/admin/clientes">Historial</a>
+                <a class="dk-nav__link" href="/AdminReportes">Reportes</a>
+            }
+            else if (User.IsInRole("Estilista"))
+            {
+                <a class="dk-nav__link" href="/Agenda">Mi Agenda</a>
+                <a class="dk-nav__link" href="/clientes">Clientes</a>
             }
             else
             {
-                <a href="/cuenta/login" class="dk-nav__link">Iniciar sesión</a>
-                <a href="/cuenta/registro" class="dk-nav__link">Registrarse</a>
+                <button type="button" class="dk-nav__link" id="navServicios" style="background:none; border:none; cursor:pointer;">
+                    Servicios
+                </button>
+                @if (User.IsInRole("Cliente"))
+                {
+                    <a class="dk-nav__link" href="/estilistas">Estilistas</a>
+                }
             }
-        </nav>
 
-    </header>
+            @if (User.Identity?.IsAuthenticated == true)
+            {
+                @if (User.IsInRole("Cliente"))
+                {
+                    <partial name="_MenuUsuario" />
+                }
+                else
+                {
+                    <div class="dk-nav__user">
+                        <span class="badge-rol">
+                            @(User.IsInRole("Administrador") ? "Admin" : "Estilista")
+                        </span>
+                        @User.Identity!.Name
+                    </div>
+                    <form asp-controller="Account" asp-action="Logout" method="post" class="dk-nav__form">
+                        <button type="submit" class="dk-nav__logout">
+                            <i class="bi bi-box-arrow-right"></i> Cerrar sesión
+                        </button>
+                    </form>
+                }
+            }
+            else
+            {
+                <a class="dk-nav__link" href="/cuenta/login">Iniciar sesión</a>
+                <a class="dk-nav__link" href="/cuenta/registro">Registrarse</a>
+            }
+        </div>
+    </nav>
 
     @if (TempData["Success"] != null)
     {
@@ -73,38 +271,41 @@
     {
         <div class="dk-toast dk-toast--err">@TempData["Error"]</div>
     }
-
+    @if (TempData["Info"] != null)
+    {
+        <div class="dk-toast dk-toast--info">@TempData["Info"]</div>
+    }
 
     <main>
-
         <!-- ================= INICIO ================= -->
         <div id="inicio">
-
             <section class="dk-hero">
-
                 <div class="dk-hero__content">
-
                     <span class="dk-hero__line">Salón de Belleza · Lima</span>
-
                     <h1 class="dk-hero__title">
                         Elegancia que<br />
                         <em>Transforma</em>
                     </h1>
-
                     <p class="dk-hero__text">
                         Experimenta el arte del estilo premium en un espacio
                         diseñado para tu transformación personal. Reserva tu cita
                         y descubre una nueva forma de cuidarte.
                     </p>
 
-                    <button id="btnReservar" type="button" class="dk-btn dk-btn--primary">
-                        Reservar mi cita
-                    </button>
-
+                    @if (User.IsInRole("Administrador") || User.IsInRole("Estilista"))
+                    {
+                        <a href="/Agenda" class="dk-btn dk-btn--primary" style="background-color: #5a4b41; color: white; text-decoration: none; padding: 12px 30px; border-radius: 25px; font-weight: 600;">
+                            Ir a mi Panel de Citas
+                        </a>
+                    }
+                    else
+                    {
+                        <button id="btnReservar" type="button" class="dk-btn dk-btn--primary">
+                            Reservar mi cita
+                        </button>
+                    }
                 </div>
-
             </section>
-
 
             <!-- Estadísticas -->
             <section class="dk-info" style="padding-top: 3rem; padding-bottom: 3rem;">
@@ -124,7 +325,6 @@
                 </div>
             </section>
 
-
             <!-- ================= NOSOTROS ================= -->
             <section id="nosotros" class="dk-info">
                 <h2>Nosotros</h2>
@@ -134,7 +334,6 @@
                     profesionales capacitados y productos de calidad.
                 </p>
             </section>
-
 
             <!-- ================= CONTACTO ================= -->
             <section id="contacto" class="dk-info">
@@ -146,15 +345,11 @@
                     Dirección: Lima, Perú
                 </p>
             </section>
-
         </div>
-
 
         <!-- ================= SERVICIOS ================= -->
         <section id="servicios" class="dk-servicios" hidden>
-
             <div class="dk-container">
-
                 <button type="button" id="btnAtras" class="dk-back">
                     &larr; Volver al inicio
                 </button>
@@ -173,12 +368,7 @@
                         @foreach (var categoria in Model.Categorias)
                         {
                             <article class="dk-cat">
-
-                                <button type="button"
-                                        class="dk-cat__header"
-                                        aria-expanded="false"
-                                        aria-controls="cat-@categoria.Id">
-
+                                <button type="button" class="dk-cat__header" aria-expanded="false" aria-controls="cat-@categoria.Id">
                                     <div class="dk-cat__top">
                                         <span class="dk-cat__icon" aria-hidden="true">
                                             @if (((HashSet<int>?)ViewBag.CategoriasConImagen)?.Contains(categoria.Id) == true)
@@ -196,7 +386,6 @@
                                                         <line x1="32" y1="32" x2="42" y2="38"/>
                                                     </svg>
                                                     break;
-
                                                 case "manicure":
                                                     <svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                                         <rect x="24" y="6" width="16" height="9" rx="2"/>
@@ -206,7 +395,6 @@
                                                         <line x1="25" y1="28" x2="25" y2="50" opacity="0.4"/>
                                                     </svg>
                                                     break;
-
                                                 case "coloración":
                                                 case "coloracion":
                                                     <svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -219,7 +407,6 @@
                                                         <path d="M21 34 Q19 38 21 42" opacity="0.5"/>
                                                     </svg>
                                                     break;
-
                                                 default:
                                                     <svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                                         <path d="M32 8 L36 28 L56 32 L36 36 L32 56 L28 36 L8 32 L28 28 Z"/>
@@ -240,7 +427,6 @@
                                             <polyline points="9 18 15 12 9 6"/>
                                         </svg>
                                     </span>
-
                                 </button>
 
                                 <div id="cat-@categoria.Id" class="dk-cat__body" hidden>
@@ -271,8 +457,7 @@
                                                 </div>
                                             </div>
 
-                                            <a href="/reservas/nueva?servicioId=@servicio.Id"
-                                               class="dk-btn dk-btn--outline dk-btn--select">
+                                            <a href="/reservas/nueva?servicioId=@servicio.Id" class="dk-btn dk-btn--outline dk-btn--select">
                                                 Seleccionar
                                                 <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                                                     <line x1="5" y1="12" x2="19" y2="12"/>
@@ -282,7 +467,6 @@
                                         </div>
                                     }
                                 </div>
-
                             </article>
                         }
                     </div>
@@ -298,73 +482,107 @@
                         </p>
                     </div>
                 }
-
             </div>
-
         </section>
-
     </main>
 
-
-    <!-- ==================== FOOTER ==================== -->
-    <footer class="dk-footer">
-        <div class="dk-container">
-            <div class="dk-footer__grid">
-
-                <div class="dk-footer__col">
-                    <h3 class="dk-footer__brand">Salón de Belleza D'Kaiza</h3>
-                    <p class="dk-footer__text">
-                        Realzamos tu belleza y estilo con atención personalizada,
-                        profesionales capacitados y productos de calidad.
+    <!-- ================= FOOTER SINCRONIZADO ================= -->
+    <footer class="dk-footer" id="main-footer" style="font-family: 'Montserrat', sans-serif;">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-4 mb-4">
+                    <h4 style="font-family: 'Playfair Display', serif; font-weight: bold; margin-bottom: 15px; font-size: 1.5rem;">
+                        D'Kaiza
+                    </h4>
+                    <p style="font-size: 0.9rem; line-height: 1.6;">
+                        Elegancia que transforma. Tu salón de belleza premium en Lima.
                     </p>
                 </div>
 
-                <div class="dk-footer__col">
-                    <h4 class="dk-footer__title">Enlaces</h4>
-                    <ul class="dk-footer__list">
-                        <li><a href="#inicio">Inicio</a></li>
-                        <li><a href="#" id="footerServicios">Servicios</a></li>
-                        <li><a href="#nosotros">Nosotros</a></li>
-                        <li><a href="#contacto">Contacto</a></li>
+                <div class="col-md-4 mb-4">
+                    <h6 class="text-uppercase mb-3" style="font-size: 0.8rem; letter-spacing: 1px; font-weight: 700;">
+                        Enlaces
+                    </h6>
+                    <ul class="list-unstyled" style="font-size: 0.9rem;">
+                        <li class="mb-2"><a href="/" class="footer-link">Inicio</a></li>
+                        <li class="mb-2"><a href="#" class="footer-link" id="footerServicios">Servicios</a></li>
+                        <li class="mb-2"><a href="#nosotros" class="footer-link">Nosotros</a></li>
+                        <li class="mb-2"><a href="#contacto" class="footer-link">Contacto</a></li>
                     </ul>
                 </div>
 
-                <div class="dk-footer__col">
-                    <h4 class="dk-footer__title">Contacto</h4>
-                    <ul class="dk-footer__list dk-footer__list--contact">
-                        <li>
-                            <span class="dk-footer__label">Teléfono</span>
-                            <span>999 999 999</span>
+                <div class="col-md-4 mb-4">
+                    <h6 class="text-uppercase mb-3" style="font-size: 0.8rem; letter-spacing: 1px; font-weight: 700;">
+                        Contacto
+                    </h6>
+                    <ul class="list-unstyled" style="font-size: 0.9rem;">
+                        <li class="mb-2 d-flex align-items-center gap-2">
+                            <span style="color: var(--layout-text-light) !important;">📍</span> Av. Principal 123, Lima
                         </li>
-                        <li>
-                            <span class="dk-footer__label">Dirección</span>
-                            <span>Lima, Perú</span>
+                        <li class="mb-2 d-flex align-items-center gap-2">
+                            <span style="color: var(--layout-text-light) !important;">📞</span> +51 999 888 777
                         </li>
-                        <li>
-                            <span class="dk-footer__label">Horario</span>
-                            <span>Lun a Sáb · 10:00 – 22:00</span>
+                        <li class="mb-2 d-flex align-items-center gap-2">
+                            <span style="color: var(--layout-text-light) !important;">✉️</span> hola@dkaiza.com
                         </li>
                     </ul>
                 </div>
-
             </div>
 
-            <div class="dk-footer__bottom">
-                <p class="dk-footer__copy">
-                    © 2026 Salón de Belleza D'Kaiza · Todos los derechos reservados.
-                </p>
-                <ul class="dk-footer__social">
-                    <li><a href="#" aria-label="Instagram">IG</a></li>
-                    <li><a href="#" aria-label="Facebook">FB</a></li>
-                    <li><a href="#" aria-label="TikTok">TT</a></li>
-                </ul>
+            <hr style="border-color: var(--layout-border-color); margin-top: 20px; margin-bottom: 20px; opacity: 1;" />
+
+            <div class="d-flex justify-content-between align-items-center flex-wrap">
+                <div class="small" style="font-size: 0.8rem;">
+                    &copy; @DateTime.Now.Year Salón de belleza D'Kaiza. Todos los derechos reservados.
+                </div>
+                <div class="d-flex mt-2 mt-md-0">
+                    <a href="#" class="social-link">Instagram</a>
+                    <a href="#" class="social-link">Facebook</a>
+                    <a href="#" class="social-link">TikTok</a>
+                </div>
             </div>
         </div>
     </footer>
 
-
-    <!-- ================= JAVASCRIPT ================= -->
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/jquery@3.7.1/dist/jquery.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="~/js/dkaiza.js" asp-append-version="true"></script>
+    
+    <!-- Script para la navegación de la página -->
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            const btnNavServicios = document.getElementById('navServicios');
+            const btnFooterServicios = document.getElementById('footerServicios');
+            const seccionInicio = document.getElementById('inicio');
+            const seccionServicios = document.getElementById('servicios');
+            const btnAtras = document.getElementById('btnAtras');
 
+            function mostrarServicios(e) {
+                if(e) e.preventDefault();
+                if(seccionInicio) seccionInicio.hidden = true;
+                if(seccionServicios) seccionServicios.hidden = false;
+                window.scrollTo(0, 0); 
+            }
+
+            function mostrarInicio(e) {
+                if(e) e.preventDefault();
+                if(seccionServicios) seccionServicios.hidden = true;
+                if(seccionInicio) seccionInicio.hidden = false;
+                window.scrollTo(0, 0);
+            }
+
+            if(btnNavServicios) btnNavServicios.addEventListener('click', mostrarServicios);
+            if(btnFooterServicios) btnFooterServicios.addEventListener('click', mostrarServicios);
+            if(btnAtras) btnAtras.addEventListener('click', mostrarInicio);
+        });
+    </script>
+
+    @* ── Chatbot de atención al cliente (solo para clientes y visitantes) ── *@
+    @if (User.Identity?.IsAuthenticated != true || User.IsInRole("Cliente"))
+    {
+        @await Html.PartialAsync("_Chatbot")
+        <script src="~/js/chatbot.js" asp-append-version="true"></script>
+    }
 </body>
 </html>

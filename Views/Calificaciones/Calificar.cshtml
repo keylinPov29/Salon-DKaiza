@@ -1,0 +1,228 @@
+@model CalificarViewModel
+@using System.Globalization
+
+@functions {
+    static readonly string[] Meses = { "enero", "febrero", "marzo", "abril", "mayo", "junio", "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre" };
+    static readonly string[] NombresDia = { "domingo", "lunes", "martes", "miércoles", "jueves", "viernes", "sábado" };
+
+    const string Svg = "<svg viewBox=\"0 0 24 24\" width=\"17\" height=\"17\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\">";
+    static readonly string IcoReloj = Svg + "<circle cx=\"12\" cy=\"12\" r=\"9\"/><path d=\"M12 7v5l3 2\"/></svg>";
+    static readonly string IcoCalendario = Svg + "<rect x=\"3\" y=\"5\" width=\"18\" height=\"16\" rx=\"3\"/><path d=\"M8 3v4M16 3v4M3 11h18\"/></svg>";
+    static readonly string IcoCheck = Svg + "<path d=\"M5 12.5l4.5 4.5L19 7.5\"/></svg>";
+    static readonly string IcoEtiqueta = Svg + "<path d=\"M20 12l-8 8-9-9V4h7z\"/><circle cx=\"8\" cy=\"8\" r=\"1.2\"/></svg>";
+    static readonly string IcoVolver = Svg + "<path d=\"M15 18l-6-6 6-6\"/></svg>";
+
+    static string Iniciales(string? nombre)
+    {
+        var partes = (nombre ?? "").Split(' ', StringSplitOptions.RemoveEmptyEntries);
+        var s = string.Concat(partes.Take(2).Select(p => char.ToUpperInvariant(p[0])));
+        return s.Length == 0 ? "?" : s;
+    }
+
+    static string Estrellas(int n) =>
+        "<span class=\"dk-stars\" aria-label=\"" + n + " de 5 estrellas\">" +
+        "<span class=\"dk-stars__on\">" + new string('★', n) + "</span>" +
+        "<span class=\"dk-stars__off\">" + new string('★', 5 - n) + "</span></span>";
+
+    static string Precio(decimal p) => "S/ " + p.ToString("N2", CultureInfo.InvariantCulture);
+    static int Minutos(DateTime a, DateTime b) => (int)(b - a).TotalMinutes;
+}
+
+@{
+    ViewData["Title"] = "Calificar servicio";
+    var primerNombre = Model.Estilista.Split(' ', StringSplitOptions.RemoveEmptyEntries).FirstOrDefault() ?? Model.Estilista;
+}
+
+<section class="dk-mc dk-ca-pag">
+    <div class="dk-ca">
+
+        <aside class="dk-ca__izq">
+            <span class="dk-ca__kicker">Tu visita</span>
+
+            <div class="dk-ca__av">
+                @if (Model.EstilistaTieneFoto)
+                {
+                    <img src="/media/estilistas/@Model.EstilistaId" alt="" />
+                }
+                else
+                {
+                    @Iniciales(Model.Estilista)
+                }
+            </div>
+            <span class="dk-ca__por">Te atendió</span>
+            <h2 class="dk-ca__nom">@Model.Estilista</h2>
+            @if (!string.IsNullOrWhiteSpace(Model.Especialidad))
+            {
+                <span class="dk-ca__esp">@Model.Especialidad</span>
+            }
+
+            <hr />
+
+            <h3 class="dk-ca__sv">@Model.Servicio</h3>
+            <div class="dk-ca__ln">@Html.Raw(IcoCalendario) @NombresDia[(int)Model.Inicio.DayOfWeek] @Model.Inicio.Day de @Meses[Model.Inicio.Month - 1]</div>
+            <div class="dk-ca__ln">@Html.Raw(IcoReloj) @Model.Inicio.ToString("HH:mm") · @Minutos(Model.Inicio, Model.Fin) min</div>
+            <div class="dk-ca__ln">@Html.Raw(IcoEtiqueta) @Precio(Model.Precio)</div>
+
+            <span class="dk-ca__estado">@Html.Raw(IcoCheck) Completada</span>
+        </aside>
+
+        <div class="dk-ca__der">
+
+            @if (Model.YaCalificada && Model.Gracias)
+            {
+                <div class="dk-ca__gracias">
+                    <div class="dk-ca__graciaico">@Html.Raw(Estrellas(Model.Estrellas))</div>
+                    <h1>Muchas gracias por calificar nuestro servicio</h1>
+                    <p>Tu opinión ayuda a otras clientas a elegir y nos ayuda a seguir mejorando.</p>
+                    <div class="dk-ca__acts">
+                        <a class="dk-mc__btn dk-mc__btn--main" href="/cuenta/historial">Volver al historial</a>
+                        <a class="dk-mc__btn dk-ca__btn-lin" href="/estilistas/@Model.EstilistaId">Ver opiniones de @primerNombre</a>
+                    </div>
+                </div>
+            }
+            else if (Model.YaCalificada)
+            {
+                <span class="dk-ca__eb">Ya calificada</span>
+                <h1 class="dk-ca__tit">Ya calificaste este servicio</h1>
+                <p class="dk-ca__sub">Cada cita se puede calificar una sola vez.</p>
+
+                <div class="dk-ca__guardada">
+                    @Html.Raw(Estrellas(Model.Estrellas))
+                    @if (!string.IsNullOrWhiteSpace(Model.Comentario))
+                    {
+                        <p>“@Model.Comentario”</p>
+                    }
+                </div>
+
+                <div class="dk-ca__acts">
+                    <a class="dk-mc__btn dk-mc__btn--main" href="/cuenta/historial">@Html.Raw(IcoVolver) Volver al historial</a>
+                </div>
+            }
+            else
+            {
+                <span class="dk-ca__eb">Califica tu visita</span>
+                <h1 class="dk-ca__tit">¿Cómo te fue con @primerNombre?</h1>
+
+                @if (!ViewData.ModelState.IsValid)
+                {
+                    <div class="dk-alert" role="alert">
+                        <ul>
+                            @foreach (var err in ViewData.ModelState.Values.SelectMany(v => v.Errors))
+                            {
+                                <li>@err.ErrorMessage</li>
+                            }
+                        </ul>
+                    </div>
+                }
+
+                <form method="post" action="/cuenta/historial/@Model.CitaId/calificar" id="frmCalificar" data-cliente="@Model.ClienteAbreviado" novalidate>
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="estrellas" id="estrellas" value="@Model.Estrellas" />
+
+                    <div class="dk-ca__rate" id="rate" role="radiogroup" aria-label="Calificación de 1 a 5 estrellas">
+                        <button type="button" data-v="1" role="radio" aria-label="1 estrella">★</button>
+                        <button type="button" data-v="2" role="radio" aria-label="2 estrellas">★</button>
+                        <button type="button" data-v="3" role="radio" aria-label="3 estrellas">★</button>
+                        <button type="button" data-v="4" role="radio" aria-label="4 estrellas">★</button>
+                        <button type="button" data-v="5" role="radio" aria-label="5 estrellas">★</button>
+                    </div>
+                    <div class="dk-ca__lbl" id="lbl" aria-live="polite">Toca una estrella para calificar</div>
+
+                    <label class="dk-ca__label" for="comentario">Cuéntanos más <em>(opcional)</em></label>
+                    <textarea id="comentario" name="comentario" maxlength="250" placeholder="¿Qué te gustó? ¿Qué podemos mejorar?">@Model.Comentario</textarea>
+
+                    <div class="dk-ca__bar"><i id="barra"></i></div>
+                    <div class="dk-ca__cnt"><span>Tu comentario será público con tu nombre abreviado.</span><b id="cnt">0 / 250</b></div>
+
+                    <div class="dk-ca__pv">
+                        <small>Así se verá tu opinión</small>
+                        <div class="dk-ca__pvrow">
+                            <span class="dk-ca__pvav" id="pvAv">?</span>
+                            <div>
+                                <b id="pvNom"></b>
+                                <div id="pvSt" class="dk-ca__pvst"></div>
+                                <p id="pvTx" class="dk-ca__pvtx"></p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="dk-ca__acts">
+                        <button type="submit" class="dk-mc__btn dk-mc__btn--main" id="btnGuardar" disabled>Guardar calificación</button>
+                        <a class="dk-mc__btn dk-ca__btn-lin" href="/cuenta/historial">Cancelar</a>
+                    </div>
+                </form>
+            }
+        </div>
+    </div>
+</section>
+
+@if (!Model.YaCalificada)
+{
+    <script>
+        (function () {
+            var form = document.getElementById('frmCalificar');
+            if (!form) return;
+
+            var textos = { 1: 'Mala', 2: 'Regular', 3: 'Buena', 4: 'Muy buena', 5: 'Excelente' };
+            var hid = document.getElementById('estrellas');
+            var botones = document.querySelectorAll('#rate button');
+            var lbl = document.getElementById('lbl');
+            var ta = document.getElementById('comentario');
+            var cnt = document.getElementById('cnt');
+            var barra = document.getElementById('barra');
+            var guardar = document.getElementById('btnGuardar');
+            var pvNom = document.getElementById('pvNom');
+            var pvAv = document.getElementById('pvAv');
+            var pvSt = document.getElementById('pvSt');
+            var pvTx = document.getElementById('pvTx');
+            var cliente = form.getAttribute('data-cliente') || 'Tú';
+            var valor = parseInt(hid.value, 10) || 0;
+
+            pvNom.textContent = cliente;
+            pvAv.textContent = (cliente.trim().charAt(0) || '?').toUpperCase();
+
+            function pintar(n) {
+                botones.forEach(function (b) {
+                    var v = parseInt(b.getAttribute('data-v'), 10);
+                    b.classList.toggle('on', v <= n);
+                    b.setAttribute('aria-checked', v === valor ? 'true' : 'false');
+                });
+            }
+
+            function estrellasTexto(n) {
+                return '★★★★★'.slice(0, n) + '<span class="dk-stars__off">' + '★★★★★'.slice(0, 5 - n) + '</span>';
+            }
+
+            function actualizar() {
+                pintar(valor);
+                lbl.textContent = valor ? valor + ' de 5 · ' + textos[valor] : 'Toca una estrella para calificar';
+                guardar.disabled = valor < 1;
+
+                var len = ta.value.length;
+                cnt.textContent = len + ' / 250';
+                barra.style.width = Math.min(100, len / 250 * 100) + '%';
+
+                pvSt.innerHTML = valor ? '<span class="dk-stars"><span class="dk-stars__on">' + estrellasTexto(valor) + '</span></span>' : '';
+                var t = ta.value.trim();
+                if (t) { pvTx.textContent = '“' + t + '”'; pvTx.classList.remove('is-vac'); }
+                else { pvTx.textContent = 'Aquí aparecerá tu comentario si decides escribir uno.'; pvTx.classList.add('is-vac'); }
+            }
+
+            botones.forEach(function (b) {
+                var v = parseInt(b.getAttribute('data-v'), 10);
+                b.addEventListener('click', function () { valor = v; hid.value = v; actualizar(); });
+                b.addEventListener('mouseenter', function () { pintar(v); });
+                b.addEventListener('mouseleave', function () { pintar(valor); });
+            });
+
+            ta.addEventListener('input', actualizar);
+
+            form.addEventListener('submit', function (e) {
+                if (valor < 1) { e.preventDefault(); return; }
+                guardar.disabled = true;
+            });
+
+            actualizar();
+        })();
+    </script>
+}

@@ -1,0 +1,372 @@
+@model DKaiza.Web.Estilistas.AgendaEstilistaViewModel
+@using DKaiza.Web.Dominio
+
+@{
+    ViewData["Title"] = "Mis Citas";
+    var fechaIso = Model.FechaSeleccionada?.ToString("yyyy-MM-dd");
+    var totalCitas = Model.Citas.Count();
+
+    string ClaseEstado(EstadoCita e) => e switch
+    {
+        EstadoCita.Pendiente     => "st-pendiente",
+        EstadoCita.Confirmada    => "st-confirmada",
+        EstadoCita.PendientePago => "st-pago",
+        EstadoCita.Pagada        => "st-pagada",
+        EstadoCita.EnProceso     => "st-proceso",
+        EstadoCita.Completada    => "st-completada",
+        EstadoCita.Cancelada     => "st-cancelada",
+        _ => "st-pendiente"
+    };
+
+    string TextoEstado(EstadoCita e) => e switch
+    {
+        EstadoCita.Pendiente     => "Pendiente",
+        EstadoCita.Confirmada    => "Confirmada",
+        EstadoCita.PendientePago => "Pendiente de pago",
+        EstadoCita.Pagada        => "Pagada",
+        EstadoCita.EnProceso     => "En proceso",
+        EstadoCita.Completada    => "Completada",
+        EstadoCita.Cancelada     => "Cancelada",
+        _ => e.ToString()
+    };
+}
+
+<style>
+    /* ===== PALETA (la original, solo para esta vista) ===== */
+    .ag-page {
+        --crema:        #faf6f4;
+        --terracota:    #b88f86;
+        --terracota-os: #9c766d;
+        --marron:       #5a4b41;
+        --marron-os:    #433630;
+        --rosa-suave:   #e8d5ce;
+        --rosa-palido:  #f4e8e4;
+        --texto-suave:  #8f8179;
+        --borde:        #efe3de;
+        --sombra:       0 1px 2px rgba(90,75,65,.05), 0 8px 24px rgba(184,143,134,.12);
+        --sombra-hover: 0 4px 8px rgba(90,75,65,.07), 0 20px 40px rgba(184,143,134,.25);
+        --ease:         cubic-bezier(.22,.8,.3,1);
+
+        background-color: var(--crema);
+        background-image:
+            radial-gradient(900px 400px at 10% -5%, rgba(232,213,206,.6), transparent 60%),
+            radial-gradient(700px 400px at 100% 0%, rgba(184,143,134,.14), transparent 60%);
+        background-repeat: no-repeat;
+        font-family: 'Montserrat', sans-serif;
+        color: var(--marron);
+        min-height: calc(100vh - 68px);
+        /* cubre el margen superior del footer para que no quede franja blanca */
+        margin-bottom: -50px;
+        padding-bottom: 50px;
+    }
+
+    /* ===== ANIMACIONES ===== */
+    @@keyframes subirSuave {
+        from { opacity: 0; transform: translateY(18px) scale(.98); }
+        to   { opacity: 1; transform: translateY(0) scale(1); }
+    }
+    @@keyframes bajarSuave {
+        from { opacity: 0; transform: translateY(-10px); }
+        to   { opacity: 1; transform: translateY(0); }
+    }
+    @@keyframes pulso {
+        0%   { box-shadow: 0 0 0 0 rgba(184,143,134,.55); }
+        70%  { box-shadow: 0 0 0 7px rgba(184,143,134,0); }
+        100% { box-shadow: 0 0 0 0 rgba(184,143,134,0); }
+    }
+
+    /* ===== ENCABEZADO ===== */
+    .ag-head {
+        display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between;
+        gap: 14px; padding: 8px 0 22px;
+        animation: bajarSuave .6s var(--ease) both;
+    }
+    .ag-eyebrow {
+        display: inline-block; font-size: .68rem; font-weight: 700; letter-spacing: 2.2px;
+        text-transform: uppercase; color: var(--terracota); margin-bottom: 6px;
+    }
+    .ag-title {
+        font-family: 'Playfair Display', serif; font-weight: 700; font-size: 2.4rem; margin: 0 0 4px;
+        background: linear-gradient(90deg, var(--marron-os), var(--terracota-os));
+        -webkit-background-clip: text; background-clip: text; color: transparent;
+    }
+    .ag-sub { color: var(--texto-suave); font-size: .92rem; margin: 0; }
+    .ag-contador {
+        font-size: .85rem; font-weight: 600; color: var(--terracota-os);
+        background: var(--rosa-palido); border: 1px solid var(--rosa-suave);
+        padding: 6px 16px; border-radius: 999px;
+    }
+
+    /* ===== BARRA DE FILTRO ===== */
+    .ag-toolbar {
+        display: flex; flex-wrap: wrap; align-items: center; gap: 12px;
+        background: rgba(255,255,255,.88); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+        border: 1px solid var(--borde); border-radius: 16px; padding: 10px 14px;
+        box-shadow: var(--sombra); margin-bottom: 26px;
+        animation: bajarSuave .6s .1s var(--ease) both;
+    }
+    .ag-toolbar form { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; margin: 0; }
+    .ag-campo {
+        display: flex; align-items: center; gap: 8px; margin: 0;
+        padding: 7px 12px; border: 1px solid var(--borde); border-radius: 12px; background: var(--crema);
+        transition: border-color .25s, box-shadow .25s, transform .25s var(--ease);
+    }
+    .ag-campo:hover { transform: translateY(-1px); border-color: var(--terracota); }
+    .ag-campo:focus-within { border-color: var(--terracota); box-shadow: 0 0 0 4px rgba(184,143,134,.22); }
+    .ag-campo svg { width: 16px; height: 16px; color: var(--terracota); flex-shrink: 0; }
+    .ag-campo input {
+        border: none; background: transparent; outline: none; cursor: pointer;
+        font-family: inherit; font-weight: 600; font-size: .85rem; color: var(--marron);
+    }
+    .ag-limpiar {
+        color: var(--terracota-os); border: 1px solid var(--rosa-suave); border-radius: 12px;
+        padding: 7px 14px; font-size: .8rem; font-weight: 600; text-decoration: none;
+        transition: background-color .25s, transform .25s var(--ease);
+    }
+    .ag-limpiar:hover { background: var(--rosa-palido); color: var(--marron); transform: translateY(-1px); }
+    .ag-limpiar:focus-visible, .ag-btn:focus-visible { outline: 2px solid var(--terracota); outline-offset: 2px; }
+
+    /* ===== TARJETAS ===== */
+    .ag-grid > div { animation: subirSuave .65s var(--ease) both; }
+    .ag-grid > div:nth-child(1) { animation-delay: .05s; }
+    .ag-grid > div:nth-child(2) { animation-delay: .12s; }
+    .ag-grid > div:nth-child(3) { animation-delay: .19s; }
+    .ag-grid > div:nth-child(4) { animation-delay: .26s; }
+    .ag-grid > div:nth-child(5) { animation-delay: .33s; }
+    .ag-grid > div:nth-child(6) { animation-delay: .40s; }
+    .ag-grid > div:nth-child(n+7) { animation-delay: .47s; }
+
+    .cita {
+        --estado: var(--terracota);
+        position: relative; overflow: hidden; height: 100%;
+        display: flex; flex-direction: column; justify-content: space-between; gap: 16px;
+        background: linear-gradient(180deg, #ffffff 0%, #fdfaf8 100%);
+        border: 1px solid var(--borde); border-top: 4px solid var(--estado); border-radius: 18px;
+        padding: 20px; box-shadow: var(--sombra);
+        transition: transform .35s var(--ease), box-shadow .35s var(--ease);
+    }
+    .cita::before {
+        content: ''; position: absolute; top: -60px; right: -60px; width: 160px; height: 160px;
+        background: radial-gradient(circle, var(--estado) 0%, transparent 70%);
+        opacity: .16; pointer-events: none;
+        transition: opacity .35s, transform .5s var(--ease);
+    }
+    .cita:hover { transform: translateY(-6px); box-shadow: var(--sombra-hover); }
+    .cita:hover::before { opacity: .34; transform: scale(1.25); }
+    .cita > * { position: relative; }
+
+    .cita.st-pendiente  { --estado: #dcb99a; }
+    .cita.st-confirmada { --estado: #a9b6c4; }
+    .cita.st-pago       { --estado: #d4a39b; }
+    .cita.st-pagada     { --estado: #a9c2ae; }
+    .cita.st-proceso    { --estado: var(--terracota); }
+    .cita.st-completada { --estado: #a9c2ae; opacity: .85; }
+    .cita.st-cancelada  { --estado: #cbbfbc; opacity: .8; }
+
+    .cita-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; margin-bottom: 14px; }
+    .hora { font-size: 1.6rem; font-weight: 700; line-height: 1; letter-spacing: -.5px; color: var(--marron); }
+    .hora small { font-size: .85rem; font-weight: 500; color: var(--texto-suave); letter-spacing: 0; }
+    .fecha { font-size: .78rem; color: var(--texto-suave); margin-top: 5px; }
+
+    .servicio {
+        font-family: 'Playfair Display', serif; font-weight: 700; font-size: 1.15rem; line-height: 1.3;
+        color: var(--marron); margin: 0 0 14px; padding-bottom: 14px; border-bottom: 1px dashed var(--rosa-suave);
+    }
+
+    .fila { display: flex; align-items: center; gap: 12px; }
+    .fila + .fila { margin-top: 10px; }
+    .avatar {
+        width: 40px; height: 40px; border-radius: 50%; flex-shrink: 0;
+        display: flex; align-items: center; justify-content: center;
+        font-weight: 700; font-size: .95rem; transition: transform .35s var(--ease);
+        box-shadow: 0 0 0 3px rgba(255,255,255,.9), 0 3px 8px rgba(90,75,65,.1);
+    }
+    .cita:hover .avatar { transform: scale(1.08) rotate(-4deg); }
+    .avatar.tono-0 { background: var(--rosa-suave); color: #8a5a50; }
+    .avatar.tono-1 { background: #dbe7de; color: #44715a; }
+    .avatar.tono-2 { background: #dde4ee; color: #4f6788; }
+    .avatar.tono-3 { background: #efdfd0; color: #8f6544; }
+    .fila-etiqueta { font-size: .7rem; color: var(--texto-suave); line-height: 1.2; }
+    .fila-valor { font-size: .9rem; font-weight: 600; color: var(--marron); line-height: 1.3; }
+    .fila-valor.tel { font-weight: 500; font-size: .82rem; color: var(--texto-suave); }
+
+    /* ===== AVISO: PAGO PENDIENTE ===== */
+    .aviso-pago {
+        display: flex; align-items: flex-start; gap: 8px;
+        margin-top: 14px; padding: 10px 12px;
+        background: #f9ece9; border: 1px solid #ecd0cb; border-radius: 12px;
+        font-size: .76rem; line-height: 1.4; color: #8f4a42;
+    }
+    .aviso-pago svg { width: 15px; height: 15px; flex-shrink: 0; margin-top: 1px; }
+
+    /* ===== BADGES ===== */
+    .badge-estado {
+        display: inline-flex; align-items: center; gap: 6px; white-space: nowrap;
+        font-size: .7rem; font-weight: 700; padding: 5px 11px; border-radius: 999px;
+    }
+    .badge-estado::before { content: ''; width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+    .badge-estado.st-pendiente  { background: #f6e8da; color: #8f5f36; }
+    .badge-estado.st-confirmada { background: #e5eaf1; color: #476080; }
+    .badge-estado.st-pago       { background: #f4e1de; color: #9a5048; }
+    .badge-estado.st-pagada     { background: #e1eee4; color: #36684b; }
+    .badge-estado.st-proceso    { background: var(--rosa-suave); color: var(--marron-os); }
+    .badge-estado.st-proceso::before { animation: pulso 1.8s infinite; }
+    .badge-estado.st-completada { background: #e1eee4; color: #36684b; }
+    .badge-estado.st-cancelada  { background: #ece6e4; color: #7a6a68; }
+
+    /* ===== BOTÓN CON BRILLO ===== */
+    .ag-btn {
+        position: relative; overflow: hidden; width: 100%; border: none; border-radius: 12px; padding: 11px;
+        background: linear-gradient(135deg, var(--terracota-os), var(--marron));
+        color: #fff; font-family: inherit; font-weight: 600; font-size: .85rem; letter-spacing: .3px;
+        box-shadow: 0 6px 14px rgba(90,75,65,.22);
+        transition: transform .3s var(--ease), box-shadow .3s var(--ease), filter .3s;
+    }
+    .ag-btn::after {
+        content: ''; position: absolute; top: 0; left: -80%; width: 50%; height: 100%;
+        background: linear-gradient(120deg, transparent, rgba(255,255,255,.35), transparent);
+        transform: skewX(-20deg); transition: left .7s var(--ease);
+    }
+    .ag-btn:hover { transform: translateY(-2px); box-shadow: 0 10px 22px rgba(90,75,65,.32); filter: brightness(1.05); }
+    .ag-btn:hover::after { left: 130%; }
+    .ag-btn:active { transform: translateY(0) scale(.98); }
+
+    /* Botón secundario (citas con pago pendiente) */
+    .ag-btn.ag-btn-suave {
+        background: var(--rosa-palido); color: var(--marron);
+        border: 1px solid var(--rosa-suave); box-shadow: none;
+    }
+    .ag-btn.ag-btn-suave::after { display: none; }
+    .ag-btn.ag-btn-suave:hover { background: var(--rosa-suave); box-shadow: none; filter: none; }
+
+    /* ===== ESTADO VACÍO ===== */
+    .ag-vacio {
+        text-align: center; padding: 56px 20px; background: #fff;
+        border: 1px dashed var(--terracota); border-radius: 18px;
+        animation: subirSuave .6s var(--ease) both;
+    }
+    .ag-vacio svg { width: 40px; height: 40px; color: var(--terracota); margin-bottom: 10px; }
+    .ag-vacio h5 { font-family: 'Playfair Display', serif; color: var(--marron); margin-bottom: 6px; }
+    .ag-vacio p { color: var(--texto-suave); font-size: .9rem; margin: 0; }
+
+    @@media (prefers-reduced-motion: reduce) {
+        *, *::before, *::after { animation: none !important; transition: none !important; }
+    }
+    @@media (max-width: 767px) {
+        .ag-title { font-size: 1.9rem; }
+        .ag-toolbar form, .ag-campo { width: 100%; }
+    }
+</style>
+
+<div class="ag-page">
+<div class="container py-4">
+
+    <div class="ag-head">
+        <div>
+            <span class="ag-eyebrow">Mi agenda</span>
+            <h1 class="ag-title">Mis citas</h1>
+            <p class="ag-sub">Revisa tus citas y comienza la atención de cada cliente.</p>
+        </div>
+        <span class="ag-contador">@totalCitas @(totalCitas == 1 ? "cita" : "citas")</span>
+    </div>
+
+    <div class="ag-toolbar">
+        <form method="get">
+            <label class="ag-campo">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>
+                <input type="date" name="fecha" value="@fechaIso" onchange="this.form.submit()" aria-label="Fecha" />
+            </label>
+
+            @if (Model.FechaSeleccionada.HasValue)
+            {
+                <a href="/Agenda" class="ag-limpiar">Ver todas</a>
+            }
+        </form>
+    </div>
+
+    @if (!Model.Citas.Any())
+    {
+        <div class="ag-vacio">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>
+            <h5>No se encontraron citas</h5>
+            <p>Prueba con otra fecha o quita el filtro.</p>
+        </div>
+    }
+    else
+    {
+        <div class="row g-3 ag-grid">
+            @foreach (var cita in Model.Citas)
+            {
+                var clase = ClaseEstado(cita.Estado);
+                var cliente = (cita.ClienteNombre ?? "").Trim();
+                var inicial = cliente.Length > 0 ? cliente.Substring(0, 1).ToUpper() : "C";
+                var tono = cliente.Length > 0 ? char.ToUpper(cliente[0]) % 4 : 0;
+                var mostrarTel = !string.IsNullOrWhiteSpace(cita.ClienteTelefono) && cita.ClienteTelefono != "N/A";
+                var pagoPendiente = cita.Estado == EstadoCita.PendientePago;
+
+                <div class="col-sm-6 col-lg-4">
+                    <article class="cita @clase">
+                        <div>
+                            <div class="cita-head">
+                                <div>
+                                    <div class="hora">@cita.Inicio.ToString("HH:mm") <small>– @cita.Fin.ToString("HH:mm")</small></div>
+                                    <div class="fecha">@cita.Inicio.ToString("dd MMM yyyy")</div>
+                                </div>
+                                <span class="badge-estado @clase">@TextoEstado(cita.Estado)</span>
+                            </div>
+
+                            <h3 class="servicio">@cita.ServicioNombre</h3>
+
+                            <div class="fila">
+                                <div class="avatar tono-@tono" aria-hidden="true">@inicial</div>
+                                <div>
+                                    <div class="fila-etiqueta">Cliente</div>
+                                    <div class="fila-valor">@cliente</div>
+                                    @if (mostrarTel)
+                                    {
+                                        <div class="fila-valor tel">@cita.ClienteTelefono</div>
+                                    }
+                                </div>
+                            </div>
+
+                            @if (pagoPendiente)
+                            {
+                                <div class="aviso-pago">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16h.01"/></svg>
+                                    <span>Pago pendiente: no se puede iniciar la atención todavía.</span>
+                                </div>
+                            }
+                        </div>
+
+                        <button type="button" class="ag-btn @(pagoPendiente ? "ag-btn-suave" : "")" onclick="verDetalle(@cita.Id)">Ver detalle</button>
+                    </article>
+                </div>
+            }
+        </div>
+    }
+</div>
+</div>
+
+<!-- MODAL -->
+<div class="modal fade" id="modalDetalle" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content" id="contenidoModal" style="border-radius: 20px; border: none; overflow: hidden; box-shadow: 0 20px 50px rgba(90,75,65,.28);">
+            <!-- AJAX -->
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        function verDetalle(id) {
+            fetch(`/Agenda/DetalleCita?id=${id}`)
+                .then(response => response.text())
+                .then(html => {
+                    document.getElementById('contenidoModal').innerHTML = html;
+                    var myModal = new bootstrap.Modal(document.getElementById('modalDetalle'));
+                    myModal.show();
+                })
+                .catch(() => alert("No se pudo cargar el detalle de la cita."));
+        }
+    </script>
+}

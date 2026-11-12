@@ -1,0 +1,106 @@
+@{
+    var badgeRol = User.IsInRole("Administrador") ? "Admin" : User.IsInRole("Estilista") ? "Estilista" : "Cliente";
+}
+
+<details class="dk-user" id="dkUser">
+    <summary class="dk-nav__link" style="display: flex; align-items: center; gap: 8px; cursor: pointer; color: var(--layout-text-light) !important; font-weight: 500; font-size: 0.95rem; padding: 8px 16px; text-decoration: none;">
+        <span class="badge-rol" style="background-color: var(--layout-badge-bg); color: #fff; font-size: 0.6rem; padding: 3px 8px; border-radius: 12px; text-transform: uppercase; font-weight: bold; margin-right: 4px;">
+            @badgeRol
+        </span>
+        @User.Identity!.Name <span aria-hidden="true" style="font-size: 0.8rem;">▾</span>
+    </summary>
+    
+    <div class="dk-user__menu">
+        <a href="/cuenta/perfil">Mi perfil</a>
+        <a href="/cuenta/mis-citas">Ver mis citas</a>
+        <a href="/cuenta/historial">Historial</a>
+        <form asp-controller="Account" asp-action="Logout" method="post" style="margin: 0; padding: 0;">
+            <button type="submit">Cerrar sesión</button>
+        </form>
+    </div>
+</details>
+
+<style>
+    /* ===== ESTILOS DEL MENÚ DE USUARIO ===== */
+    .dk-user {
+        position: relative;
+        display: inline-block;
+    }
+
+    .dk-user > summary {
+        list-style: none; /* Quita la flecha por defecto */
+    }
+    .dk-user > summary::-webkit-details-marker {
+        display: none;
+    }
+
+    /* El menú desplegable */
+    .dk-user__menu {
+        position: absolute;
+        top: 100%;
+        right: 0;
+        margin-top: 10px;
+        min-width: 200px;
+        background-color: var(--layout-bg-dark) !important; /* Fondo oscuro como el navbar */
+        border: 1px solid var(--layout-border-color) !important;
+        border-radius: 12px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+        padding: 10px 0;
+        z-index: 1000;
+    }
+
+    /* Enlaces del menú */
+    .dk-user__menu a,
+    .dk-user__menu button {
+        display: block;
+        width: 100%;
+        text-align: left;
+        padding: 10px 20px;
+        color: var(--layout-text-muted) !important; /* Texto beige claro */
+        text-decoration: none;
+        font-size: 0.9rem;
+        font-weight: 500;
+        background: transparent;
+        border: none;
+        transition: all 0.2s ease;
+        cursor: pointer;
+    }
+
+    /* Hover de los enlaces */
+    .dk-user__menu a:hover,
+    .dk-user__menu button:hover {
+        background-color: rgba(255, 255, 255, 0.1) !important; /* Un toque de luz al pasar el mouse */
+        color: var(--layout-text-light) !important; /* Texto blanco marfil */
+        padding-left: 25px; /* Pequeño efecto de desplazamiento */
+    }
+
+    /* Separador antes de Cerrar sesión */
+    .dk-user__menu form {
+        border-top: 1px solid var(--layout-border-color);
+        margin-top: 8px;
+        padding-top: 8px;
+    }
+
+    /* Botón de cerrar sesión (tono ligeramente rojizo para diferenciar) */
+    .dk-user__menu button {
+        color: #ffb3b3 !important; /* Un rosado suave para que resalte */
+    }
+    .dk-user__menu button:hover {
+        background-color: rgba(255, 179, 179, 0.1) !important;
+        color: #ffcccc !important;
+    }
+</style>
+
+<script>
+    (function () {
+        var d = document.getElementById('dkUser');
+        if(!d) return;
+        
+        document.addEventListener('click', function (e) {
+            if (!d.contains(e.target)) d.removeAttribute('open');
+        });
+        document.addEventListener('keydown', function (e) {
+            if (e.key === 'Escape') d.removeAttribute('open');
+        });
+    })();
+</script>

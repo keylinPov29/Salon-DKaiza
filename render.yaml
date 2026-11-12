@@ -20,3 +20,11 @@ services:
         sync: false
       - key: AdminInicial__Password
         sync: false
+      - key: RecepcionistaInicial__Email
+        sync: false
+      - key: RecepcionistaInicial__Password
+        sync: false
+      - key: MercadoPago__AccessToken
+        sync: false
+      - key: MercadoPago__PublicKey
+        sync: false

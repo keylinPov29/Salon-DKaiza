@@ -1,0 +1,142 @@
+@model DKaiza.Web.Models.AdminClientesViewModel
+@{
+    ViewData["Title"] = "Gestión de historial de clientes";
+}
+
+@functions {
+    static string Iniciales(string nombre)
+    {
+        var partes = (nombre ?? "").Split(' ', StringSplitOptions.RemoveEmptyEntries);
+        if (partes.Length == 0) return "?";
+        if (partes.Length == 1) return partes[0].Substring(0, 1).ToUpper();
+        return (partes[0].Substring(0, 1) + partes[1].Substring(0, 1)).ToUpper();
+    }
+
+    static string TextoFrecuencia(string f) =>
+        f == "alta" ? "Frecuencia alta" : f == "media" ? "Frecuencia media" : "Frecuencia baja";
+}
+
+<section class="dk-mc dk-cl">
+    <div class="dk-mc__card dk-cl__card">
+
+        <div class="dk-mc__band">
+            <div class="dk-mc__bandtxt">
+                <span class="dk-mc__hola">Panel de la administradora</span>
+                <h1 class="dk-mc__title">Gestión de historial de clientes</h1>
+            </div>
+            <div class="dk-mc__bandico">
+                <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0"/><path d="M16 4.5a3.5 3.5 0 0 1 0 7M18 14.5a6.5 6.5 0 0 1 3.5 5.5"/></svg>
+            </div>
+        </div>
+
+        <div class="dk-mc__body">
+
+            <div class="dk-ad__kpis">
+                <div class="dk-ad__kpi">
+                    <span class="dk-ad__kpi-ico"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0"/><path d="M16 4.5a3.5 3.5 0 0 1 0 7M18 14.5a6.5 6.5 0 0 1 3.5 5.5"/></svg></span>
+                    <div><b>@Model.TotalClientes</b><span>Total de clientes</span></div>
+                </div>
+                <div class="dk-ad__kpi dk-ad__kpi--vip">
+                    <span class="dk-ad__kpi-ico"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 8l4 4 5-7 5 7 4-4-2 11H5z"/></svg></span>
+                    <div><b>@Model.ClientesVip</b><span>Clientes VIP</span></div>
+                </div>
+                <div class="dk-ad__kpi dk-ad__kpi--ok">
+                    <span class="dk-ad__kpi-ico"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M8 12.5l3 3 5-6"/></svg></span>
+                    <div><b>@Model.TotalAsistencias</b><span>Total de asistencias</span></div>
+                </div>
+                <div class="dk-ad__kpi">
+                    <span class="dk-ad__kpi-ico"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg></span>
+                    <div><b>@Model.PromedioPorCliente.ToString("0.0", System.Globalization.CultureInfo.InvariantCulture)</b><span>Promedio por cliente</span></div>
+                </div>
+            </div>
+
+            <div class="dk-ad__top">
+                <h2>Clientes</h2>
+                <span>Ordenados por asistencias</span>
+            </div>
+
+            @if (!Model.Clientes.Any())
+            {
+                <div class="dk-mc__vacio">Todavía no hay clientes registrados.</div>
+            }
+            else
+            {
+                <div class="dk-cl__tabla dk-ad__tabla">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Cliente</th>
+                                <th>Asistencias</th>
+                                <th>Frecuencia</th>
+                                <th>VIP</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var c in Model.Clientes)
+                            {
+                                var ancho = Model.MaxAsistencias > 0 ? (int)Math.Round(c.Asistencias * 100.0 / Model.MaxAsistencias) : 0;
+                                <tr class="@(c.EsVip ? "es-vip" : "")">
+                                    <td>
+                                        <div class="dk-cl__quien">
+                                            <i class="dk-cl__av">@Iniciales(c.Nombre)</i>
+                                            <div>
+                                                <b>@c.Nombre</b>
+                                                <small>@(string.IsNullOrWhiteSpace(c.Telefono) ? "Sin teléfono" : c.Telefono)</small>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <div style="min-width:84px">
+                                            <span class="dk-ad__num">@c.Asistencias</span>
+                                            <span class="dk-cl__barra"><i style="width:@(ancho)%"></i></span>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <span class="dk-ad__frec dk-ad__frec--@c.Frecuencia">@TextoFrecuencia(c.Frecuencia)</span>
+                                    </td>
+                                    <td>
+                                        @if (c.EsVip)
+                                        {
+                                            <span class="dk-ad__vip"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 8l4 4 5-7 5 7 4-4-2 11H5z"/></svg> VIP</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="dk-cl__nada">—</span>
+                                        }
+                                    </td>
+                                    <td class="dk-cl__acc">
+                                        <a class="dk-mc__btn dk-mc__btn--main dk-mc__btn--sm" href="/admin/clientes/@c.Id">Ver historial</a>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+
+                var desde = (Model.Pagina - 1) * Model.PorPagina + 1;
+                var hasta = desde + Model.Clientes.Count - 1;
+                <div class="dk-cl__pie">
+                    <span>Mostrando @desde a @hasta de @Model.TotalClientes clientes</span>
+                    @if (Model.TotalPaginas > 1)
+                    {
+                        <nav class="dk-cl__pag">
+                            @for (var p = 1; p <= Model.TotalPaginas; p++)
+                            {
+                                if (p == Model.Pagina)
+                                {
+                                    <a class="is-on">@p</a>
+                                }
+                                else
+                                {
+                                    <a href="/admin/clientes?pagina=@p">@p</a>
+                                }
+                            }
+                        </nav>
+                    }
+                </div>
+            }
+
+        </div>
+    </div>
+</section>
